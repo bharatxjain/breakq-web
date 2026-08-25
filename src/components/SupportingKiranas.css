@@ -1,0 +1,53 @@
+.supporting-inner {
+  position: relative;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.supporting-inner h2 {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  max-width: 480px;
+}
+
+.floating-tag {
+  position: absolute;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  cursor: default;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.floating-tag:hover {
+  transform: translateY(-8px) scale(1.1) rotate(-2deg);
+  box-shadow: 0 12px 24px rgba(112, 1, 254, 0.22);
+  z-index: 3;
+}
+
+.tag-gray {
+  background: var(--gray-100);
+  color: var(--gray-900);
+}
+
+.tag-green {
+  background: var(--primary-pill);
+  color: var(--primary-darker);
+}
+
+@media (max-width: 800px) {
+  .floating-tag {
+    display: none;
+  }
+  .supporting-inner {
+    min-height: auto;
+  }
+}

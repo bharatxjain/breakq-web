@@ -1,0 +1,40 @@
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 12px;
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+}
+
+.photo-placeholder span {
+  max-width: 85%;
+  line-height: 1.4;
+}
+
+.tone-light {
+  background: linear-gradient(135deg, #eef2f0, #dfe7e2);
+  color: var(--gray-600);
+}
+
+.tone-green {
+  background: linear-gradient(135deg, #9b4dff, #5500c5);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tone-dark {
+  background: linear-gradient(135deg, #2a2a2a, #0d0d0d);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.tone-night {
+  background: linear-gradient(135deg, #3a2a5c, #1a1030, #4a2a10);
+  color: rgba(255, 255, 255, 0.65);
+}
