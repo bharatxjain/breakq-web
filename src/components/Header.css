@@ -1,6 +1,8 @@
 .header {
   padding: 20px 0;
   background: var(--white);
+  position: relative;
+  z-index: 100;
 }
 
 .header-inner {
@@ -14,12 +16,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.2;
+  min-width: 0;
 }
 
 .brand-name {
@@ -35,6 +39,9 @@
 .brand-tag {
   font-size: 11px;
   color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav {
@@ -57,11 +64,113 @@
   color: var(--primary) !important;
 }
 
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--gray-900);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.menu-toggle.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.menu-toggle.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav {
+  display: none;
+}
+
+.mobile-nav-backdrop {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .nav {
     display: none;
   }
+  .header-inner .header-cta {
+    display: none;
+  }
   .brand-tag {
     display: none;
+  }
+  .menu-toggle {
+    display: flex;
+  }
+
+  .mobile-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 98;
+  }
+
+  .mobile-nav-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(80vw, 320px);
+    background: var(--white);
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.12);
+    padding: 96px 28px 32px;
+    gap: 28px;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 99;
+  }
+
+  .mobile-nav.is-open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav nav {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .mobile-nav-cta {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-name {
+    font-size: 19px;
   }
 }

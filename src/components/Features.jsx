@@ -1,28 +1,32 @@
-import './Features.css'
+import "./Features.css";
 
 function AppIconsVisual() {
   const icons = [
-    { label: 'Kirana', color: '#7001FE', glyph: '🛒' },
-    { label: 'Dairy', color: '#38bdf8', glyph: '🥛' },
-    { label: 'Medical', color: '#f87171', glyph: '💊' },
-    { label: 'Electrical', color: '#facc15', glyph: '💡' },
-    { label: 'Bakery', color: '#fb923c', glyph: '🍞' },
-    { label: 'Stationery', color: '#34d399', glyph: '📚' },
-    { label: 'Fashion', color: '#f472b6', glyph: '👕' },
-    { label: 'Mobiles', color: '#a78bfa', glyph: '📱' },
-  ]
+    { label: "Kirana", color: "#7001FE", glyph: "🛒" },
+    { label: "Dairy", color: "#38bdf8", glyph: "🥛" },
+    { label: "Medical", color: "#f87171", glyph: "💊" },
+    { label: "Electrical", color: "#facc15", glyph: "💡" },
+    { label: "Bakery", color: "#fb923c", glyph: "🍞" },
+    { label: "Stationery", color: "#34d399", glyph: "📚" },
+    { label: "Fashion", color: "#f472b6", glyph: "👕" },
+    { label: "Mobiles", color: "#a78bfa", glyph: "📱" },
+  ];
   return (
     <div className="visual-phone-mini">
       <div className="mini-status">9:41</div>
       <div className="mini-icons">
         {icons.map((ic) => (
-          <div key={ic.label} className="mini-icon" style={{ background: ic.color }}>
+          <div
+            key={ic.label}
+            className="mini-icon"
+            style={{ background: ic.color }}
+          >
             <span>{ic.glyph}</span>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function VendorPickerVisual() {
@@ -38,7 +42,7 @@ function VendorPickerVisual() {
         <small>⭐ 4.6 · 0.7 km away</small>
       </div>
     </div>
-  )
+  );
 }
 
 function SearchOrbVisual() {
@@ -54,29 +58,29 @@ function SearchOrbVisual() {
       <span className="mini-float f2">🔍</span>
       <span className="mini-float f3">🏬</span>
     </div>
-  )
+  );
 }
 
 const cards = [
   {
-    title: 'Multi-Vendor, Multi-Category Discovery',
-    desc: 'Explore a wide network of verified local stores — Kirana, Dairy, Medical, Electrical, and more — all in your area.',
+    title: "Multi-Vendor, Multi-Category Discovery",
+    desc: "Explore a wide network of verified local stores — Kirana, Dairy, Medical, Electrical, and more — all in your area.",
     visual: <AppIconsVisual />,
   },
   {
-    title: 'Shop-First Experience',
-    desc: 'Select your favorite specific vendor to browse their unique digital storefront and catalog.',
+    title: "Shop-First Experience",
+    desc: "Select your favorite specific vendor to browse their unique digital storefront and catalog.",
     visual: <VendorPickerVisual />,
   },
   {
-    title: 'Smart Search & Categories',
-    desc: 'Find exactly what you need — from Atta and Dal to medicines, dairy products, and electrical fittings — using our lightning-fast search.',
+    title: "Smart Search & Categories",
+    desc: "Find exactly what you need — from Atta and Dal to medicines, dairy products, and electrical fittings — using our lightning-fast search.",
     visual: <SearchOrbVisual />,
     tall: true,
   },
   {
-    title: 'Secure Authentication',
-    desc: 'Enjoy a safe shopping experience with our verified email OTP login system.',
+    title: "Secure Authentication",
+    desc: "Enjoy a safe shopping experience with our verified email OTP login system.",
     visual: (
       <div className="visual-coin-mini">
         <div className="coin">🔐</div>
@@ -84,8 +88,8 @@ const cards = [
     ),
   },
   {
-    title: 'Direct Store Access',
-    desc: 'Need to visit in person? Get precise map directions and instant call support for every partner store.',
+    title: "Direct Store Access",
+    desc: "Need to visit in person? Get precise map directions and instant call support for every partner store.",
     visual: (
       <div className="visual-docs-mini">
         <div className="store-access-icons">
@@ -96,8 +100,8 @@ const cards = [
     ),
   },
   {
-    title: 'Clean & Premium UI',
-    desc: 'A modern, clutter-free interface designed for speed and ease of use across every store category.',
+    title: "Clean & Premium UI",
+    desc: "A modern, clutter-free interface designed for speed and ease of use across every store category.",
     visual: (
       <div className="visual-phone-mini bag-visual">
         <div className="mini-status">9:41</div>
@@ -105,17 +109,20 @@ const cards = [
       </div>
     ),
   },
-]
+];
 
 export default function Features() {
   return (
     <section className="section features">
       <div className="container">
         <span className="eyebrow">Why choose BreakQ</span>
-        <h2 className="section-title">Everything your neighborhood needs, in one app</h2>
+        <h2 className="section-title">
+          Everything your neighborhood needs, in one app
+        </h2>
         <p className="section-subtitle">
-          Unlike generic grocery-only apps, BreakQ puts your entire local community first — Kirana, Dairy,
-          Medical, Electrical, and more, not just groceries.
+          Unlike generic grocery-only apps, BreakQ puts your entire local
+          community first — Kirana, Dairy, Medical, Electrical, and more, not
+          just groceries.
         </p>
 
         <div className="features-grid">
@@ -129,5 +136,5 @@ export default function Features() {
         </div>
       </div>
     </section>
-  )
+  );
 }

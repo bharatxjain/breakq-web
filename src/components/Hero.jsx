@@ -38,20 +38,9 @@ export default function Hero() {
             </p>
 
             <div className="store-badges">
-              <button className="store-badge">
-                <span className="store-icon"></span>
-                <span>
-                  <small>Download on the</small>
-                  <strong>App Store</strong>
-                </span>
-              </button>
-              <button className="store-badge">
-                <span className="store-icon">▶</span>
-                <span>
-                  <small>GET IT ON</small>
-                  <strong>Google Play</strong>
-                </span>
-              </button>
+              <a href="#" className="store-badge">
+                <img src="/badges/google-play.png" alt="Get it on Google Play" />
+              </a>
             </div>
 
             <div className="hero-rating">
@@ -85,7 +74,7 @@ export default function Hero() {
                 <div className="app-topbar">
                   <span className="app-menu">☰</span>
                   <div className="app-topbar-text">
-                    <strong>Pick up your order in 15 Mins</strong>
+                    <strong>Shop from stores you trust</strong>
                     <small>Bilekahalli - Oasis Regency Apart... ⌄</small>
                   </div>
                   <span className="app-bell">🔔</span>

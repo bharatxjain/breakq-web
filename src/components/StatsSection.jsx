@@ -1,19 +1,29 @@
-import './StatsSection.css'
+import "./StatsSection.css";
 
 const stats = [
-  { value: '43%', label: 'of retail will be digital by 2030' },
-  { value: '$1.3T', label: 'projected market value by 2028' },
-  { value: '27%', label: 'CAGR in rural e-commerce' },
-]
+  { value: "43%", label: "of retail will be digital by 2030" },
+  { value: "$1.3T", label: "projected market value by 2028" },
+  { value: "27%", label: "CAGR in rural e-commerce" },
+];
 
 const drivers = [
-  { title: 'Urbanization', desc: '560M+ Urban population by 2030' },
-  { title: 'Government Initiatives', desc: 'ONDC empowering small retailers' },
-  { title: 'Rising Incomes', desc: 'Rising incomes fuelling demand for convenience' },
-  { title: 'Digital Adaptation', desc: '750M+ smartphone users driving digital shopping' },
-]
+  { title: "Urbanization", desc: "560M+ Urban population by 2030" },
+  { title: "Government Initiatives", desc: "ONDC empowering small retailers" },
+  {
+    title: "Rising Incomes",
+    desc: "Rising incomes fuelling demand for convenience",
+  },
+  {
+    title: "Digital Adaptation",
+    desc: "750M+ smartphone users driving digital shopping",
+  },
+];
 
-const investors = ['TURBOSTART', 'UV — Unpopular Ventures', 'snow leopard technology ventures']
+const investors = [
+  "TURBOSTART",
+  "UV — Unpopular Ventures",
+  "snow leopard technology ventures",
+];
 
 export default function StatsSection() {
   return (
@@ -22,7 +32,8 @@ export default function StatsSection() {
         <span className="eyebrow eyebrow-dark">Powered by Ambition</span>
         <h2 className="section-title title-light">India's Retail Revolution</h2>
         <p className="section-subtitle subtitle-light">
-          India has always been in the fore-front when it comes to retail. How do the numbers look?
+          India has always been in the fore-front when it comes to retail. How
+          do the numbers look?
         </p>
 
         <div className="stats-grid">
@@ -38,7 +49,10 @@ export default function StatsSection() {
           <div className="pie-chart" />
           <div>
             <h3>92% Market Share</h3>
-            <p>Traditional retail dominates but faces growing Q-commerce competition</p>
+            <p>
+              Traditional retail dominates but faces growing Q-commerce
+              competition
+            </p>
           </div>
         </div>
 
@@ -62,5 +76,5 @@ export default function StatsSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

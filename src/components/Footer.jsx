@@ -41,7 +41,11 @@ export default function Footer() {
             <ul>
               {col.links.map((l) => (
                 <li key={l}>
-                  {routes[l] ? <Link to={routes[l]}>{l}</Link> : <a href="#">{l}</a>}
+                  {routes[l] ? (
+                    <Link to={routes[l]}>{l}</Link>
+                  ) : (
+                    <a href="#">{l}</a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -49,9 +53,7 @@ export default function Footer() {
         ))}
       </div>
 
-      <div className="container footer-bottom">
-        <span>2025 BreakQ. All rights reserved.</span>
-      </div>
+      <div className="container footer-bottom"></div>
 
       <div className="footer-watermark">BreakQ</div>
     </footer>

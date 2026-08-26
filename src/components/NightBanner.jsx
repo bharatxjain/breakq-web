@@ -1,10 +1,12 @@
-import './NightBanner.css'
+import "./NightBanner.css";
 
 export default function NightBanner() {
   return (
     <section className="night-banner">
       <div className="night-bg" aria-hidden="true">
-        <span className="night-caption">Indian street market at dusk — replace with brand photography</span>
+        <span className="night-caption">
+          Indian street market at dusk replace with brand photography
+        </span>
       </div>
 
       <div className="night-phones">
@@ -15,15 +17,16 @@ export default function NightBanner() {
 
         <div className="night-phone phone-front">
           <div className="nb-topbar">
-            <strong>Delivery in 15 Mins</strong>
+            <strong>Your Neighborhood, Online</strong>
           </div>
           <div className="nb-greeting">
-            <small>Hi, Deepak</small>
+            <small>Hi, Yash</small>
             <p>Here's what's nearby</p>
           </div>
           <div className="nb-card">
             <span>
-              From Kirana to Medical, right from the <strong>stores you trust!</strong>
+              From Kirana to Medical, right from the{" "}
+              <strong>stores you trust!</strong>
             </span>
             <span className="nb-basket">🧺</span>
           </div>
@@ -39,5 +42,5 @@ export default function NightBanner() {
         </div>
       </div>
     </section>
-  )
+  );
 }
