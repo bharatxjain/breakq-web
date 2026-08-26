@@ -266,7 +266,14 @@ export default function About() {
               today and bring your local market home!
             </p>
             <div className="about-cta-actions">
-              <button className="btn btn-primary">Download BreakQ</button>
+              <a
+                href="https://play.google.com/store/apps/details?id=com.kks.bharatkirana"
+                className="btn btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download BreakQ
+              </a>
               <Link to="/contact" className="btn btn-black">
                 Become a partner
               </Link>

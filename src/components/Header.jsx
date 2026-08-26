@@ -52,7 +52,14 @@ export default function Header() {
           )}
         </nav>
 
-        <button className="btn btn-black header-cta">Download App</button>
+        <a
+          href="https://play.google.com/store/apps/details?id=com.kks.bharatkirana"
+          className="btn btn-black header-cta"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Download App
+        </a>
 
         <button
           className={`menu-toggle ${open ? 'is-open' : ''}`}
@@ -88,7 +95,15 @@ export default function Header() {
             )
           )}
         </nav>
-        <button className="btn btn-black mobile-nav-cta">Download App</button>
+        <a
+          href="https://play.google.com/store/apps/details?id=com.kks.bharatkirana"
+          className="btn btn-black mobile-nav-cta"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setOpen(false)}
+        >
+          Download App
+        </a>
       </div>
     </header>
   )

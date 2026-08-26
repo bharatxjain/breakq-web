@@ -38,7 +38,12 @@ export default function Hero() {
             </p>
 
             <div className="store-badges">
-              <a href="#" className="store-badge">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.kks.bharatkirana"
+                className="store-badge"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <img src="/badges/google-play.png" alt="Get it on Google Play" />
               </a>
             </div>

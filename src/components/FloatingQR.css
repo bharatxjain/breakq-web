@@ -12,21 +12,11 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
-.qr-grid {
+.qr-image {
   width: 46px;
   height: 46px;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(7, 1fr);
-  gap: 1px;
-}
-
-.qr-cell {
-  background: transparent;
-}
-
-.qr-cell.on {
-  background: var(--ink);
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .floating-qr-text {
