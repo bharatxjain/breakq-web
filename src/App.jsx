@@ -6,6 +6,10 @@ import ScrollToTop from './components/ScrollToTop'
 import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import VoiceOrder from './components/VoiceOrder'
+
+
+
 
 export default function App() {
   return (
@@ -21,6 +25,7 @@ export default function App() {
       </main>
       <Footer />
       <FloatingQR />
+      <VoiceOrder/>    
     </>
   )
 }
