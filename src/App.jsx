@@ -6,18 +6,11 @@ import ScrollToTop from './components/ScrollToTop'
 import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
-<<<<<<< HEAD
-import VoiceOrder from './components/VoiceOrder'
-
-
-
-=======
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Returns from './pages/Returns'
 import WhyBreakQ from './pages/WhyBreakQ'
 import BecomePartner from './pages/BecomePartner'
->>>>>>> 5647de2c2c05d108adca47b44aa97a6369affd28
 
 export default function App() {
   return (

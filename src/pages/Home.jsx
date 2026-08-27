@@ -12,11 +12,7 @@ export default function Home() {
       <Hero />
       <SupportingKiranas />
       <Features />
-<<<<<<< HEAD
-      <VoiceOrder />
-=======
       <MultiLang />
->>>>>>> 5647de2c2c05d108adca47b44aa97a6369affd28
       <NightBanner />
       <StatsSection />
     </>
