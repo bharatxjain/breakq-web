@@ -7,7 +7,7 @@ const features = [
   {
     icon: "🏬",
     title: "Multi-Vendor, Multi-Category Discovery",
-    desc: "Explore a wide network of verified local stores — Kirana, Dairy, Medical, Electrical, and more — all in your area.",
+    desc: "Explore a wide network of verified local stores Kirana, Dairy, Medical, Electrical, and more — all in your area.",
     image: "https://placehold.co/320x640/7001FE/ffffff?text=Discovery",
   },
   {
@@ -19,7 +19,7 @@ const features = [
   {
     icon: "🔍",
     title: "Smart Search & Categories",
-    desc: "Find exactly what you need — from Atta and Dal to medicines, dairy products, and electrical fittings — using our lightning-fast search.",
+    desc: "Find exactly what you need from Atta and Dal to medicines, dairy products, and electrical fittings using our lightning-fast search.",
     image: "https://placehold.co/320x640/f87171/ffffff?text=Search",
   },
   {
@@ -79,7 +79,7 @@ export default function Features() {
         </h2>
         <p className="section-subtitle">
           Unlike generic grocery-only apps, BreakQ puts your entire local
-          community first — Kirana, Dairy, Medical, Electrical, and more, not
+          community first - Kirana, Dairy, Medical, Electrical, and more, not
           just groceries.
         </p>
 

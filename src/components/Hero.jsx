@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PhoneFrame from "./PhoneFrame";
 import "./Hero.css";
 
@@ -22,8 +23,10 @@ export default function Hero() {
 
           <div className="hero-content">
             <div className="hero-pill">
-              <span>🏪 Are you a Shop Owner?</span>
-              <button className="btn btn-black hero-pill-btn">Sign up</button>
+              <span>Are you a Shop Owner?</span>
+              <Link to="/become-a-partner" className="btn btn-black hero-pill-btn">
+                Sign up
+              </Link>
             </div>
 
             <h1>

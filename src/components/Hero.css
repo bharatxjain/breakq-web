@@ -303,33 +303,57 @@
 
 @media (max-width: 480px) {
   .hero {
-    padding: 32px 16px 0;
+    padding: 28px 16px 0;
   }
   .hero h1 {
     font-size: 30px;
+    margin-bottom: 14px;
   }
   .hero-subtitle {
-    font-size: 16px;
+    font-size: 15px;
+    margin-bottom: 24px;
   }
   .hero-pill {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding: 14px 16px;
-    border-radius: 18px;
-    width: 100%;
+    gap: 8px;
+    padding: 4px 4px 4px 12px;
+    margin-bottom: 22px;
   }
   .hero-pill span {
-    text-align: center;
+    font-size: 12.5px;
+    white-space: nowrap;
   }
   .hero-pill-btn {
-    width: 100%;
+    padding: 6px 14px;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+  .hero-rating {
+    margin-top: 16px;
+    padding-top: 14px;
+  }
+  .hero-phone {
+    margin-top: 28px;
   }
   .hero-ticker {
-    margin: 28px -16px 0;
+    margin: 24px -16px 0;
+    padding: 14px 0;
   }
   .ticker-track {
     font-size: 15px;
     padding-left: 16px;
+  }
+}
+
+@media (max-width: 340px) {
+  .hero-pill {
+    gap: 6px;
+    padding: 4px 4px 4px 10px;
+  }
+  .hero-pill span {
+    font-size: 11px;
+  }
+  .hero-pill-btn {
+    padding: 5px 11px;
+    font-size: 10.5px;
   }
 }

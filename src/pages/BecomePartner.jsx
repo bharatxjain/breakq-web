@@ -78,6 +78,24 @@ async function uploadShopFile(file, baseName) {
   return data.publicUrl;
 }
 
+function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not supported on this device/browser."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
+  });
+}
+
+async function reverseGeocode(lat, lng) {
+  const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+  if (!res.ok) throw new Error("Could not look up that address.");
+  const data = await res.json();
+  if (!data.display_name) throw new Error("Could not look up that address.");
+  return data.display_name;
+}
+
 function Stepper({ step }) {
   const activeIndex = Math.min(STEPS.findIndex((s) => s.key === step), STEPS.length - 1);
   return (
@@ -119,6 +137,8 @@ export default function BecomePartner() {
   const [account, setAccount] = useState(initialAccount);
   const [accountErrors, setAccountErrors] = useState({});
   const [submittingAccount, setSubmittingAccount] = useState(false);
+  const [locatingAccount, setLocatingAccount] = useState(false);
+  const [accountLocationError, setAccountLocationError] = useState("");
 
   // Step 2: verify
   const [otp, setOtp] = useState("");
@@ -258,24 +278,46 @@ export default function BecomePartner() {
     }
   }
 
-  function handleUseLocation() {
-    if (!navigator.geolocation) {
-      setLocationError("Location is not supported on this device/browser.");
-      return;
+  function handleChangeEmail() {
+    setOtp("");
+    setVerifyError("");
+    setResendState("idle");
+    setStep("account");
+  }
+
+  async function handleUseAccountLocation() {
+    setLocatingAccount(true);
+    setAccountLocationError("");
+    try {
+      const pos = await getCurrentPosition();
+      const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      updateAccount("address", address);
+    } catch (err) {
+      setAccountLocationError(err.message || "Could not get your location. You can enter it manually below.");
+    } finally {
+      setLocatingAccount(false);
     }
+  }
+
+  async function handleUseLocation() {
     setLocating(true);
     setLocationError("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
-        setLocating(false);
-      },
-      () => {
-        setLocationError("Could not get your location. You can enter it manually below.");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    try {
+      const pos = await getCurrentPosition();
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      setLocation({ lat, lng });
+      try {
+        const address = await reverseGeocode(lat, lng);
+        updateShop("address", address);
+      } catch {
+        // Coordinates are captured either way — address text is a bonus, not required.
+      }
+    } catch (err) {
+      setLocationError(err.message || "Could not get your location. You can enter it manually below.");
+    } finally {
+      setLocating(false);
+    }
   }
 
   async function handleShopSubmit(e) {
@@ -413,6 +455,15 @@ export default function BecomePartner() {
                     className={accountErrors.address ? "has-error" : ""}
                     placeholder="Area, city, pincode"
                   />
+                  <button
+                    type="button"
+                    className="bp-location-btn"
+                    onClick={handleUseAccountLocation}
+                    disabled={locatingAccount}
+                  >
+                    📍 {locatingAccount ? "Locating…" : "Use my current location"}
+                  </button>
+                  {accountLocationError && <span className="bp-error">{accountLocationError}</span>}
                   {accountErrors.address && <span className="bp-error">{accountErrors.address}</span>}
                 </div>
 
@@ -449,14 +500,24 @@ export default function BecomePartner() {
                   {verifying ? "Verifying…" : "Verify"}
                 </button>
 
-                <button
-                  type="button"
-                  className="bp-resend"
-                  onClick={handleResend}
-                  disabled={resendState === "sending"}
-                >
-                  {resendState === "sent" ? "Code resent ✓" : resendState === "sending" ? "Resending…" : "Resend code"}
-                </button>
+                <div className="bp-verify-actions">
+                  <button
+                    type="button"
+                    className="bp-resend"
+                    onClick={handleResend}
+                    disabled={resendState === "sending"}
+                  >
+                    {resendState === "sent"
+                      ? "Code resent ✓"
+                      : resendState === "sending"
+                        ? "Resending…"
+                        : "Resend code"}
+                  </button>
+                  <span className="bp-verify-sep">·</span>
+                  <button type="button" className="bp-resend" onClick={handleChangeEmail}>
+                    Wrong email? Change it
+                  </button>
+                </div>
               </form>
             )}
 
@@ -507,6 +568,9 @@ export default function BecomePartner() {
                     className={shopErrors.address ? "has-error" : ""}
                     placeholder="Shop address, area, city, pincode"
                   />
+                  {!shopErrors.address && (
+                    <span className="bp-hint">Tip: "Use my current location" below fills this in automatically.</span>
+                  )}
                   {shopErrors.address && <span className="bp-error">{shopErrors.address}</span>}
                 </div>
 

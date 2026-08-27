@@ -228,8 +228,18 @@
   padding-left: 18px !important;
 }
 
+.bp-verify-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.bp-verify-sep {
+  color: var(--gray-100);
+}
+
 .bp-resend {
-  align-self: center;
   background: none;
   color: var(--primary);
   font-size: 13.5px;
