@@ -1,0 +1,350 @@
+.why-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.why-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.why-narrow {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.why-narrow .eyebrow,
+.why-narrow .section-title {
+  text-align: left;
+}
+
+.why-narrow .section-title {
+  margin-bottom: 20px;
+}
+
+.why-narrow p {
+  color: var(--gray-600);
+  line-height: 1.75;
+  font-size: 16px;
+}
+
+.why-narrow p + p {
+  margin-top: 16px;
+}
+
+/* ----- problem / callout ----- */
+
+.why-problem {
+  padding-top: 24px;
+}
+
+.why-callout {
+  margin-top: 40px;
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 28px 32px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--primary-dark);
+  font-style: normal;
+}
+
+/* ----- what is ----- */
+
+.why-what-is {
+  background: var(--gray-100);
+}
+
+/* ----- market table ----- */
+
+.why-table-wrap {
+  margin: 40px auto 0;
+  max-width: 900px;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-100);
+  box-shadow: 0 4px 16px rgba(112, 1, 254, 0.06);
+}
+
+.why-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+  background: var(--white);
+}
+
+.why-table th,
+.why-table td {
+  text-align: left;
+  padding: 16px 24px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.why-table thead th {
+  background: var(--primary);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.why-table tbody tr:not(:last-child) {
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.why-table tbody td:first-child {
+  font-weight: 700;
+  color: var(--gray-900);
+  white-space: nowrap;
+}
+
+.why-table tbody td:last-child {
+  color: var(--gray-600);
+}
+
+.why-market-note {
+  margin-top: 28px;
+  text-align: center;
+}
+
+/* ----- diff cards ----- */
+
+.why-diff-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.why-diff-card {
+  position: relative;
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 30px 26px;
+  box-shadow: 0 4px 16px rgba(112, 1, 254, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.why-diff-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(112, 1, 254, 0.12);
+}
+
+.why-diff-num {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 14px;
+}
+
+.why-diff-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.why-diff-card p {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+/* ----- roadmap ----- */
+
+.why-roadmap {
+  background: var(--gray-100);
+}
+
+.why-roadmap-list {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.why-roadmap-list li {
+  position: relative;
+  padding: 16px 20px 16px 44px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.why-roadmap-list li::before {
+  content: '\2192';
+  position: absolute;
+  left: 18px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.why-roadmap-list strong {
+  color: var(--gray-900);
+}
+
+.why-roadmap-note {
+  margin-top: 24px;
+  color: var(--gray-600);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ----- security ----- */
+
+.why-security-inner {
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.why-security-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.why-security-inner .eyebrow {
+  margin-top: 4px;
+}
+
+.why-security-inner p {
+  color: var(--gray-600);
+  line-height: 1.7;
+  margin-top: 12px;
+}
+
+/* ----- audience ----- */
+
+.why-audience-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.why-audience-card {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 30px 24px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(29, 26, 37, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.why-audience-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(112, 1, 254, 0.14);
+}
+
+.why-audience-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.why-audience-card h3 {
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+
+.why-audience-card p {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+/* ----- closing quote + cta ----- */
+
+.why-closing-quote {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--gray-600);
+  line-height: 1.7;
+}
+
+.why-cta-inner {
+  text-align: center;
+  background: linear-gradient(135deg, #9b4dff, #7001fe 60%, #5500c5);
+  border-radius: var(--radius-lg);
+  padding: 56px 24px;
+}
+
+.why-cta-inner h2 {
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.why-cta-inner p {
+  color: rgba(255, 255, 255, 0.85);
+  margin: 12px auto 28px;
+  max-width: 440px;
+}
+
+.why-cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.why-cta-actions .btn-black {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* ----- responsive ----- */
+
+@media (max-width: 900px) {
+  .why-diff-grid,
+  .why-audience-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .why-callout {
+    font-size: 17px;
+    padding: 24px 22px;
+  }
+}
+
+@media (max-width: 560px) {
+  .why-diff-grid,
+  .why-audience-grid {
+    grid-template-columns: 1fr;
+  }
+  .why-cta-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  .why-table th,
+  .why-table td {
+    padding: 12px 16px;
+  }
+}

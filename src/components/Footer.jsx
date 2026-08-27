@@ -2,12 +2,20 @@ import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import "./Footer.css";
 
-const routes = { Home: "/", "About us": "/about", "Contact us": "/contact" };
+const routes = {
+  Home: "/",
+  "About us": "/about",
+  "Contact us": "/contact",
+  "Privacy Policy": "/privacy",
+  "Terms & Conditions": "/terms",
+  "Return Policy": "/returns",
+  "Why BreakQ?": "/why-breakq",
+};
 
 const columns = [
   {
     title: "Platform",
-    links: ["Home", "About us", "Contact us", "Bright Stores", "Merchants"],
+    links: ["Home", "About us", "Contact us", "Why BreakQ?"],
   },
   {
     title: "Legal",

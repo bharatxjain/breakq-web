@@ -271,3 +271,334 @@
 }
 
 /* Features */
+
+.features-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, minmax(180px, auto));
+  gap: 20px;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: 0 4px 16px rgba(112, 1, 254, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(112, 1, 254, 0.12);
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.feature-visual {
+  flex: 1;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* bento placement — mirrors the order of `cards` in About.jsx */
+
+.feature-card:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.feature-card:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.feature-card:nth-child(3) {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+}
+
+.feature-card:nth-child(4) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.feature-card:nth-child(5) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.feature-card:nth-child(6) {
+  grid-column: 1 / span 2;
+  grid-row: 3;
+}
+
+/* ----- mini phone / app-icon grid visual ----- */
+
+.visual-phone-mini {
+  width: 100%;
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(112, 1, 254, 0.08);
+}
+
+.mini-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+.mini-icons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.mini-icon {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 4px 10px rgba(29, 26, 37, 0.14);
+}
+
+.bag-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.bag-visual .mini-status {
+  align-self: flex-start;
+  margin-bottom: 0;
+}
+
+.bag-icon {
+  font-size: 42px;
+}
+
+/* ----- mini store list visual ----- */
+
+.visual-card-mini {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(112, 1, 254, 0.08);
+}
+
+.visual-mini-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-400);
+}
+
+.delivery-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--gray-100);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.delivery-option small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-400);
+}
+
+.delivery-option.active {
+  background: var(--primary-light);
+  border: 1px solid var(--primary-pill);
+  color: var(--primary-dark);
+}
+
+/* ----- search orb visual (tall card) ----- */
+
+.visual-orb-mini {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.visual-orb-mini p {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.mini-orb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #c8a6ff, var(--primary) 60%, var(--primary-dark));
+  box-shadow: 0 0 0 10px rgba(112, 1, 254, 0.08), 0 20px 40px rgba(112, 1, 254, 0.28);
+  animation: feature-pulse 2.4s ease-in-out infinite;
+}
+
+.mini-float {
+  position: absolute;
+  font-size: 20px;
+  animation: feature-float 4s ease-in-out infinite;
+}
+
+.mini-float.f1 {
+  top: 6%;
+  left: 10%;
+}
+
+.mini-float.f2 {
+  top: 12%;
+  right: 8%;
+  animation-delay: 0.6s;
+}
+
+.mini-float.f3 {
+  bottom: 10%;
+  left: 16%;
+  animation-delay: 1.2s;
+}
+
+@keyframes feature-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes feature-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ----- coin / lock visual ----- */
+
+.visual-coin-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.coin {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  border: 2px solid var(--primary-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  box-shadow: 0 10px 24px rgba(112, 1, 254, 0.16);
+  animation: feature-pulse 2.6s ease-in-out infinite;
+}
+
+/* ----- store access icons visual ----- */
+
+.visual-docs-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.store-access-icons {
+  display: flex;
+  gap: 16px;
+}
+
+.store-access-icons span {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 10px rgba(29, 26, 37, 0.06);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.store-access-icons span:hover {
+  transform: translateY(-4px);
+  background: var(--primary-light);
+}
+
+@media (max-width: 900px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: none;
+  }
+  .feature-card:nth-child(1),
+  .feature-card:nth-child(2),
+  .feature-card:nth-child(4),
+  .feature-card:nth-child(5) {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .feature-card:nth-child(3),
+  .feature-card:nth-child(6) {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .feature-card:nth-child(3),
+  .feature-card:nth-child(6) {
+    grid-column: auto;
+  }
+}

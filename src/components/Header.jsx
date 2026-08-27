@@ -1,24 +1,24 @@
-import { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import Logo from './Logo'
-import './Header.css'
+import { useEffect, useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import Logo from "./Logo";
+import "./Header.css";
 
 const links = [
-  { label: 'Home', to: '/' },
-  { label: 'About us', to: '/about' },
-  { label: 'Careers', to: '#' },
-  { label: 'Contact us', to: '/contact' },
-]
+  { label: "Home", to: "/" },
+  { label: "Why BreakQ?", to: "/why-breakq" },
+  { label: "About us", to: "/about" },
+  { label: "Contact us", to: "/contact" },
+];
 
 export default function Header() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
     <header className="header">
@@ -29,13 +29,15 @@ export default function Header() {
             <span className="brand-name">
               Break<span className="brand-pro">Q</span>
             </span>
-            <span className="brand-tag">Your Neighborhood's Digital Marketplace</span>
+            <span className="brand-tag">
+              Your Neighborhood's Digital Marketplace
+            </span>
           </div>
         </Link>
 
         <nav className="nav">
           {links.map((link) =>
-            link.to === '#' ? (
+            link.to === "#" ? (
               <a key={link.label} href="#">
                 {link.label}
               </a>
@@ -43,12 +45,14 @@ export default function Header() {
               <NavLink
                 key={link.label}
                 to={link.to}
-                end={link.to === '/'}
-                className={({ isActive }) => (isActive ? 'nav-active' : undefined)}
+                end={link.to === "/"}
+                className={({ isActive }) =>
+                  isActive ? "nav-active" : undefined
+                }
               >
                 {link.label}
               </NavLink>
-            )
+            ),
           )}
         </nav>
 
@@ -62,7 +66,7 @@ export default function Header() {
         </a>
 
         <button
-          className={`menu-toggle ${open ? 'is-open' : ''}`}
+          className={`menu-toggle ${open ? "is-open" : ""}`}
           aria-label="Toggle menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
@@ -73,12 +77,15 @@ export default function Header() {
         </button>
       </div>
 
-      <div className={`mobile-nav-backdrop ${open ? 'is-open' : ''}`} onClick={() => setOpen(false)} />
+      <div
+        className={`mobile-nav-backdrop ${open ? "is-open" : ""}`}
+        onClick={() => setOpen(false)}
+      />
 
-      <div className={`mobile-nav ${open ? 'is-open' : ''}`}>
+      <div className={`mobile-nav ${open ? "is-open" : ""}`}>
         <nav>
           {links.map((link) =>
-            link.to === '#' ? (
+            link.to === "#" ? (
               <a key={link.label} href="#" onClick={() => setOpen(false)}>
                 {link.label}
               </a>
@@ -86,13 +93,15 @@ export default function Header() {
               <NavLink
                 key={link.label}
                 to={link.to}
-                end={link.to === '/'}
-                className={({ isActive }) => (isActive ? 'nav-active' : undefined)}
+                end={link.to === "/"}
+                className={({ isActive }) =>
+                  isActive ? "nav-active" : undefined
+                }
                 onClick={() => setOpen(false)}
               >
                 {link.label}
               </NavLink>
-            )
+            ),
           )}
         </nav>
         <a
@@ -106,5 +115,5 @@ export default function Header() {
         </a>
       </div>
     </header>
-  )
+  );
 }
