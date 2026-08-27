@@ -83,7 +83,7 @@ export default function Hero() {
                   <span className="app-menu">☰</span>
                   <div className="app-topbar-text">
                     <strong>Shop from stores you trust</strong>
-                    <small>Bilekahalli - Oasis Regency Apart... ⌄</small>
+                    <small>Your Local store.</small>
                   </div>
                   <span className="app-bell">🔔</span>
                 </div>

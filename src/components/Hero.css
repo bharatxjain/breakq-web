@@ -2,6 +2,16 @@
   padding: 8px 0 40px;
 }
 
+.hero-wrap .container {
+  max-width: 1360px;
+}
+
+@media (min-width: 901px) {
+  .hero-wrap {
+    padding-top: 40px;
+  }
+}
+
 .hero {
   position: relative;
   background: linear-gradient(135deg, #9b4dff, #7001fe 60%, #5500c5);
