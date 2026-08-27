@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import "./Features.css";
 
 function AppIconsVisual() {
@@ -109,7 +108,7 @@ const cards = [
         <div className="bag-icon">🛍️</div>
       </div>
     ),
-=======
+
 import { useEffect, useRef, useState } from 'react'
 import './Features.css'
 
@@ -151,7 +150,6 @@ const features = [
     title: 'Clean & Premium UI',
     desc: 'A modern, clutter-free interface designed for speed and ease of use across every store category.',
     image: 'https://placehold.co/320x640/a78bfa/ffffff?text=BreakQ+UI',
->>>>>>> 8965367 (Added changes applied)
   },
 ];
 
