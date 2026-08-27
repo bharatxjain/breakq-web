@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import useReveal from "../hooks/useReveal";
 import { supabase } from "../lib/supabaseClient";
@@ -6,60 +6,91 @@ import "./BecomePartner.css";
 
 const MAX_FILE_MB = 5;
 
-const initialForm = {
+// 'pending' is the safe default for real vendors going live — flip to
+// 'approved' locally only while testing the flow end-to-end.
+const SHOP_STATUS = "pending";
+
+// Matches the category set already used elsewhere on this site (About page).
+// Verify these match the app's actual `primary_category` values before launch.
+const CATEGORIES = [
+  "Kirana",
+  "Dairy",
+  "Medical",
+  "Electrical",
+  "Bakery",
+  "Stationery",
+  "Fashion",
+  "Mobiles",
+];
+
+const STEPS = [
+  { key: "account", label: "Account" },
+  { key: "verify", label: "Verify email" },
+  { key: "shop", label: "Shop details" },
+];
+
+const initialAccount = { fullName: "", email: "", password: "", mobile: "", address: "" };
+const initialShop = {
   name: "",
-  mobile: "",
+  ownerName: "",
+  phone: "",
   address: "",
-  experience: "",
-  gstin: "",
+  category: "",
+  yearsInBusiness: "",
+  openTime: "09:00",
+  closeTime: "21:00",
 };
 
-function validate(form, photo) {
+function validateAccount(a) {
   const errors = {};
-
-  if (!form.name.trim()) errors.name = "Please enter your full name.";
-
-  if (!form.mobile.trim()) {
-    errors.mobile = "Please enter your mobile number.";
-  } else if (!/^[6-9]\d{9}$/.test(form.mobile.trim())) {
-    errors.mobile = "Enter a valid 10-digit mobile number.";
-  }
-
-  if (!form.address.trim())
-    errors.address = "Please enter your business address.";
-
-  if (form.experience === "") {
-    errors.experience = "Please enter your years of experience.";
-  } else if (
-    Number(form.experience) < 0 ||
-    Number.isNaN(Number(form.experience))
-  ) {
-    errors.experience = "Enter a valid number of years.";
-  }
-
-  if (form.gstin.trim() && !/^[0-9A-Z]{15}$/i.test(form.gstin.trim())) {
-    errors.gstin = "GSTIN should be 15 characters.";
-  }
-
-  if (!photo) errors.photo = "Please upload a photo of you or your shop.";
-
+  if (!a.fullName.trim()) errors.fullName = "Please enter your full name.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim())) errors.email = "Enter a valid email address.";
+  if (a.password.length < 6) errors.password = "Password must be at least 6 characters.";
+  if (!/^[6-9]\d{9}$/.test(a.mobile.trim())) errors.mobile = "Enter a valid 10-digit mobile number.";
+  if (!a.address.trim()) errors.address = "Please enter your address.";
   return errors;
 }
 
-function checkFileSize(file, field, errors) {
-  if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
-    errors[field] = `File must be under ${MAX_FILE_MB}MB.`;
+function validateShop(s, photo, location) {
+  const errors = {};
+  if (!s.name.trim()) errors.name = "Please enter your shop name.";
+  if (!s.ownerName.trim()) errors.ownerName = "Please enter the owner name.";
+  if (!/^[6-9]\d{9}$/.test(s.phone.trim())) errors.phone = "Enter a valid 10-digit phone number.";
+  if (!s.address.trim()) errors.address = "Please enter the shop address.";
+  if (!s.category) errors.category = "Please select a category.";
+  if (s.yearsInBusiness === "" || Number(s.yearsInBusiness) < 0 || Number.isNaN(Number(s.yearsInBusiness))) {
+    errors.yearsInBusiness = "Enter a valid number of years.";
   }
+  if (!s.openTime) errors.openTime = "Required.";
+  if (!s.closeTime) errors.closeTime = "Required.";
+  if (!photo) errors.photo = "Please upload a photo of your shop.";
+  if (photo && photo.size > MAX_FILE_MB * 1024 * 1024) errors.photo = `File must be under ${MAX_FILE_MB}MB.`;
+  if (!location.lat || !location.lng) errors.location = "Please share your shop location.";
+  return errors;
 }
 
-async function uploadFile(file, kind) {
+async function uploadShopFile(file, baseName) {
   const ext = file.name.split(".").pop();
-  const path = `${kind}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await supabase.storage
-    .from("partner-applications")
-    .upload(path, file);
+  const path = `${baseName}.${ext}`;
+  const { error } = await supabase.storage.from("shop-documents").upload(path, file, { upsert: true });
   if (error) throw error;
-  return path;
+  const { data } = supabase.storage.from("shop-documents").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function Stepper({ step }) {
+  const activeIndex = Math.min(STEPS.findIndex((s) => s.key === step), STEPS.length - 1);
+  return (
+    <div className="bp-stepper">
+      {STEPS.map((s, i) => (
+        <div key={s.key} className={`bp-step ${i < activeIndex ? "is-done" : ""} ${i === activeIndex ? "is-active" : ""}`}>
+          <span className="bp-step-dot">{i < activeIndex ? "✓" : i + 1}</span>
+          <span className="bp-step-label">{s.label}</span>
+          {i < STEPS.length - 1 && <span className="bp-step-line" />}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function FileField({ label, required, file, onChange, error, accept, hint }) {
@@ -68,14 +99,10 @@ function FileField({ label, required, file, onChange, error, accept, hint }) {
       <label className="bp-label">
         {label} {required && <span className="bp-required">*</span>}
       </label>
-      <label
-        className={`bp-dropzone ${file ? "has-file" : ""} ${error ? "has-error" : ""}`}
-      >
+      <label className={`bp-dropzone ${file ? "has-file" : ""} ${error ? "has-error" : ""}`}>
         <input type="file" accept={accept} onChange={onChange} />
         <span className="bp-dropzone-icon">{file ? "✅" : "📎"}</span>
-        <span className="bp-dropzone-text">
-          {file ? file.name : "Click to upload"}
-        </span>
+        <span className="bp-dropzone-text">{file ? file.name : "Click to upload"}</span>
       </label>
       {hint && !error && <span className="bp-hint">{hint}</span>}
       {error && <span className="bp-error">{error}</span>}
@@ -84,68 +111,213 @@ function FileField({ label, required, file, onChange, error, accept, hint }) {
 }
 
 export default function BecomePartner() {
-  const [form, setForm] = useState(initialForm);
-  const [photo, setPhoto] = useState(null);
-  const [businessProof, setBusinessProof] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [step, setStep] = useState("account");
+  const [session, setSession] = useState(null);
   const [formRef, formInView] = useReveal();
 
-  function updateField(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
+  // Step 1: account
+  const [account, setAccount] = useState(initialAccount);
+  const [accountErrors, setAccountErrors] = useState({});
+  const [submittingAccount, setSubmittingAccount] = useState(false);
+
+  // Step 2: verify
+  const [otp, setOtp] = useState("");
+  const [verifyError, setVerifyError] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [resendState, setResendState] = useState("idle"); // idle | sending | sent
+
+  // Step 3: shop
+  const [shop, setShop] = useState(initialShop);
+  const [shopErrors, setShopErrors] = useState({});
+  const [photo, setPhoto] = useState(null);
+  const [businessProof, setBusinessProof] = useState(null);
+  const [location, setLocation] = useState({ lat: "", lng: "" });
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [submittingShop, setSubmittingShop] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  // Pick up an existing/newly-verified session (covers both the "click the
+  // email link" and "enter the OTP" paths — the link redirects back here
+  // with a session already established).
+  useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) {
+        setSession(data.session);
+        setStep((s) => (s === "success" ? s : "shop"));
+      }
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (newSession) {
+        setSession(newSession);
+        setStep((s) => (s === "success" ? s : "shop"));
+      }
+    });
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Prefill shop details from account info / auth metadata once signed in.
+  useEffect(() => {
+    if (!session) return;
+    const meta = session.user.user_metadata || {};
+    setShop((s) => ({
+      ...s,
+      ownerName: s.ownerName || meta.full_name || account.fullName || "",
+      phone: s.phone || meta.mobile || account.mobile || "",
+      address: s.address || meta.address || account.address || "",
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  function updateAccount(field, value) {
+    setAccount((a) => ({ ...a, [field]: value }));
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  function updateShop(field, value) {
+    setShop((s) => ({ ...s, [field]: value }));
+  }
 
-    const validationErrors = validate(form, photo);
-    checkFileSize(photo, "photo", validationErrors);
-    checkFileSize(businessProof, "businessProof", validationErrors);
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length) return;
+  async function handleAccountSubmit(e) {
+    e.preventDefault();
+    const errors = validateAccount(account);
+    setAccountErrors(errors);
+    if (Object.keys(errors).length) return;
 
     if (!supabase) {
-      setStatus({
-        type: "error",
-        message: "We couldn't reach our servers. Please try again shortly.",
-      });
+      setAccountErrors({ form: "We couldn't reach our servers. Please try again shortly." });
       return;
     }
 
-    setSubmitting(true);
-    setStatus(null);
-
+    setSubmittingAccount(true);
     try {
-      const photoPath = await uploadFile(photo, "photo");
-      const proofPath = businessProof
-        ? await uploadFile(businessProof, "business-proof")
-        : null;
-
-      const { error } = await supabase.from("partner_applications").insert({
-        name: form.name.trim(),
-        mobile: form.mobile.trim(),
-        business_address: form.address.trim(),
-        years_experience: Number(form.experience),
-        gstin: form.gstin.trim() || null,
-        photo_path: photoPath,
-        business_proof_path: proofPath,
+      const { data, error } = await supabase.auth.signUp({
+        email: account.email.trim(),
+        password: account.password,
+        options: {
+          data: {
+            full_name: account.fullName.trim(),
+            mobile: account.mobile.trim(),
+            address: account.address.trim(),
+          },
+        },
       });
-
       if (error) throw error;
 
-      setStatus({ type: "success" });
-      setForm(initialForm);
-      setPhoto(null);
-      setBusinessProof(null);
-      setErrors({});
+      if (data.session) {
+        setSession(data.session);
+        setStep("shop");
+      } else {
+        setStep("verify");
+      }
     } catch (err) {
-      setStatus({
-        type: "error",
-        message: "Something went wrong while submitting. Please try again.",
-      });
+      setAccountErrors({ form: err.message || "Something went wrong. Please try again." });
     } finally {
-      setSubmitting(false);
+      setSubmittingAccount(false);
+    }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(otp)) {
+      setVerifyError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setVerifying(true);
+    setVerifyError("");
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: account.email.trim(),
+        token: otp,
+        type: "signup",
+      });
+      if (error) throw error;
+      setSession(data.session);
+      setStep("shop");
+    } catch (err) {
+      setVerifyError(err.message || "Invalid or expired code.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleResend() {
+    setResendState("sending");
+    try {
+      await supabase.auth.resend({ type: "signup", email: account.email.trim() });
+      setResendState("sent");
+    } catch {
+      setResendState("idle");
+    }
+  }
+
+  function handleUseLocation() {
+    if (!navigator.geolocation) {
+      setLocationError("Location is not supported on this device/browser.");
+      return;
+    }
+    setLocating(true);
+    setLocationError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
+        setLocating(false);
+      },
+      () => {
+        setLocationError("Could not get your location. You can enter it manually below.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function handleShopSubmit(e) {
+    e.preventDefault();
+    const errors = validateShop(shop, photo, location);
+    setShopErrors(errors);
+    if (Object.keys(errors).length) return;
+
+    setSubmittingShop(true);
+    setSubmitError("");
+
+    try {
+      const shopId = "s_" + Date.now();
+      const photoUrl = await uploadShopFile(photo, `${shopId}_shop`);
+      const proofUrl = businessProof ? await uploadShopFile(businessProof, `${shopId}_proof`) : null;
+
+      const { error } = await supabase.from("shops").insert({
+        id: shopId,
+        name: shop.name.trim(),
+        owner_name: shop.ownerName.trim(),
+        owner_id: session.user.id,
+        address: shop.address.trim(),
+        phone: shop.phone.trim(),
+        lat: Number(location.lat),
+        lng: Number(location.lng),
+        primary_category: shop.category,
+        years_in_business: Number(shop.yearsInBusiness),
+        is_partner: false,
+        accepting_orders: true,
+        open_time: shop.openTime,
+        close_time: shop.closeTime,
+        image_url: photoUrl,
+        business_proof_url: proofUrl,
+        status: SHOP_STATUS,
+      });
+      if (error) throw error;
+
+      setStep("success");
+    } catch (err) {
+      setSubmitError(err.message || "Something went wrong while submitting. Please try again.");
+    } finally {
+      setSubmittingShop(false);
     }
   }
 
@@ -154,137 +326,308 @@ export default function BecomePartner() {
       <PageHeader
         eyebrow="Partner with us"
         title="Become a BreakQ Partner"
-        subtitle="Bring your shop online and reach more customers in your neighborhood. Tell us a bit about your business and our team will reach out."
+        subtitle="Set up your shop once on the web, then manage orders day-to-day from the BreakQ app."
       />
 
       <section className="section bp-section">
         <div className="container bp-narrow">
-          <div
-            ref={formRef}
-            className={`bp-card ${formInView ? "is-visible" : ""}`}
-          >
-            {status?.type === "success" ? (
-              <div className="bp-success">
-                <div className="bp-success-icon">🎉</div>
-                <h2>Application received!</h2>
-                <p>
-                  Thanks for your interest in partnering with BreakQ. Our team
-                  will reach out to you shortly.
-                </p>
-              </div>
-            ) : (
-              <form className="bp-form" onSubmit={handleSubmit} noValidate>
-                {status?.type === "error" && (
-                  <div className="bp-banner-error">{status.message}</div>
-                )}
+          <div ref={formRef} className={`bp-card ${formInView ? "is-visible" : ""}`}>
+            {step !== "success" && <Stepper step={step} />}
+
+            {step === "account" && (
+              <form className="bp-form" onSubmit={handleAccountSubmit} noValidate>
+                {accountErrors.form && <div className="bp-banner-error">{accountErrors.form}</div>}
+
+                <div className="bp-field">
+                  <label className="bp-label" htmlFor="bp-fullname">
+                    Full Name <span className="bp-required">*</span>
+                  </label>
+                  <input
+                    id="bp-fullname"
+                    type="text"
+                    value={account.fullName}
+                    onChange={(e) => updateAccount("fullName", e.target.value)}
+                    className={accountErrors.fullName ? "has-error" : ""}
+                    placeholder="Your name"
+                  />
+                  {accountErrors.fullName && <span className="bp-error">{accountErrors.fullName}</span>}
+                </div>
 
                 <div className="bp-grid">
                   <div className="bp-field">
-                    <label className="bp-label" htmlFor="bp-name">
-                      Full Name <span className="bp-required">*</span>
+                    <label className="bp-label" htmlFor="bp-email">
+                      Email <span className="bp-required">*</span>
                     </label>
                     <input
-                      id="bp-name"
-                      type="text"
-                      value={form.name}
-                      onChange={(e) => updateField("name", e.target.value)}
-                      className={errors.name ? "has-error" : ""}
-                      placeholder="Your name"
+                      id="bp-email"
+                      type="email"
+                      value={account.email}
+                      onChange={(e) => updateAccount("email", e.target.value)}
+                      className={accountErrors.email ? "has-error" : ""}
+                      placeholder="you@example.com"
                     />
-                    {errors.name && (
-                      <span className="bp-error">{errors.name}</span>
-                    )}
+                    {accountErrors.email && <span className="bp-error">{accountErrors.email}</span>}
                   </div>
 
                   <div className="bp-field">
-                    <label className="bp-label" htmlFor="bp-mobile">
-                      Mobile Number <span className="bp-required">*</span>
+                    <label className="bp-label" htmlFor="bp-password">
+                      Password <span className="bp-required">*</span>
                     </label>
                     <input
-                      id="bp-mobile"
+                      id="bp-password"
+                      type="password"
+                      value={account.password}
+                      onChange={(e) => updateAccount("password", e.target.value)}
+                      className={accountErrors.password ? "has-error" : ""}
+                      placeholder="At least 6 characters"
+                    />
+                    {accountErrors.password && <span className="bp-error">{accountErrors.password}</span>}
+                  </div>
+                </div>
+
+                <div className="bp-field">
+                  <label className="bp-label" htmlFor="bp-mobile">
+                    Mobile Number <span className="bp-required">*</span>
+                  </label>
+                  <input
+                    id="bp-mobile"
+                    type="tel"
+                    inputMode="numeric"
+                    value={account.mobile}
+                    onChange={(e) => updateAccount("mobile", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    className={accountErrors.mobile ? "has-error" : ""}
+                    placeholder="10-digit mobile number"
+                  />
+                  {accountErrors.mobile && <span className="bp-error">{accountErrors.mobile}</span>}
+                </div>
+
+                <div className="bp-field">
+                  <label className="bp-label" htmlFor="bp-address">
+                    Address <span className="bp-required">*</span>
+                  </label>
+                  <textarea
+                    id="bp-address"
+                    rows={3}
+                    value={account.address}
+                    onChange={(e) => updateAccount("address", e.target.value)}
+                    className={accountErrors.address ? "has-error" : ""}
+                    placeholder="Area, city, pincode"
+                  />
+                  {accountErrors.address && <span className="bp-error">{accountErrors.address}</span>}
+                </div>
+
+                <button type="submit" className="btn btn-primary bp-submit" disabled={submittingAccount}>
+                  {submittingAccount ? "Creating account…" : "Continue"}
+                </button>
+              </form>
+            )}
+
+            {step === "verify" && (
+              <form className="bp-form" onSubmit={handleVerifyOtp} noValidate>
+                <p className="bp-verify-text">
+                  We sent a verification link and a 6-digit code to <strong>{account.email}</strong>. Click the
+                  link, or enter the code below.
+                </p>
+
+                <div className="bp-field">
+                  <label className="bp-label" htmlFor="bp-otp">
+                    Verification code
+                  </label>
+                  <input
+                    id="bp-otp"
+                    type="text"
+                    inputMode="numeric"
+                    className={`bp-otp-input ${verifyError ? "has-error" : ""}`}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000"
+                  />
+                  {verifyError && <span className="bp-error">{verifyError}</span>}
+                </div>
+
+                <button type="submit" className="btn btn-primary bp-submit" disabled={verifying}>
+                  {verifying ? "Verifying…" : "Verify"}
+                </button>
+
+                <button
+                  type="button"
+                  className="bp-resend"
+                  onClick={handleResend}
+                  disabled={resendState === "sending"}
+                >
+                  {resendState === "sent" ? "Code resent ✓" : resendState === "sending" ? "Resending…" : "Resend code"}
+                </button>
+              </form>
+            )}
+
+            {step === "shop" && (
+              <form className="bp-form" onSubmit={handleShopSubmit} noValidate>
+                {submitError && <div className="bp-banner-error">{submitError}</div>}
+
+                <div className="bp-grid">
+                  <div className="bp-field">
+                    <label className="bp-label" htmlFor="bp-shop-name">
+                      Shop Name <span className="bp-required">*</span>
+                    </label>
+                    <input
+                      id="bp-shop-name"
+                      type="text"
+                      value={shop.name}
+                      onChange={(e) => updateShop("name", e.target.value)}
+                      className={shopErrors.name ? "has-error" : ""}
+                      placeholder="e.g. Sharma Kirana Store"
+                    />
+                    {shopErrors.name && <span className="bp-error">{shopErrors.name}</span>}
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-label" htmlFor="bp-owner-name">
+                      Owner Name <span className="bp-required">*</span>
+                    </label>
+                    <input
+                      id="bp-owner-name"
+                      type="text"
+                      value={shop.ownerName}
+                      onChange={(e) => updateShop("ownerName", e.target.value)}
+                      className={shopErrors.ownerName ? "has-error" : ""}
+                    />
+                    {shopErrors.ownerName && <span className="bp-error">{shopErrors.ownerName}</span>}
+                  </div>
+                </div>
+
+                <div className="bp-field">
+                  <label className="bp-label" htmlFor="bp-shop-address">
+                    Shop Address <span className="bp-required">*</span>
+                  </label>
+                  <textarea
+                    id="bp-shop-address"
+                    rows={3}
+                    value={shop.address}
+                    onChange={(e) => updateShop("address", e.target.value)}
+                    className={shopErrors.address ? "has-error" : ""}
+                    placeholder="Shop address, area, city, pincode"
+                  />
+                  {shopErrors.address && <span className="bp-error">{shopErrors.address}</span>}
+                </div>
+
+                <div className="bp-grid">
+                  <div className="bp-field">
+                    <label className="bp-label" htmlFor="bp-shop-phone">
+                      Phone <span className="bp-required">*</span>
+                    </label>
+                    <input
+                      id="bp-shop-phone"
                       type="tel"
                       inputMode="numeric"
-                      value={form.mobile}
-                      onChange={(e) =>
-                        updateField(
-                          "mobile",
-                          e.target.value.replace(/\D/g, "").slice(0, 10),
-                        )
-                      }
-                      className={errors.mobile ? "has-error" : ""}
-                      placeholder="10-digit mobile number"
+                      value={shop.phone}
+                      onChange={(e) => updateShop("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      className={shopErrors.phone ? "has-error" : ""}
                     />
-                    {errors.mobile && (
-                      <span className="bp-error">{errors.mobile}</span>
+                    {shopErrors.phone && <span className="bp-error">{shopErrors.phone}</span>}
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-label" htmlFor="bp-category">
+                      Category <span className="bp-required">*</span>
+                    </label>
+                    <select
+                      id="bp-category"
+                      value={shop.category}
+                      onChange={(e) => updateShop("category", e.target.value)}
+                      className={shopErrors.category ? "has-error" : ""}
+                    >
+                      <option value="">Select a category</option>
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    {shopErrors.category && <span className="bp-error">{shopErrors.category}</span>}
+                  </div>
+                </div>
+
+                <div className="bp-grid">
+                  <div className="bp-field">
+                    <label className="bp-label" htmlFor="bp-years">
+                      Years in Business <span className="bp-required">*</span>
+                    </label>
+                    <input
+                      id="bp-years"
+                      type="number"
+                      min="0"
+                      value={shop.yearsInBusiness}
+                      onChange={(e) => updateShop("yearsInBusiness", e.target.value)}
+                      className={shopErrors.yearsInBusiness ? "has-error" : ""}
+                      placeholder="e.g. 5"
+                    />
+                    {shopErrors.yearsInBusiness && <span className="bp-error">{shopErrors.yearsInBusiness}</span>}
+                  </div>
+
+                  <div className="bp-field bp-field-hours">
+                    <label className="bp-label">
+                      Open — Close <span className="bp-required">*</span>
+                    </label>
+                    <div className="bp-hours-row">
+                      <input
+                        type="time"
+                        value={shop.openTime}
+                        onChange={(e) => updateShop("openTime", e.target.value)}
+                        className={shopErrors.openTime ? "has-error" : ""}
+                      />
+                      <span>–</span>
+                      <input
+                        type="time"
+                        value={shop.closeTime}
+                        onChange={(e) => updateShop("closeTime", e.target.value)}
+                        className={shopErrors.closeTime ? "has-error" : ""}
+                      />
+                    </div>
+                    {(shopErrors.openTime || shopErrors.closeTime) && (
+                      <span className="bp-error">{shopErrors.openTime || shopErrors.closeTime}</span>
                     )}
                   </div>
                 </div>
 
                 <div className="bp-field">
-                  <label className="bp-label" htmlFor="bp-address">
-                    Business Address <span className="bp-required">*</span>
+                  <label className="bp-label">
+                    Shop Location <span className="bp-required">*</span>
                   </label>
-                  <textarea
-                    id="bp-address"
-                    rows={3}
-                    value={form.address}
-                    onChange={(e) => updateField("address", e.target.value)}
-                    className={errors.address ? "has-error" : ""}
-                    placeholder="Shop address, area, city, pincode"
-                  />
-                  {errors.address && (
-                    <span className="bp-error">{errors.address}</span>
+                  <button type="button" className="bp-location-btn" onClick={handleUseLocation} disabled={locating}>
+                    📍 {locating ? "Locating…" : "Use my current location"}
+                  </button>
+                  {location.lat && location.lng && (
+                    <span className="bp-hint">
+                      Captured: {location.lat}, {location.lng}
+                    </span>
                   )}
-                </div>
-
-                <div className="bp-grid">
-                  <div className="bp-field">
-                    <label className="bp-label" htmlFor="bp-experience">
-                      Years of Experience <span className="bp-required">*</span>
-                    </label>
+                  {locationError && <span className="bp-error">{locationError}</span>}
+                  <div className="bp-grid bp-location-manual">
                     <input
-                      id="bp-experience"
                       type="number"
-                      min="0"
-                      value={form.experience}
-                      onChange={(e) =>
-                        updateField("experience", e.target.value)
-                      }
-                      className={errors.experience ? "has-error" : ""}
-                      placeholder="e.g. 5"
+                      step="any"
+                      placeholder="Latitude"
+                      value={location.lat}
+                      onChange={(e) => setLocation((l) => ({ ...l, lat: e.target.value }))}
                     />
-                    {errors.experience && (
-                      <span className="bp-error">{errors.experience}</span>
-                    )}
-                  </div>
-
-                  <div className="bp-field">
-                    <label className="bp-label" htmlFor="bp-gstin">
-                      GSTIN <span className="bp-optional">(optional)</span>
-                    </label>
                     <input
-                      id="bp-gstin"
-                      type="text"
-                      value={form.gstin}
-                      onChange={(e) =>
-                        updateField("gstin", e.target.value.toUpperCase())
-                      }
-                      className={errors.gstin ? "has-error" : ""}
-                      placeholder="15-character GSTIN"
+                      type="number"
+                      step="any"
+                      placeholder="Longitude"
+                      value={location.lng}
+                      onChange={(e) => setLocation((l) => ({ ...l, lng: e.target.value }))}
                     />
-                    {errors.gstin && (
-                      <span className="bp-error">{errors.gstin}</span>
-                    )}
                   </div>
+                  {shopErrors.location && <span className="bp-error">{shopErrors.location}</span>}
                 </div>
 
                 <div className="bp-grid">
                   <FileField
-                    label="Photo of you / your shop"
+                    label="Shop Photo"
                     required
                     file={photo}
                     onChange={(e) => setPhoto(e.target.files[0] || null)}
-                    error={errors.photo}
+                    error={shopErrors.photo}
                     accept="image/*"
                     hint="PNG or JPG, up to 5MB"
                   />
@@ -292,23 +635,28 @@ export default function BecomePartner() {
                   <FileField
                     label="Business Proof"
                     file={businessProof}
-                    onChange={(e) =>
-                      setBusinessProof(e.target.files[0] || null)
-                    }
-                    error={errors.businessProof}
+                    onChange={(e) => setBusinessProof(e.target.files[0] || null)}
+                    error={shopErrors.businessProof}
                     accept="image/*,.pdf"
-                    hint="Optional - image or PDF, up to 5MB"
+                    hint="Optional — image or PDF, up to 5MB"
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-primary bp-submit"
-                  disabled={submitting}
-                >
-                  {submitting ? "Submitting…" : "Submit application"}
+                <button type="submit" className="btn btn-primary bp-submit" disabled={submittingShop}>
+                  {submittingShop ? "Submitting…" : "Complete registration"}
                 </button>
               </form>
+            )}
+
+            {step === "success" && (
+              <div className="bp-success">
+                <div className="bp-success-icon">🎉</div>
+                <h2>You're all set!</h2>
+                <p>
+                  Your shop has been registered. Download the BreakQ app and log in with the same email to access
+                  your Vendor Dashboard.
+                </p>
+              </div>
             )}
           </div>
         </div>

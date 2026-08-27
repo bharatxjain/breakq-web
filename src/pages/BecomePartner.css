@@ -28,6 +28,67 @@
   gap: 22px;
 }
 
+.bp-stepper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.bp-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.bp-step:last-child {
+  flex: 0;
+}
+
+.bp-step-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-400);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.bp-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+
+.bp-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--gray-100);
+  margin: 0 4px;
+}
+
+.bp-step.is-active .bp-step-dot,
+.bp-step.is-done .bp-step-dot {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.bp-step.is-active .bp-step-label,
+.bp-step.is-done .bp-step-label {
+  color: var(--gray-900);
+}
+
+.bp-step.is-done .bp-step-line {
+  background: var(--primary-pill);
+}
+
 .bp-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -58,6 +119,10 @@
 .bp-field input[type='text'],
 .bp-field input[type='tel'],
 .bp-field input[type='number'],
+.bp-field input[type='email'],
+.bp-field input[type='password'],
+.bp-field input[type='time'],
+.bp-field select,
 .bp-field textarea {
   font-family: var(--font);
   font-size: 15px;
@@ -69,6 +134,10 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.bp-field select {
+  appearance: auto;
+}
+
 .bp-field textarea {
   resize: vertical;
   min-height: 88px;
@@ -76,6 +145,7 @@
 }
 
 .bp-field input:focus,
+.bp-field select:focus,
 .bp-field textarea:focus {
   outline: none;
   border-color: var(--primary);
@@ -83,6 +153,7 @@
 }
 
 .bp-field input.has-error,
+.bp-field select.has-error,
 .bp-field textarea.has-error {
   border-color: #f87171;
 }
@@ -143,6 +214,67 @@
   white-space: nowrap;
 }
 
+.bp-verify-text {
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.bp-otp-input {
+  text-align: center;
+  font-size: 24px !important;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  padding-left: 18px !important;
+}
+
+.bp-resend {
+  align-self: center;
+  background: none;
+  color: var(--primary);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.bp-resend:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bp-location-btn {
+  align-self: flex-start;
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.bp-location-btn:hover {
+  background: var(--primary-light);
+}
+
+.bp-location-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bp-location-manual {
+  margin-top: 4px;
+}
+
+.bp-hours-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bp-hours-row input {
+  flex: 1;
+}
+
 .bp-submit {
   align-self: flex-start;
   margin-top: 8px;
@@ -192,5 +324,14 @@
   }
   .bp-grid {
     grid-template-columns: 1fr;
+  }
+  .bp-location-manual {
+    grid-template-columns: 1fr 1fr;
+  }
+  .bp-step-label {
+    display: none;
+  }
+  .bp-step:last-child .bp-step-label {
+    display: none;
   }
 }
