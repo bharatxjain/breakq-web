@@ -244,6 +244,7 @@
     transform: scale(0.82);
     transform-origin: top center;
     height: 560px;
+    margin-bottom: -100px;
   }
 }
 

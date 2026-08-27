@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import './SupportingKiranas.css'
 
 const stores = [
@@ -31,7 +32,9 @@ export default function SupportingKiranas() {
           </p>
           <div className="sk-actions">
             <button className="btn btn-primary">Download BreakQ</button>
-            <button className="btn btn-black">Become a partner</button>
+            <Link to="/become-a-partner" className="btn btn-black">
+              Become a partner
+            </Link>
           </div>
         </div>
 
@@ -68,9 +71,9 @@ export default function SupportingKiranas() {
           ))}
 
           <div className="sk-hub" style={{ left: `${HUB.x}%`, top: `${HUB.y}%` }}>
-            <div class="sk-hub-logo">
-              BREAK<span class="q-text">Q</span>
-            </div>  
+            <div className="sk-hub-logo">
+              BREAK<span className="q-text">Q</span>
+            </div>
             <span className="sk-hub-tag">Supporting Local Stores</span>
             <span className="sk-hub-tag">Empowering Communities</span>
             <span className="sk-live">Live Inventory</span>

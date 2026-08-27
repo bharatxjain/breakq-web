@@ -274,7 +274,7 @@ export default function About() {
               >
                 Download BreakQ
               </a>
-              <Link to="/contact" className="btn btn-black">
+              <Link to="/become-a-partner" className="btn btn-black">
                 Become a partner
               </Link>
             </div>

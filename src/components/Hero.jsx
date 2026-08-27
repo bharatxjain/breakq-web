@@ -33,7 +33,7 @@ export default function Hero() {
             </h1>
 
             <p className="hero-subtitle">
-              Kirana, Dairy, Medical, Electrical & more — shop from the local
+              Kirana, Dairy, Medical, Electrical & more - shop from the local
               vendors you already trust.
             </p>
 
@@ -44,7 +44,10 @@ export default function Hero() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img src="/badges/google-play.png" alt="Get it on Google Play" />
+                <img
+                  src="/badges/google-play.png"
+                  alt="Get it on Google Play"
+                />
               </a>
             </div>
 
@@ -85,7 +88,7 @@ export default function Hero() {
                   <span className="app-bell">🔔</span>
                 </div>
                 <div className="app-greeting">
-                  <small>Hi, Deepak</small>
+                  <small>Hi, Yash!</small>
                   <p>Here's what's nearby</p>
                 </div>
                 <div className="app-card">
