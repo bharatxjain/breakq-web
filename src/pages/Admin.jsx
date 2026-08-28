@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getMyProfile,
   getRole,
-  getSession,
   getUserEmail,
   logLoginAttempt,
   probeSchema,
@@ -27,7 +26,6 @@ import "./Admin.css";
 // The page password is a shared pre-filter, NOT the identity check — it lives
 // in the client bundle. Real authorization is profiles.role === 'admin' below.
 const GATE_PASSWORD = import.meta.env.VITE_ADMIN_GATE_PASSWORD || "breakq-admin";
-const GATE_KEY = "ap_gate_ok";
 const VIEW_KEY = "ap_view";
 
 const NAV = [
@@ -54,8 +52,10 @@ const NAV = [
 const ALL_VIEWS = NAV.flatMap((g) => g.items);
 
 export default function Admin() {
-  const [gateOk, setGateOk] = useState(() => sessionStorage.getItem(GATE_KEY) === "1");
-  const [phase, setPhase] = useState("checking"); // checking | email | otp | denied | ready
+  // Never persisted: every visit to /admin starts at the page-password gate and
+  // requires a fresh email OTP. State only lives for the current mount.
+  const [gateOk, setGateOk] = useState(false);
+  const [phase, setPhase] = useState("gate"); // gate | wiping | email | otp | denied | ready
 
   useEffect(() => {
     const prev = document.title;
@@ -65,38 +65,32 @@ export default function Admin() {
     };
   }, []);
 
-  const checkAdmin = useCallback(async () => {
-    setPhase("checking");
-    try {
-      const session = await getSession();
-      if (!session) {
-        setPhase("email");
-        return;
-      }
-      const role = await getRole();
-      if (role === "admin") {
-        setPhase("ready");
-      } else {
-        await signOut();
-        setPhase("denied");
-      }
-    } catch {
-      setPhase("email");
-    }
-  }, []);
-
+  // As soon as the gate is cleared, drop any lingering Supabase session so the
+  // admin must complete OTP again — we deliberately don't resume a saved login.
   useEffect(() => {
-    if (gateOk) checkAdmin();
-  }, [gateOk, checkAdmin]);
+    if (!gateOk) return;
+    let alive = true;
+    setPhase("wiping");
+    (async () => {
+      try {
+        await signOut();
+      } catch {
+        /* ignore */
+      }
+      if (alive) setPhase("email");
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [gateOk]);
+
+  const goReady = useCallback(() => setPhase("ready"), []);
 
   if (!gateOk) {
-    return <GateScreen onPass={() => {
-      sessionStorage.setItem(GATE_KEY, "1");
-      setGateOk(true);
-    }} />;
+    return <GateScreen onPass={() => setGateOk(true)} />;
   }
 
-  if (phase === "checking") {
+  if (phase === "wiping") {
     return (
       <div className="ap ap-center">
         <Spinner />
@@ -110,14 +104,15 @@ export default function Admin() {
         <Shell
           onSignOut={async () => {
             await signOut();
-            setPhase("email");
+            setGateOk(false);
+            setPhase("gate");
           }}
         />
       </ToastProvider>
     );
   }
 
-  return <LoginScreen phase={phase} setPhase={setPhase} onAuthed={checkAdmin} />;
+  return <LoginScreen phase={phase} setPhase={setPhase} onAuthed={goReady} />;
 }
 
 /* ------------------------------------------------------------- auth --- */
@@ -137,7 +132,9 @@ function AuthShell({ step, title, lead, children }) {
         <h1 className="ap-auth-title">{title}</h1>
         {lead && <p className="ap-auth-lead">{lead}</p>}
         {children}
-        <p className="ap-auth-foot">Hidden console · authorised admins only</p>
+        <a className="ap-auth-back" href="/">
+          ← Back to breakq.app
+        </a>
       </div>
     </div>
   );
@@ -145,6 +142,7 @@ function AuthShell({ step, title, lead, children }) {
 
 function GateScreen({ onPass }) {
   const [pw, setPw] = useState("");
+  const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
   return (
     <AuthShell step="Step 1 of 2" title="Access password" lead="Enter the shared password to reach the sign-in screen.">
@@ -158,16 +156,27 @@ function GateScreen({ onPass }) {
       >
         <label className="ap-field">
           <span className="ap-field-label">Access password</span>
-          <input
-            type="password"
-            autoFocus
-            value={pw}
-            onChange={(e) => {
-              setPw(e.target.value);
-              setErr("");
-            }}
-            placeholder="••••••••"
-          />
+          <span className="ap-input-reveal">
+            <input
+              type={show ? "text" : "password"}
+              autoFocus
+              value={pw}
+              onChange={(e) => {
+                setPw(e.target.value);
+                setErr("");
+              }}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="ap-reveal-btn"
+              onClick={() => setShow((v) => !v)}
+              aria-label={show ? "Hide password" : "Show password"}
+              aria-pressed={show}
+            >
+              {show ? "Hide" : "Show"}
+            </button>
+          </span>
           {err && <span className="ap-field-error">{err}</span>}
         </label>
         <button type="submit" className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg">

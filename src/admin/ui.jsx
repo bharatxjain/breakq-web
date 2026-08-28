@@ -461,6 +461,27 @@ export function Legend({ rows }) {
 
 /* ----------------------------------------------------------- confirm --- */
 
+export function ConfirmDialog({ title, message, confirmLabel, tone = "primary", busy, onConfirm, onClose }) {
+  return (
+    <Modal
+      title={title}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="ap-btn ap-btn-ghost" onClick={onClose} disabled={busy}>
+            Cancel
+          </button>
+          <button className={`ap-btn ap-btn-${tone}`} onClick={onConfirm} disabled={busy}>
+            {busy ? "Working…" : confirmLabel}
+          </button>
+        </>
+      }
+    >
+      <div className="ap-confirm-msg">{message}</div>
+    </Modal>
+  );
+}
+
 export function ConfirmButton({ onConfirm, children, className = "ap-btn ap-btn-danger", confirmLabel = "Confirm?" }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {

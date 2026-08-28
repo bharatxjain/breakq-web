@@ -65,7 +65,7 @@ export default function SupportingKiranas() {
           </h1>
           <p className="sk-subtitle">
             Shop from trusted local Kirana, Medical, Dairy, Bakery, and
-            Electrical stores — all through a single platform built for your
+            Electrical stores - all through a single platform built for your
             community.
           </p>
           <div className="sk-actions">

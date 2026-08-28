@@ -10,7 +10,7 @@ import {
 import {
   Async,
   Badge,
-  ConfirmButton,
+  ConfirmDialog,
   Field,
   Modal,
   fmtDate,
@@ -28,6 +28,7 @@ export default function Vendors() {
   const { state, data, error, reload } = useAsync(() => fetchShops(tab), [tab]);
   const [detail, setDetail] = useState(null);
   const [rejecting, setRejecting] = useState(null);
+  const [confirm, setConfirm] = useState(null); // { kind: 'approve' | 'delete', shop }
   const [busy, setBusy] = useState(false);
 
   async function run(label, fn) {
@@ -37,6 +38,7 @@ export default function Vendors() {
       notify(label, "ok");
       setDetail(null);
       setRejecting(null);
+      setConfirm(null);
       reload();
     } catch (e) {
       notify(e.message || "Action failed", "danger");
@@ -103,9 +105,9 @@ export default function Vendors() {
                         <button
                           className="ap-btn ap-btn-sm ap-btn-ok"
                           disabled={busy}
-                          onClick={() => run("Shop approved", () => approveShop(s.id))}
+                          onClick={() => setConfirm({ kind: "approve", shop: s })}
                         >
-                          Approve
+                          Verify
                         </button>
                         <button
                           className="ap-btn ap-btn-sm ap-btn-danger"
@@ -173,9 +175,9 @@ export default function Vendors() {
                 <button
                   className="ap-btn ap-btn-ok"
                   disabled={busy}
-                  onClick={() => run("Shop approved", () => approveShop(detail.id))}
+                  onClick={() => setConfirm({ kind: "approve", shop: detail })}
                 >
-                  Approve
+                  Verify
                 </button>
                 <button
                   className="ap-btn ap-btn-danger"
@@ -204,14 +206,13 @@ export default function Vendors() {
                 Restore
               </button>
             ) : (
-              <ConfirmButton
-                confirmLabel="Really delete?"
-                onConfirm={() =>
-                  run("Shop soft-deleted", () => softDeleteShop(detail.id))
-                }
+              <button
+                className="ap-btn ap-btn-danger"
+                disabled={busy}
+                onClick={() => setConfirm({ kind: "delete", shop: detail })}
               >
-                Delete (soft)
-              </ConfirmButton>
+                Delete
+              </button>
             )}
           </div>
         </Modal>
@@ -223,6 +224,41 @@ export default function Vendors() {
           busy={busy}
           onClose={() => setRejecting(null)}
           onSubmit={(reason) => run("Shop rejected", () => rejectShop(rejecting.id, reason))}
+        />
+      )}
+
+      {confirm?.kind === "approve" && (
+        <ConfirmDialog
+          title={`Verify ${confirm.shop.name}?`}
+          tone="ok"
+          confirmLabel="Verify vendor"
+          busy={busy}
+          onClose={() => setConfirm(null)}
+          onConfirm={() => run("Vendor verified", () => approveShop(confirm.shop.id))}
+          message={
+            <>
+              <strong>{confirm.shop.name}</strong> will go live for customers and the owner
+              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that
+              their shop is approved. Continue?
+            </>
+          }
+        />
+      )}
+
+      {confirm?.kind === "delete" && (
+        <ConfirmDialog
+          title={`Delete ${confirm.shop.name}?`}
+          tone="danger"
+          confirmLabel="Delete vendor"
+          busy={busy}
+          onClose={() => setConfirm(null)}
+          onConfirm={() => run("Vendor deleted", () => softDeleteShop(confirm.shop.id))}
+          message={
+            <>
+              This soft-deletes <strong>{confirm.shop.name}</strong> and stops it accepting orders. The
+              record is kept (orders and history stay intact) and can be restored later. Continue?
+            </>
+          }
         />
       )}
     </div>
@@ -247,7 +283,7 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
       onClose={onClose}
       footer={
         <>
-          <button className="ap-btn ap-btn-ghost" onClick={onClose}>
+          <button className="ap-btn ap-btn-ghost" onClick={onClose} disabled={busy}>
             Cancel
           </button>
           <button
@@ -261,12 +297,15 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
               onSubmit(reason.trim());
             }}
           >
-            Reject shop
+            {busy ? "Working…" : "Reject vendor"}
           </button>
         </>
       }
     >
-      <Field label="Reason for rejection" required error={err} hint="Shown to the vendor in the app.">
+      <p className="ap-confirm-msg">
+        <strong>{shop.name}</strong> will be marked rejected and the owner emailed with the reason below.
+      </p>
+      <Field label="Reason for rejection" required error={err} hint="Shown to the vendor in the app and email.">
         <textarea
           rows={4}
           value={reason}
