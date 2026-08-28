@@ -1,0 +1,486 @@
+// Shared admin-panel UI primitives + formatters.
+
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+
+/* --------------------------------------------------------- formatters --- */
+
+export function money(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return "—";
+  return "₹" + v.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+export function num(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return "—";
+  return v.toLocaleString("en-IN");
+}
+
+export function fmtDate(s) {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function fmtDateTime(s) {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function hourLabel(h) {
+  const n = Number(h);
+  if (!Number.isFinite(n)) return "—";
+  const am = n < 12;
+  const twelve = n % 12 === 0 ? 12 : n % 12;
+  return `${twelve} ${am ? "AM" : "PM"}`;
+}
+
+/* -------------------------------------------------------------- toasts --- */
+
+const ToastCtx = createContext(() => {});
+export const useToast = () => useContext(ToastCtx);
+
+export function ToastProvider({ children }) {
+  const [items, setItems] = useState([]);
+  const push = useCallback((message, tone = "info") => {
+    const id = Math.random().toString(36).slice(2);
+    setItems((xs) => [...xs, { id, message, tone }]);
+    setTimeout(() => setItems((xs) => xs.filter((x) => x.id !== id)), 4200);
+  }, []);
+  return (
+    <ToastCtx.Provider value={push}>
+      {children}
+      <div className="ap-toasts" role="status" aria-live="polite">
+        {items.map((t) => (
+          <div key={t.id} className={`ap-toast ap-toast-${t.tone}`}>
+            {t.message}
+          </div>
+        ))}
+      </div>
+    </ToastCtx.Provider>
+  );
+}
+
+/* ---------------------------------------------------------- async hook --- */
+
+export function useAsync(fn, deps) {
+  const [state, setState] = useState("loading"); // loading | done | error
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+
+  const reload = useCallback(() => {
+    let alive = true;
+    setState("loading");
+    setError(null);
+    Promise.resolve()
+      .then(() => fnRef.current())
+      .then((d) => {
+        if (alive) {
+          setData(d);
+          setState("done");
+        }
+      })
+      .catch((e) => {
+        if (alive) {
+          setError(e);
+          setState("error");
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(reload, [reload]);
+
+  return { state, data, error, reload, setData };
+}
+
+export function Async({ state, error, onRetry, isEmpty, empty, children }) {
+  if (state === "loading")
+    return (
+      <div className="ap-async ap-async-load">
+        <Spinner />
+        <span>Loading…</span>
+      </div>
+    );
+  if (state === "error")
+    return (
+      <div className="ap-async ap-async-error">
+        <p>{String(error?.message || error || "Something went wrong.")}</p>
+        {onRetry && (
+          <button className="ap-btn ap-btn-ghost" onClick={onRetry}>
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  if (isEmpty) return <div className="ap-async ap-async-empty">{empty || "Nothing here yet."}</div>;
+  return children;
+}
+
+/* ------------------------------------------------------------ spinner --- */
+
+export function Spinner() {
+  return <span className="ap-spinner" aria-hidden="true" />;
+}
+
+/* -------------------------------------------------------------- modal --- */
+
+export function Modal({ title, onClose, children, footer, wide }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="ap-modal-backdrop" onMouseDown={onClose}>
+      <div
+        className={`ap-modal ${wide ? "ap-modal-wide" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <header className="ap-modal-head">
+          <h3>{title}</h3>
+          <button className="ap-modal-x" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </header>
+        <div className="ap-modal-body">{children}</div>
+        {footer && <footer className="ap-modal-foot">{footer}</footer>}
+      </div>
+    </div>
+  );
+}
+
+/* --------------------------------------------------------- stat card --- */
+
+export function StatCard({ label, value, sub, tone }) {
+  return (
+    <div className={`ap-stat ${tone ? `ap-stat-${tone}` : ""}`}>
+      <span className="ap-stat-label">{label}</span>
+      <span className="ap-stat-value">{value}</span>
+      {sub != null && <span className="ap-stat-sub">{sub}</span>}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------- avatar --- */
+
+export function Avatar({ name, email, size = 32 }) {
+  const src = (name || email || "").trim();
+  let initials = "?";
+  if (src.includes("@")) {
+    initials = src[0].toUpperCase();
+  } else if (src) {
+    initials = src
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() || "")
+      .join("");
+  }
+  return (
+    <span
+      className="ap-avatar"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+      aria-hidden="true"
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
+/* --------------------------------------------------------------- badge --- */
+
+export function Badge({ children, tone = "neutral" }) {
+  return <span className={`ap-badge ap-badge-${tone}`}>{children}</span>;
+}
+
+export function statusTone(status) {
+  const s = String(status || "").toLowerCase();
+  if (["approved", "active", "paid", "captured", "success"].includes(s)) return "ok";
+  if (["pending", "created", "processing"].includes(s)) return "warn";
+  if (["rejected", "failed", "expired", "cancelled", "canceled"].includes(s)) return "danger";
+  return "neutral";
+}
+
+/* ---------------------------------------------------------------- form --- */
+
+export function Field({ label, hint, error, children, required }) {
+  return (
+    <label className="ap-field">
+      <span className="ap-field-label">
+        {label} {required && <span className="ap-req">*</span>}
+      </span>
+      {children}
+      {hint && !error && <span className="ap-field-hint">{hint}</span>}
+      {error && <span className="ap-field-error">{error}</span>}
+    </label>
+  );
+}
+
+export function Toggle({ checked, onChange, label }) {
+  return (
+    <button
+      type="button"
+      className={`ap-toggle ${checked ? "is-on" : ""}`}
+      onClick={() => onChange(!checked)}
+      aria-pressed={checked}
+    >
+      <span className="ap-toggle-track">
+        <span className="ap-toggle-thumb" />
+      </span>
+      <span className="ap-toggle-label">{label}</span>
+    </button>
+  );
+}
+
+/* -------------------------------------------------------- mini bar chart --- */
+// Deliberately minimal: one hue, faint baseline, emphasized last bar.
+// Good enough for an at-a-glance internal trend; not a full analytics viz.
+
+export function Bars({ data, metric, format = num, height = 150 }) {
+  if (!data || data.length === 0) return <div className="ap-async-empty">No data in the last 30 days.</div>;
+  const vals = data.map((d) => Number(d[metric]) || 0);
+  const max = Math.max(1, ...vals);
+  const w = 100 / data.length;
+
+  return (
+    <div className="ap-bars" style={{ height }}>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="ap-bars-svg" aria-hidden="true">
+        <line x1="0" y1="99.5" x2="100" y2="99.5" className="ap-bars-axis" />
+        {data.map((d, i) => {
+          const h = (Number(d[metric]) || 0) / max * 96;
+          return (
+            <rect
+              key={i}
+              x={i * w + w * 0.16}
+              y={100 - h}
+              width={w * 0.68}
+              height={Math.max(h, 0.4)}
+              className={i === data.length - 1 ? "ap-bar ap-bar-last" : "ap-bar"}
+            />
+          );
+        })}
+      </svg>
+      <div className="ap-bars-meta">
+        <span>{fmtDate(data[0].d)}</span>
+        <span className="ap-bars-peak">peak {format(max)}</span>
+        <span>{fmtDate(data[data.length - 1].d)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------- delta chip --- */
+
+export function DeltaChip({ now, prev }) {
+  const a = Number(now);
+  const b = Number(prev);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+  const pct = ((a - b) / b) * 100;
+  const up = pct >= 0;
+  return (
+    <span className={`ap-delta ${up ? "is-up" : "is-down"}`}>
+      {up ? "▲" : "▼"} {Math.abs(pct).toFixed(1)}%
+    </span>
+  );
+}
+
+/* ---------------------------------------------------------- mini charts --- */
+
+export function MiniBars({ values, tone = "primary" }) {
+  if (!values || values.length === 0) return null;
+  const max = Math.max(1, ...values);
+  return (
+    <div className={`ap-minibars ap-minibars-${tone}`}>
+      {values.map((v, i) => (
+        <span
+          key={i}
+          className={i === values.length - 1 ? "is-last" : ""}
+          style={{ height: `${Math.max(4, ((Number(v) || 0) / max) * 100)}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function Spark({ values, tone = "primary" }) {
+  if (!values || values.length === 0) return null;
+  const W = 100;
+  const H = 40;
+  const vs = values.map((v) => Number(v) || 0);
+  const max = Math.max(1, ...vs);
+  const step = vs.length > 1 ? W / (vs.length - 1) : 0;
+  const pts = vs.map((v, i) => [i * step, H - 3 - (v / max) * (H - 6)]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const area = `${line} L ${W} ${H} L 0 ${H} Z`;
+  return (
+    <svg className={`ap-spark ap-spark-${tone}`} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <path d={area} className="ap-spark-fill" />
+      <path d={line} className="ap-spark-line" vectorEffect="non-scaling-stroke" fill="none" />
+    </svg>
+  );
+}
+
+export function AreaChart({ data, metric, format = num, compare }) {
+  if (!data || data.length === 0) return <div className="ap-async-empty">No data in the last 30 days.</div>;
+  const W = 640;
+  const H = 200;
+  const PL = 6;
+  const PT = 14;
+  const PB = 6;
+  const cur = data.map((d) => Number(d[metric]) || 0);
+  const cmp = compare && compare.length >= 2 ? compare.map((d) => Number(d[metric]) || 0) : null;
+  const max = Math.max(1, ...cur, ...(cmp || []));
+  const n = (cmp ? Math.max(data.length, cmp.length) : data.length) - 1;
+  const stepX = (W - PL * 2) / Math.max(1, n);
+  const x = (i) => PL + i * stepX;
+  const y = (v) => PT + (1 - v / max) * (H - PT - PB);
+  const toPath = (arr) => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const line = toPath(cur);
+  const area = `${line} L ${x(cur.length - 1).toFixed(1)} ${H - PB} L ${PL} ${H - PB} Z`;
+  const last = [x(cur.length - 1), y(cur[cur.length - 1])];
+
+  return (
+    <div className="ap-area">
+      <svg viewBox={`0 0 ${W} ${H}`} className="ap-area-svg" role="img" aria-label={`${metric} over the last 30 days`}>
+        <defs>
+          <linearGradient id="apAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="ap-area-g0" />
+            <stop offset="100%" className="ap-area-g1" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75, 1].map((f) => (
+          <line key={f} x1={PL} x2={W - PL} y1={y(max * f)} y2={y(max * f)} className="ap-area-grid" />
+        ))}
+        <path d={area} fill="url(#apAreaGrad)" />
+        {cmp && <path d={toPath(cmp)} className="ap-area-cmp" fill="none" />}
+        <path d={line} className="ap-area-line" fill="none" />
+        <circle cx={last[0]} cy={last[1]} r="3.5" className="ap-area-dot" />
+      </svg>
+      <div className="ap-area-x">
+        <span>{fmtDate(data[0].d)}</span>
+        <span className="ap-area-peak">
+          peak {format(max)}
+          {cmp ? "  ·  ┄ prior 30 days" : ""}
+        </span>
+        <span>{fmtDate(data[data.length - 1].d)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function BarChart({ data, format = num, height = 190, unit = "" }) {
+  if (!data || data.length === 0) return <div className="ap-async-empty">No data.</div>;
+  const vals = data.map((d) => Number(d.value) || 0);
+  const max = Math.max(1, ...vals);
+  const peak = vals.indexOf(Math.max(...vals));
+  return (
+    <div className="ap-barchart">
+      <div className="ap-barchart-plot" style={{ height }}>
+        {data.map((d, i) => (
+          <div className="ap-barchart-col" key={i} title={`${d.label}${unit ? ` ${unit}` : ""}: ${format(vals[i])}`}>
+            <span
+              className={`ap-barchart-bar ${i === peak ? "is-peak" : ""}`}
+              style={{ height: `${Math.max(1.5, (vals[i] / max) * 100)}%` }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="ap-barchart-x">
+        {data.map((d, i) => (
+          <span key={i}>{i % Math.ceil(data.length / 8) === 0 ? d.label : ""}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function Donut({ segments, centerLabel, centerSub }) {
+  const total = segments.reduce((s, x) => s + (Number(x.value) || 0), 0);
+  const R = 54;
+  const C = 2 * Math.PI * R;
+  let acc = 0;
+  return (
+    <div className="ap-donut">
+      <svg viewBox="0 0 132 132" className="ap-donut-svg">
+        <circle cx="66" cy="66" r={R} className="ap-donut-track" />
+        {total > 0 &&
+          segments.map((seg, i) => {
+            const dash = ((Number(seg.value) || 0) / total) * C;
+            const node = (
+              <circle
+                key={i}
+                cx="66"
+                cy="66"
+                r={R}
+                className="ap-donut-seg"
+                style={{ stroke: seg.color, strokeDasharray: `${dash} ${C - dash}`, strokeDashoffset: -acc }}
+              />
+            );
+            acc += dash;
+            return node;
+          })}
+      </svg>
+      <div className="ap-donut-center">
+        <strong>{centerLabel}</strong>
+        {centerSub && <span>{centerSub}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function Legend({ rows }) {
+  return (
+    <ul className="ap-legend">
+      {rows.map((r, i) => (
+        <li key={i}>
+          <span className="ap-legend-dot" style={{ background: r.color }} />
+          <span className="ap-legend-label">{r.label}</span>
+          <span className="ap-legend-value">{r.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* ----------------------------------------------------------- confirm --- */
+
+export function ConfirmButton({ onConfirm, children, className = "ap-btn ap-btn-danger", confirmLabel = "Confirm?" }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 3000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <button
+      className={className}
+      onClick={() => {
+        if (armed) {
+          setArmed(false);
+          onConfirm();
+        } else {
+          setArmed(true);
+        }
+      }}
+    >
+      {armed ? confirmLabel : children}
+    </button>
+  );
+}

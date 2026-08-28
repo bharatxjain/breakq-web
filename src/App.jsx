@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -12,7 +13,11 @@ import Returns from './pages/Returns'
 import WhyBreakQ from './pages/WhyBreakQ'
 import BecomePartner from './pages/BecomePartner'
 
-export default function App() {
+// Admin panel — its own bundle, never downloaded by normal visitors.
+const Admin = lazy(() => import('./pages/Admin'))
+
+// The public marketing site — header, footer, floating CTA.
+function SiteLayout() {
   return (
     <>
       <ScrollToTop />
@@ -32,5 +37,17 @@ export default function App() {
       <Footer />
       <FloatingQR />
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <Suspense fallback={null}>
+      <Routes>
+        {/* Hidden — not linked anywhere. Reachable only by typing /admin. */}
+        <Route path="/admin/*" element={<Admin />} />
+        <Route path="/*" element={<SiteLayout />} />
+      </Routes>
+    </Suspense>
   )
 }

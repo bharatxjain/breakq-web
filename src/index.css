@@ -124,3 +124,65 @@ ul {
     font-size: 30px;
   }
 }
+
+/* ----- shared custom scrollbar for horizontally/vertically scrollable UI ----- */
+/* Covers: legal-page TOC pill rows, the Why BreakQ comparison table, the hero
+   phone mockup's chip row, and the mobile nav drawer — anywhere a native
+   browser scrollbar would otherwise show its clunky default look. */
+
+.privacy-toc nav,
+.terms-toc nav,
+.returns-toc nav,
+.why-table-wrap,
+.app-chips,
+.mobile-nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-pill) transparent;
+}
+
+.privacy-toc nav::-webkit-scrollbar,
+.terms-toc nav::-webkit-scrollbar,
+.returns-toc nav::-webkit-scrollbar,
+.why-table-wrap::-webkit-scrollbar,
+.app-chips::-webkit-scrollbar,
+.mobile-nav::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.privacy-toc nav::-webkit-scrollbar-track,
+.terms-toc nav::-webkit-scrollbar-track,
+.returns-toc nav::-webkit-scrollbar-track,
+.why-table-wrap::-webkit-scrollbar-track,
+.app-chips::-webkit-scrollbar-track,
+.mobile-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.privacy-toc nav::-webkit-scrollbar-thumb,
+.terms-toc nav::-webkit-scrollbar-thumb,
+.returns-toc nav::-webkit-scrollbar-thumb,
+.why-table-wrap::-webkit-scrollbar-thumb,
+.app-chips::-webkit-scrollbar-thumb,
+.mobile-nav::-webkit-scrollbar-thumb {
+  background: var(--primary-pill);
+  border-radius: 999px;
+}
+
+.privacy-toc nav::-webkit-scrollbar-thumb:hover,
+.terms-toc nav::-webkit-scrollbar-thumb:hover,
+.returns-toc nav::-webkit-scrollbar-thumb:hover,
+.why-table-wrap::-webkit-scrollbar-thumb:hover,
+.app-chips::-webkit-scrollbar-thumb:hover,
+.mobile-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.privacy-toc nav::-webkit-scrollbar-button,
+.terms-toc nav::-webkit-scrollbar-button,
+.returns-toc nav::-webkit-scrollbar-button,
+.why-table-wrap::-webkit-scrollbar-button,
+.app-chips::-webkit-scrollbar-button,
+.mobile-nav::-webkit-scrollbar-button {
+  display: none;
+}
