@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import useReveal from "../hooks/useReveal";
 import { supabase } from "../lib/supabaseClient";
+import tickSuccessAnimation from "../assets/tick-success.json";
 import "./BecomePartner.css";
+
+// lottie-react pulls in the full lottie-web renderer (~380KB) — only load
+// it once someone actually reaches the success screen, not on every page.
+const Lottie = lazy(() => import("lottie-react"));
 
 const MAX_FILE_MB = 5;
 
@@ -96,6 +101,26 @@ async function reverseGeocode(lat, lng) {
   return data.display_name;
 }
 
+const REGISTRATION_KEY = "breakq_partner_registration";
+
+function readStoredRegistration() {
+  try {
+    const raw = localStorage.getItem(REGISTRATION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredRegistration(email) {
+  try {
+    localStorage.setItem(REGISTRATION_KEY, JSON.stringify({ email }));
+  } catch {
+    // localStorage unavailable (private mode, etc.) — success screen just
+    // won't survive a refresh, which is a fine fallback.
+  }
+}
+
 function Stepper({ step }) {
   const activeIndex = Math.min(STEPS.findIndex((s) => s.key === step), STEPS.length - 1);
   return (
@@ -129,8 +154,9 @@ function FileField({ label, required, file, onChange, error, accept, hint }) {
 }
 
 export default function BecomePartner() {
-  const [step, setStep] = useState("account");
+  const [step, setStep] = useState(() => (readStoredRegistration() ? "success" : "account"));
   const [session, setSession] = useState(null);
+  const [successEmail, setSuccessEmail] = useState(() => readStoredRegistration()?.email || "");
   const [formRef, formInView] = useReveal();
 
   // Step 1: account
@@ -355,12 +381,34 @@ export default function BecomePartner() {
       });
       if (error) throw error;
 
+      // Best-effort confirmation email — never block the success screen on this.
+      supabase.functions
+        .invoke("notify-vendor-registration", {
+          body: { email: session.user.email, ownerName: shop.ownerName.trim(), shopName: shop.name.trim() },
+        })
+        .catch(() => {});
+
+      writeStoredRegistration(session.user.email);
+      setSuccessEmail(session.user.email);
       setStep("success");
     } catch (err) {
       setSubmitError(err.message || "Something went wrong while submitting. Please try again.");
     } finally {
       setSubmittingShop(false);
     }
+  }
+
+  function handleRegisterAnother() {
+    setShop(initialShop);
+    setShopErrors({});
+    setPhoto(null);
+    setBusinessProof(null);
+    setLocation({ lat: "", lng: "" });
+    setLocationError("");
+    setSubmitError("");
+    // Still signed in? Go straight to shop details. Session expired since
+    // they registered? Send them through sign-in again first.
+    setStep(session ? "shop" : "account");
   }
 
   return (
@@ -461,7 +509,8 @@ export default function BecomePartner() {
                     onClick={handleUseAccountLocation}
                     disabled={locatingAccount}
                   >
-                    📍 {locatingAccount ? "Locating…" : "Use my current location"}
+                    <img src="/location.png" alt="" className="bp-location-icon" />
+                    {locatingAccount ? "Locating…" : "Use my current location"}
                   </button>
                   {accountLocationError && <span className="bp-error">{accountLocationError}</span>}
                   {accountErrors.address && <span className="bp-error">{accountErrors.address}</span>}
@@ -658,7 +707,8 @@ export default function BecomePartner() {
                     Shop Location <span className="bp-required">*</span>
                   </label>
                   <button type="button" className="bp-location-btn" onClick={handleUseLocation} disabled={locating}>
-                    📍 {locating ? "Locating…" : "Use my current location"}
+                    <img src="/location.png" alt="" className="bp-location-icon" />
+                    {locating ? "Locating…" : "Use my current location"}
                   </button>
                   {location.lat && location.lng && (
                     <span className="bp-hint">
@@ -714,12 +764,43 @@ export default function BecomePartner() {
 
             {step === "success" && (
               <div className="bp-success">
-                <div className="bp-success-icon">🎉</div>
+                <Suspense fallback={<div className="bp-success-icon" />}>
+                  <Lottie
+                    animationData={tickSuccessAnimation}
+                    loop={false}
+                    className="bp-success-icon"
+                    aria-hidden="true"
+                  />
+                </Suspense>
                 <h2>You're all set!</h2>
+                <span className="bp-review-badge">Under review</span>
                 <p>
-                  Your shop has been registered. Download the BreakQ app and log in with the same email to access
-                  your Vendor Dashboard.
+                  Your shop has been submitted and is now under review. We'll email you at{" "}
+                  <strong>{successEmail}</strong> as soon as it's verified.
                 </p>
+                <p>
+                  Meanwhile, download the BreakQ app and log in with the same email — your Vendor Dashboard unlocks
+                  automatically once your shop is approved.
+                </p>
+
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.kks.bharatkirana"
+                  className="bp-android-btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <svg viewBox="0 0 24 24" className="bp-android-icon" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"
+                    />
+                  </svg>
+                  Download for Android
+                </a>
+
+                <button type="button" className="bp-register-another" onClick={handleRegisterAnother}>
+                  Register another shop
+                </button>
               </div>
             )}
           </div>
