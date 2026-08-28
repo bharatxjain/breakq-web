@@ -1,0 +1,14 @@
+# SPA history-mode fallback for Apache / cPanel hosting.
+# Any request that isn't a real file or directory (e.g. /admin, /about) is
+# served index.html so React Router can render the route.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Fallback for hosts without mod_rewrite: still land on the app shell.
+ErrorDocument 404 /index.html
