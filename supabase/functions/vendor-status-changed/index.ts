@@ -4,19 +4,24 @@
 //          "vendor-status-changed" → paste this file → Deploy.
 //          Then: Settings → Edge Functions → uncheck "Verify JWT" for it.
 //
-// Trigger: Database → Webhooks → new webhook
-//          table = public.shops, events = UPDATE, type = HTTP Request,
-//          method = POST, URL = the function URL,
-//          HTTP header  x-webhook-secret: <same value as the WEBHOOK_SECRET secret>
+// Two ways it gets called:
 //
-// Does: when shops.status changes, emails the vendor a message matched to the
-//       new status (approved / rejected / suspended) and inserts a
+//   1. Directly from the admin panel (src/admin/api.js → notifyVendorStatus),
+//      body: { direct: true, event, shopId, shopName, ownerName, ownerId, reason }
+//      event ∈ approved | rejected | suspended | deleted | restored
+//      The caller's Supabase JWT is verified to belong to a profiles.role='admin'.
+//
+//   2. Optionally, a Database Webhook on public.shops UPDATE (legacy path):
+//      HTTP header  x-webhook-secret: <same value as the WEBHOOK_SECRET secret>
+//      Fires on a shops.status change only.
+//
+// Does: emails the vendor a message matched to the event and inserts a
 //       public.notifications row.
 //
 // Secrets:
 //   RESEND_API_KEY        required
 //   FROM_EMAIL            required   a Resend-verified sender, e.g. noreply@breakq.app
-//   WEBHOOK_SECRET        recommended  (also set as the x-webhook-secret header)
+//   WEBHOOK_SECRET        only for the legacy Database Webhook path
 //   APP_NAME             optional   defaults to "BreakQ"
 //   SUPABASE_URL         auto-injected
 //   SUPABASE_SERVICE_ROLE_KEY  auto-injected (falls back to SERVICE_ROLE_KEY)
@@ -36,9 +41,18 @@ const WEBHOOK_SECRET = env("WEBHOOK_SECRET");
 const SUPABASE_URL = env("SUPABASE_URL");
 const SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY", "SERVICE_ROLE_KEY");
 
-const PURPLE = "#7001FE";
 const GREEN = "#059669";
 const RED = "#DC2626";
+
+const CORS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-webhook-secret",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const reply = (body: string, status = 200) =>
+  new Response(body, { status, headers: CORS });
 
 interface ShopRow {
   id: string;
@@ -50,6 +64,13 @@ interface ShopRow {
 }
 
 interface WebhookPayload {
+  direct?: boolean;
+  event?: string;
+  shopId?: string;
+  shopName?: string;
+  ownerName?: string | null;
+  ownerId?: string | null;
+  reason?: string | null;
   type?: string;
   table?: string;
   record?: ShopRow;
@@ -63,6 +84,33 @@ function esc(v: unknown): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+/** Verify the caller's Supabase access token belongs to an admin. */
+async function callerIsAdmin(req: Request): Promise<boolean> {
+  const auth = req.headers.get("Authorization") || "";
+  const jwt = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!jwt || !SUPABASE_URL || !SERVICE_ROLE_KEY) return false;
+
+  const ur = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${jwt}` },
+  });
+  if (!ur.ok) return false;
+  const uid = (await ur.json())?.id;
+  if (!uid) return false;
+
+  const pr = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}&select=role`,
+    {
+      headers: {
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+    },
+  );
+  if (!pr.ok) return false;
+  const rows = await pr.json();
+  return rows?.[0]?.role === "admin";
 }
 
 async function lookupOwnerEmail(ownerId: string): Promise<string | null> {
@@ -155,63 +203,114 @@ function suspendedBody(shop: ShopRow): string {
   );
 }
 
-Deno.serve(async (req) => {
-  if (WEBHOOK_SECRET && req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
-    return new Response("Unauthorized", { status: 401 });
+function deletedBody(shop: ShopRow): string {
+  return shell(
+    `
+    <h2 style="margin:0 0 12px;color:${RED}">Your shop has been removed</h2>
+    <p>Hi ${esc(shop.owner_name || "there")},</p>
+    <p><b>${esc(shop.name)}</b> has been removed from ${APP_NAME} and is no longer visible to customers.</p>
+    <p>Your data and order history are retained. Reply to this email if you think this was a mistake.</p>`,
+    RED,
+  );
+}
+
+function restoredBody(shop: ShopRow): string {
+  return shell(
+    `
+    <h2 style="margin:0 0 12px;color:${GREEN}">Your shop is active again</h2>
+    <p>Hi ${esc(shop.owner_name || "there")},</p>
+    <p><b>${esc(shop.name)}</b> has been restored and is visible to customers again.</p>
+    <p>Open the ${APP_NAME} app to keep managing your products and orders.</p>`,
+    GREEN,
+  );
+}
+
+/** Send the vendor email + in-app notification for one status event. */
+async function handleStatus(event: string | undefined, shop: ShopRow): Promise<Response> {
+  let subject: string;
+  let html: string;
+  let title: string;
+  let message: string;
+
+  switch (event) {
+    case "approved":
+      subject = `Your ${APP_NAME} shop is approved`;
+      html = approvedBody(shop);
+      title = "Your shop is approved 🎉";
+      message = `${shop.name} is now live on ${APP_NAME}. Start adding products.`;
+      break;
+    case "rejected":
+      subject = `Your ${APP_NAME} registration was not approved`;
+      html = rejectedBody(shop);
+      title = "Registration not approved";
+      message = shop.rejection_reason || "Please review the email we sent for details.";
+      break;
+    case "suspended":
+      subject = `Your ${APP_NAME} shop has been suspended`;
+      html = suspendedBody(shop);
+      title = "Shop suspended";
+      message = `${shop.name} is temporarily hidden from customers.`;
+      break;
+    case "deleted":
+      subject = `Your ${APP_NAME} shop has been removed`;
+      html = deletedBody(shop);
+      title = "Shop removed";
+      message = `${shop.name} has been removed from ${APP_NAME}.`;
+      break;
+    case "restored":
+      subject = `Your ${APP_NAME} shop is active again`;
+      html = restoredBody(shop);
+      title = "Shop restored";
+      message = `${shop.name} is live on ${APP_NAME} again.`;
+      break;
+    default:
+      return reply(`Event "${event}" not messaged`, 200);
   }
-  if (!WEBHOOK_SECRET) console.warn("WEBHOOK_SECRET not set — endpoint is unauthenticated");
+
+  const vendorEmail = shop.owner_id ? await lookupOwnerEmail(shop.owner_id) : null;
+
+  await Promise.allSettled([
+    vendorEmail ? sendMail(vendorEmail, subject, html) : Promise.resolve(),
+    shop.owner_id ? logNotification(shop.owner_id, title, message) : Promise.resolve(),
+  ]);
+
+  return reply("OK", 200);
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return reply("ok", 200);
 
   try {
     const p = (await req.json()) as WebhookPayload;
+
+    // ---- direct call from the admin panel ----
+    if (p.direct) {
+      if (!(await callerIsAdmin(req))) return reply("Forbidden", 403);
+      return await handleStatus(p.event, {
+        id: p.shopId ?? "",
+        name: p.shopName,
+        owner_name: p.ownerName ?? null,
+        owner_id: p.ownerId ?? null,
+        rejection_reason: p.reason ?? null,
+      });
+    }
+
+    // ---- legacy Database Webhook path ----
+    if (WEBHOOK_SECRET && req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
+      return reply("Unauthorized", 401);
+    }
+    if (!WEBHOOK_SECRET) console.warn("WEBHOOK_SECRET not set — webhook path is unauthenticated");
+
     if (p.table !== "shops" || p.type !== "UPDATE" || !p.record || !p.old_record) {
-      return new Response("Ignored", { status: 200 });
+      return reply("Ignored", 200);
     }
-
     const newStatus = p.record.status;
-    const oldStatus = p.old_record.status;
-    if (!newStatus || newStatus === oldStatus) {
-      return new Response("No status change", { status: 200 });
+    if (!newStatus || newStatus === p.old_record.status) {
+      return reply("No status change", 200);
     }
-
-    const shop = p.record;
-    let subject: string;
-    let html: string;
-    let title: string;
-    let message: string;
-
-    switch (newStatus) {
-      case "approved":
-        subject = `Your ${APP_NAME} shop is approved`;
-        html = approvedBody(shop);
-        title = "Your shop is approved 🎉";
-        message = `${shop.name} is now live on ${APP_NAME}. Start adding products.`;
-        break;
-      case "rejected":
-        subject = `Your ${APP_NAME} registration was not approved`;
-        html = rejectedBody(shop);
-        title = "Registration not approved";
-        message = shop.rejection_reason || "Please review the email we sent for details.";
-        break;
-      case "suspended":
-        subject = `Your ${APP_NAME} shop has been suspended`;
-        html = suspendedBody(shop);
-        title = "Shop suspended";
-        message = `${shop.name} is temporarily hidden from customers.`;
-        break;
-      default:
-        return new Response(`Status ${newStatus} not messaged`, { status: 200 });
-    }
-
-    const vendorEmail = shop.owner_id ? await lookupOwnerEmail(shop.owner_id) : null;
-
-    await Promise.allSettled([
-      vendorEmail ? sendMail(vendorEmail, subject, html) : Promise.resolve(),
-      shop.owner_id ? logNotification(shop.owner_id, title, message) : Promise.resolve(),
-    ]);
-
-    return new Response("OK", { status: 200 });
+    return await handleStatus(newStatus, p.record);
   } catch (e) {
     console.error(e);
-    return new Response(`Error: ${e}`, { status: 500 });
+    return reply(`Error: ${e}`, 500);
   }
 });

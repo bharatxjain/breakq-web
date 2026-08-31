@@ -1824,3 +1824,123 @@
 form.ap-bar {
   align-items: center;
 }
+
+/* ============================================================ small phones */
+
+@media (max-width: 560px) {
+  /* header: keep brand + account on the top row, drop the search below */
+  .ap-header {
+    height: auto;
+    min-height: var(--ap-header-h);
+    flex-wrap: wrap;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    row-gap: 8px;
+  }
+  .ap-header-left {
+    margin-right: auto;
+  }
+  .ap-header-right {
+    order: 2;
+  }
+  .ap-header-search {
+    order: 3;
+    flex: 1 0 100%;
+    max-width: none;
+  }
+  .ap-setup-pill {
+    font-size: 0;
+    gap: 0;
+    padding: 6px;
+  }
+  .ap-setup-pill .ap-setup-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* content + view rhythm */
+  .ap-content {
+    padding: 12px 14px 64px;
+  }
+  .ap-view {
+    gap: 16px;
+  }
+  .ap-view-head {
+    gap: 10px;
+  }
+  .ap-view-head h1 {
+    font-size: 20px;
+  }
+  .ap-bar {
+    flex-wrap: wrap;
+  }
+  .ap-bar input {
+    flex: 1 1 160px;
+    max-width: none !important;
+  }
+
+  /* dashboard cards */
+  .ap-panel {
+    padding: 14px;
+  }
+  .ap-panel-head {
+    flex-wrap: wrap;
+  }
+  .ap-kpi {
+    min-height: 0;
+    padding: 14px;
+  }
+  .ap-kpi-value {
+    font-size: 22px;
+  }
+  .ap-kpi-donut {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* modals become bottom sheets */
+  .ap-modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .ap-modal,
+  .ap-modal-wide {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .ap-modal-head,
+  .ap-modal-foot {
+    flex: none;
+  }
+  .ap-modal-body {
+    overflow-y: auto;
+  }
+  .ap-modal-foot {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .ap-modal-foot .ap-btn {
+    width: 100%;
+  }
+
+  /* toasts span the width so they don't clip */
+  .ap-toasts {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+  .ap-toast {
+    max-width: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .ap-logo-word {
+    display: none;
+  }
+}

@@ -204,8 +204,9 @@ async function dashboardFallback() {
     const { data: shops } = await sb
       .from("shops")
       .select("name,avg_rating,rating_count")
-      .gte("rating_count", 5)
-      .order("avg_rating", { ascending: false })
+      .gt("rating_count", 0)
+      .order("avg_rating", { ascending: false, nullsFirst: false })
+      .order("rating_count", { ascending: false })
       .limit(5);
     topRated = shops || [];
   } catch {
@@ -286,17 +287,49 @@ export async function fetchShops(status) {
   return data ?? [];
 }
 
+// Fire-and-forget: ask the edge function to email the vendor + log an in-app
+// notification for a status change. Never blocks or fails the admin action —
+// a mailer outage must not stop a vendor being verified/rejected/deleted.
+function notifyVendorStatus(shop, event, reason) {
+  try {
+    client()
+      .functions.invoke("vendor-status-changed", {
+        body: {
+          direct: true,
+          event,
+          shopId: shop.id,
+          shopName: shop.name,
+          ownerName: shop.owner_name ?? null,
+          ownerId: shop.owner_id ?? null,
+          reason: reason ?? null,
+        },
+      })
+      .catch((e) => console.warn("notifyVendorStatus:", e?.message || e));
+  } catch (e) {
+    console.warn("notifyVendorStatus:", e?.message || e);
+  }
+}
+
 export async function approveShop(id) {
-  const { error } = await client().from("shops").update({ status: "approved" }).eq("id", id);
+  const { data, error } = await client()
+    .from("shops")
+    .update({ status: "approved" })
+    .eq("id", id)
+    .select("id, name, owner_name, owner_id")
+    .single();
   if (error) throw error;
+  notifyVendorStatus(data, "approved");
 }
 
 export async function rejectShop(id, reason) {
-  const { error } = await client()
+  const { data, error } = await client()
     .from("shops")
     .update({ status: "rejected", rejection_reason: reason })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, name, owner_name, owner_id")
+    .single();
   if (error) throw error;
+  notifyVendorStatus(data, "rejected", reason);
 }
 
 export async function enableCommission(id) {
@@ -308,16 +341,25 @@ export async function enableCommission(id) {
 }
 
 export async function softDeleteShop(id) {
-  const { error } = await client()
+  const { data, error } = await client()
     .from("shops")
     .update({ is_deleted: true, accepting_orders: false })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, name, owner_name, owner_id")
+    .single();
   if (error) throw error;
+  notifyVendorStatus(data, "deleted");
 }
 
 export async function restoreShop(id) {
-  const { error } = await client().from("shops").update({ is_deleted: false }).eq("id", id);
+  const { data, error } = await client()
+    .from("shops")
+    .update({ is_deleted: false })
+    .eq("id", id)
+    .select("id, name, owner_name, owner_id")
+    .single();
   if (error) throw error;
+  notifyVendorStatus(data, "restored");
 }
 
 export async function searchShops(term) {
@@ -381,7 +423,7 @@ export async function fetchSubscribers() {
   const { data, error } = await client()
     .from("vendor_subscriptions")
     .select(
-      "id, status, started_at, expires_at, amount_paid_rupees, shop_id, tier_id, shops(name), subscription_tiers(display_name)",
+      "id, status, started_at, expires_at, amount_paid_rupees, shop_id, tier_id, shops(name), subscription_tiers(display_name, price_rupees)",
     )
     .order("started_at", { ascending: false })
     .limit(500);

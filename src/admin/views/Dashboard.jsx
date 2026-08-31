@@ -237,8 +237,8 @@ export default function Dashboard() {
             <section className="ap-two-col">
               <div className="ap-panel">
                 <div className="ap-panel-head">
-                  <h2>Top rated shops</h2>
-                  <span className="ap-view-sub">rating_count ≥ 5</span>
+                  <h2>Top 5 rated shops</h2>
+                  <span className="ap-view-sub">highest average rating</span>
                 </div>
                 <div className="ap-table-wrap">
                   <table className="ap-table">
@@ -253,7 +253,7 @@ export default function Dashboard() {
                       {(data.top_rated_shops || []).length === 0 && (
                         <tr>
                           <td colSpan={3} className="ap-td-empty">
-                            No shop has 5+ ratings yet.
+                            No rated shops yet.
                           </td>
                         </tr>
                       )}

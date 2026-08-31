@@ -10,6 +10,7 @@ const routes = {
   "Terms & Conditions": "/terms",
   "Return Policy": "/returns",
   "Why BreakQ?": "/why-breakq",
+  "Be a Partner": "/become-a-partner",
 };
 
 const columns = [
@@ -18,8 +19,13 @@ const columns = [
     links: ["Home", "About us", "Contact us", "Why BreakQ?"],
   },
   {
-    title: "Legal",
-    links: ["Privacy Policy", "Terms & Conditions", "Return Policy"],
+    title: "Quick Links",
+    links: [
+      "Be a Partner",
+      "Privacy Policy",
+      "Terms & Conditions",
+      "Return Policy",
+    ],
   },
   { title: "Socials", links: ["Insta", "Linkedin", "X"] },
 ];
@@ -40,7 +46,7 @@ export default function Footer() {
               Break<span className="brand-pro">Q</span>
             </span>
           </Link>
-          <p>BreakQ by KKS Private Limited</p>
+          <p>BreakQ by KKS Private Limited. Empowering local communities.</p>
         </div>
 
         {columns.map((col) => (

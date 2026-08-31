@@ -256,7 +256,9 @@ export default function Vendors() {
           message={
             <>
               This soft-deletes <strong>{confirm.shop.name}</strong> and stops it accepting orders. The
-              record is kept (orders and history stay intact) and can be restored later. Continue?
+              record is kept (orders and history stay intact) and can be restored later. The owner
+              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that
+              their shop was removed. Continue?
             </>
           }
         />

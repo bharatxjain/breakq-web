@@ -2,8 +2,8 @@ import Hero from "../components/Hero";
 import SupportingKiranas from "../components/SupportingKiranas";
 import Features from "../components/Features";
 import NightBanner from "../components/NightBanner";
-import StatsSection from "../components/StatsSection";
 import MultiLang from "../components/MultiLang";
+import SustainablePartners from "../components/SustainablePartners";
 
 export default function Home() {
   return (
@@ -12,8 +12,8 @@ export default function Home() {
       <SupportingKiranas />
       <Features />
       <MultiLang />
+      <SustainablePartners />
       <NightBanner />
-      <StatsSection />
     </>
   );
 }

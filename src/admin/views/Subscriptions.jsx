@@ -190,7 +190,7 @@ function TierModal({ tier, onClose, onSaved, onError }) {
         <Field label="Price (₹)">
           <input type="number" value={form.price_rupees} onChange={(e) => set("price_rupees", e.target.value)} />
         </Field>
-        <Field label="Item cap">
+        <Field label="Item cap" hint="Max products a shop on this tier can list. Use -1 for unlimited.">
           <input type="number" value={form.item_cap} onChange={(e) => set("item_cap", e.target.value)} />
         </Field>
         <Field label="Commission %">
@@ -239,16 +239,27 @@ function Subscribers() {
   const { state, data, error, reload } = useAsync(fetchSubscribers, []);
   const { data: tiers } = useAsync(fetchTiers, []);
   const [changing, setChanging] = useState(null);
-  const rows = data || [];
+
+  // Only paying vendors: on a priced tier, or with a recorded payment
+  // (covers manual admin overrides). Free-tier vendors are hidden here.
+  const rows = (data || []).filter(
+    (r) =>
+      Number(r.subscription_tiers?.price_rupees) > 0 ||
+      Number(r.amount_paid_rupees) > 0,
+  );
 
   return (
     <>
+      <p className="ap-view-sub">
+        Paid subscribers only — vendors on the free tier are not listed.
+      </p>
+
       <Async
         state={state}
         error={error}
         onRetry={reload}
         isEmpty={rows.length === 0}
-        empty="No vendor subscriptions yet."
+        empty="No paid subscribers yet."
       >
         <div className="ap-table-wrap">
           <table className="ap-table">
