@@ -51,6 +51,24 @@ const NAV = [
 ];
 const ALL_VIEWS = NAV.flatMap((g) => g.items);
 
+const THEME_KEY = "ap_theme";
+
+// Resolve the admin panel theme: a stored choice wins, otherwise follow the OS.
+function resolveTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    /* storage unavailable */
+  }
+  try {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  } catch {
+    /* matchMedia unavailable */
+  }
+  return "light";
+}
+
 export default function Admin() {
   // Never persisted: every visit to /admin starts at the page-password gate and
   // requires a fresh email OTP. State only lives for the current mount.
@@ -92,7 +110,7 @@ export default function Admin() {
 
   if (phase === "wiping") {
     return (
-      <div className="ap ap-center">
+      <div className="ap ap-center" data-theme={resolveTheme()}>
         <Spinner />
       </div>
     );
@@ -119,7 +137,7 @@ export default function Admin() {
 
 function AuthShell({ step, title, lead, children }) {
   return (
-    <div className="ap ap-center">
+    <div className="ap ap-center" data-theme={resolveTheme()}>
       <div className="ap-auth">
         <div className="ap-auth-logo">
           <span className="ap-logo-mark" aria-hidden="true" />
@@ -328,6 +346,7 @@ function Shell({ onSignOut }) {
     return ALL_VIEWS.some((n) => n.key === saved) ? saved : "dashboard";
   });
   const [navOpen, setNavOpen] = useState(false);
+  const [theme, setTheme] = useState(resolveTheme);
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("ap_nav_collapsed") === "1";
@@ -369,6 +388,14 @@ function Shell({ onSignOut }) {
   }, [collapsed]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* storage unavailable — theme choice just won't persist */
+    }
+  }, [theme]);
+
+  useEffect(() => {
     getUserEmail().then((e) => setEmail(e || ""));
     getMyProfile()
       .then((p) => setPname(p?.full_name || p?.name || p?.display_name || ""))
@@ -390,7 +417,7 @@ function Shell({ onSignOut }) {
   };
 
   return (
-    <div className="ap ap-shell">
+    <div className="ap ap-shell" data-theme={theme}>
       <header className="ap-header">
         <div className="ap-header-left">
           <button className="ap-burger" onClick={() => setNavOpen((v) => !v)} aria-label="Menu">
@@ -467,6 +494,13 @@ function Shell({ onSignOut }) {
                     }}
                   >
                     Edit profile
+                  </button>
+                  <button
+                    role="menuitemcheckbox"
+                    aria-checked={theme === "dark"}
+                    onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+                  >
+                    {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                   </button>
                   <button role="menuitem" className="ap-menu-danger" onClick={onSignOut}>
                     Sign out

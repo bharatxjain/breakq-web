@@ -4,6 +4,7 @@ import Features from "../components/Features";
 import NightBanner from "../components/NightBanner";
 import MultiLang from "../components/MultiLang";
 import SustainablePartners from "../components/SustainablePartners";
+import StepJourney from "../components/StepJourney";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <SupportingKiranas />
       <Features />
       <MultiLang />
+      <StepJourney />
       <SustainablePartners />
       <NightBanner />
     </>

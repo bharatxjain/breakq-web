@@ -36,11 +36,40 @@
   font-family: var(--font, "Inter", system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.5;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark palette. The Shell resolves light/dark (stored choice, else the OS
+   setting) and stamps data-theme on the root, so no prefers-color-scheme
+   query is needed here — the explicit attribute is the single source. */
+.ap[data-theme="dark"] {
+  color-scheme: dark;
+  --ap-bg: #131118;
+  --ap-surface: #1c1922;
+  --ap-surface-2: #241f2e;
+  --ap-border: #312b3d;
+  --ap-border-strong: #443c54;
+  --ap-text: #ece9f2;
+  --ap-text-soft: #b7afc6;
+  --ap-muted: #8a8399;
+  --ap-primary: #a878ff;
+  --ap-primary-2: #6a4aa8;
+  --ap-primary-ink: #bd98ff;
+  --ap-primary-soft: #2a2040;
+  --ap-ok: #52c288;
+  --ap-ok-soft: #16281f;
+  --ap-warn: #e0a94a;
+  --ap-warn-soft: #2f2716;
+  --ap-danger: #f0857a;
+  --ap-danger-soft: #351f1c;
+  --ap-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
+}
+
+/* Fallback for any .ap that renders before a theme is stamped. */
 @media (prefers-color-scheme: dark) {
-  .ap {
+  .ap:not([data-theme]) {
+    color-scheme: dark;
     --ap-bg: #131118;
     --ap-surface: #1c1922;
     --ap-surface-2: #241f2e;
@@ -1828,25 +1857,21 @@ form.ap-bar {
 /* ============================================================ small phones */
 
 @media (max-width: 560px) {
-  /* header: keep brand + account on the top row, drop the search below */
+  /* one compact header row — the burger menu covers navigation, so the
+     "jump to a section" search is dropped rather than eating a second row */
   .ap-header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    gap: 10px;
     height: auto;
     min-height: var(--ap-header-h);
-    flex-wrap: wrap;
-    padding-top: 8px;
-    padding-bottom: 8px;
-    row-gap: 8px;
+    padding: 8px 12px;
   }
   .ap-header-left {
     margin-right: auto;
   }
-  .ap-header-right {
-    order: 2;
-  }
   .ap-header-search {
-    order: 3;
-    flex: 1 0 100%;
-    max-width: none;
+    display: none;
   }
   .ap-setup-pill {
     font-size: 0;
@@ -1860,7 +1885,7 @@ form.ap-bar {
 
   /* content + view rhythm */
   .ap-content {
-    padding: 12px 14px 64px;
+    padding: 16px 14px 64px;
   }
   .ap-view {
     gap: 16px;
@@ -1889,9 +1914,19 @@ form.ap-bar {
   .ap-kpi {
     min-height: 0;
     padding: 14px;
+    gap: 6px;
   }
   .ap-kpi-value {
     font-size: 22px;
+  }
+  /* the spark's aspect-ratio reserves ~110px at full-bleed width — cap it so
+     the "Platform revenue" card isn't a tall empty box on phones */
+  .ap-kpi-spark {
+    aspect-ratio: auto;
+    height: 40px;
+  }
+  .ap-minibars {
+    height: 38px;
   }
   .ap-kpi-donut {
     flex-direction: column;
