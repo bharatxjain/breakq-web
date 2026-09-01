@@ -1,4 +1,19 @@
+# dependencies
+node_modules/
+
+# environment
 .env
 .env.local
 .env.*.local
+
+# build tooling
 node_modules/.vite
+
+# editor / OS
+.DS_Store
+Thumbs.db
+*.log
+
+# local-only docs & config
+ADMIN_PANEL.md
+supabase

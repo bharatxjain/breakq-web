@@ -3,8 +3,10 @@
 .sj-section {
   position: relative;
   background: var(--surface);
-  /* `clip`, not `hidden`: `hidden` makes this a scroll container and
-     breaks `position: sticky` on `.sj-sticky` (the pinned stepper). */
+  /* Only the X axis: `clip` on Y would crop the pinned panel as the
+     section scrolls past. `clip` (not `hidden`) so `position: sticky`
+     still works. The scooter's ride-off is kept in check by its own
+     fade-out, not by clipping here. */
   overflow-x: clip;
 }
 
@@ -47,18 +49,16 @@
 
 .sj-tall {
   position: relative;
-  height: calc(var(--sj-steps, 3) * 100vh);
+  /* Shorter than 3 full screens so the section isn't a scroll-marathon
+     through half-empty space. */
+  height: calc(var(--sj-steps, 3) * 66vh);
 }
 
 .sj-sticky {
   position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  /* Sit near the top of the pinned view — kills the big gap under the
-     heading. The room left below is where the scooter drops away. */
-  align-items: flex-start;
-  padding-top: clamp(24px, 6vh, 64px);
+  /* Content-height (not 100vh): pins tight to the top with a small gap
+     where the heading was, and leaves no dead band above or below it. */
+  top: clamp(20px, 5vh, 56px);
 }
 
 .sj-grid {
@@ -107,10 +107,10 @@
   z-index: 1;
 }
 
-/* The delivery-scooter marker riding down the track. Held upright while
-   travelling; after 80% it peels off and drives STRAIGHT down, its travel
-   tied to scroll (--sj-exit 0→1) so it keeps dropping until the next
-   section scrolls in. */
+/* The delivery-scooter marker riding down the track. Held upright and
+   parked on the last dot through "Collect and go"; only in the final
+   stretch (--sj-exit 0→1) does it drive RIGHT, off the edge of the
+   screen as the next section arrives. Travel is tied to scroll. */
 .sj-rider {
   position: absolute;
   left: var(--sj-line-left, 17px);
@@ -121,14 +121,16 @@
   width: 48px;
   height: 48px;
   margin: 0;
-  transform: translate(-50%, calc(-50% + var(--sj-exit, 0) * 120vh))
-    rotate(calc(var(--sj-exit, 0) * -6deg));
+  transform: translate(calc(-50% + var(--sj-exit, 0) * 135vw), -50%)
+    rotate(calc(var(--sj-exit, 0) * 3deg));
   transform-origin: 50% 72%;
+  /* stays opaque across the sweep, fades only near the very end */
+  opacity: clamp(0, calc((1 - var(--sj-exit, 0)) * 2), 1);
   filter: drop-shadow(0 5px 8px rgba(29, 26, 37, 0.22));
   transition:
     top 0.12s linear,
     transform 0.12s linear,
-    opacity 0.3s ease;
+    opacity 0.15s linear;
   z-index: 4;
   pointer-events: none;
 }
@@ -253,6 +255,11 @@
 .sj-step.is-done .sj-dot {
   background: var(--primary);
   border-color: var(--primary);
+}
+
+/* number badge — only shown in the mobile numbered list */
+.sj-dot-num {
+  display: none;
 }
 
 .sj-dot-check {
@@ -723,48 +730,95 @@
   right: -44px;
 }
 
-/* ---------- responsive: below 780px, no pin, no crossfade ---------- */
+/* ---------- responsive: below 780px — plain numbered list ----------
+   No pinning, no scroll animation, no preview column: the section
+   collapses to a simple numbered 1-2-3 list of the steps. */
 
 @media (max-width: 779px) {
   .sj-head {
-    padding-top: 64px;
+    padding-top: 60px;
   }
-  /* No scroll pinning here, so the rider has nothing to travel along. */
+  .sj-title {
+    font-size: clamp(26px, 7vw, 34px);
+    line-height: 1.18;
+    overflow-wrap: break-word;
+  }
+  .sj-lead {
+    margin-top: 12px;
+    font-size: 15px;
+  }
+
+  /* drop everything that only makes sense in the pinned desktop view */
   .sj-rider,
-  .sj-line-fill {
+  .sj-line,
+  .sj-line-fill,
+  .sj-panel,
+  .sj-float,
+  .sj-deco {
     display: none;
   }
+
   .sj-tall {
     height: auto;
   }
   .sj-sticky {
     position: static;
-    height: auto;
-    display: block;
   }
   .sj-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
-    padding-top: 40px;
-    padding-bottom: 8px;
   }
-  .sj-panel {
-    min-height: 0;
-    max-width: 420px;
-    margin: 0 auto;
+  /* .sj-grid also carries .container (padding: 0 24px), which wins the
+     cascade — so put the top/bottom spacing on .sj-steps instead. */
+  .sj-steps {
+    gap: 30px;
+    margin-top: 44px; /* space above step 1 */
+    padding-bottom: 40px; /* space below the Explore BreakQ button */
   }
-  .sj-card {
-    position: static;
-    opacity: 1;
-    transform: none;
-    transition: none;
+  .sj-step-btn {
+    grid-template-columns: 30px 1fr;
+    gap: 16px;
+    cursor: default;
+  }
+  .sj-step-body {
+    gap: 8px;
+  }
+
+  /* dot → numbered badge, identical for every step */
+  .sj-step .sj-dot,
+  .sj-step.is-active .sj-dot,
+  .sj-step.is-done .sj-dot {
+    width: 30px;
+    height: 30px;
+    margin-top: -1px;
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: none;
+    animation: none;
+  }
+  .sj-dot-check {
     display: none;
   }
-  .sj-card.is-active {
+  .sj-dot-num {
     display: block;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--white);
   }
+
+  /* every step reads the same — nothing to switch between */
+  .sj-step-title,
+  .sj-step.is-active .sj-step-title {
+    color: var(--ink);
+    font-weight: 800;
+  }
+  .sj-step-desc,
+  .sj-step.is-active .sj-step-desc {
+    color: var(--gray-600);
+  }
+
   .sj-cta {
-    margin-left: 56px;
+    margin: 24px 0 0 46px;
   }
 }
 

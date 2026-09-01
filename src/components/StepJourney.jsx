@@ -320,6 +320,9 @@ export default function StepJourney() {
     const tall = tallRef.current;
     if (!tall) return undefined;
     const ol = stepsRef.current;
+    // Below 780px the section isn't pinned — it's a plain stacked list, so
+    // scroll shouldn't drive anything (see the matching CSS media query).
+    const mobile = window.matchMedia("(max-width: 779px)");
     let raf = 0;
     const setVars = (p, exit) => {
       if (!ol) return;
@@ -328,6 +331,10 @@ export default function StepJourney() {
     };
     const read = () => {
       raf = 0;
+      if (mobile.matches) {
+        setVars(0, 0);
+        return;
+      }
       const rect = tall.getBoundingClientRect();
       const dist = rect.height - window.innerHeight;
       if (dist <= 0) {
@@ -337,17 +344,17 @@ export default function StepJourney() {
         return;
       }
       const progress = Math.min(1, Math.max(0, -rect.top / dist));
-      // Past 80% the scooter peels off the track and drives straight down,
-      // travel tied to scroll so it keeps dropping until the next section
-      // scrolls into view.
-      const exit = Math.min(1, Math.max(0, (progress - 0.8) / 0.2));
+      // The scooter stays parked on the last dot through the whole "Collect
+      // and go" step; only in the final stretch (progress 0.88 → 1) does it
+      // peel off and drive left→right off the screen, tied to scroll.
+      const exit = Math.min(1, Math.max(0, (progress - 0.88) / 0.12));
       setVars(progress, exit);
       const idx = Math.min(
         steps.length - 1,
         Math.floor(progress * steps.length),
       );
       if (idx !== activeRef.current) setActive(idx);
-      const fin = progress > 0.8;
+      const fin = progress > 0.88;
       if (fin !== finishedRef.current) setFinished(fin);
     };
     const onScroll = () => {
@@ -356,9 +363,11 @@ export default function StepJourney() {
     read();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    mobile.addEventListener("change", onScroll);
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      mobile.removeEventListener("change", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -399,7 +408,11 @@ export default function StepJourney() {
   const goToStep = (i) => {
     const tall = tallRef.current;
     const dist = tall ? tall.offsetHeight - window.innerHeight : 0;
-    if (!tall || dist <= 0) {
+    if (
+      !tall ||
+      dist <= 0 ||
+      window.matchMedia("(max-width: 779px)").matches
+    ) {
       setActive(i); // mobile / not pinned — nothing to scroll to
       return;
     }
@@ -460,6 +473,7 @@ export default function StepJourney() {
                       onClick={() => goToStep(i)}
                     >
                       <span className="sj-dot" aria-hidden="true">
+                        <span className="sj-dot-num">{i + 1}</span>
                         <IconCheck className="sj-dot-check" />
                       </span>
                       <span className="sj-step-body">
