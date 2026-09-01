@@ -29,7 +29,10 @@
 
   position: fixed;
   inset: 0;
-  overflow: auto;
+  /* Only ever scroll vertically. Wide content (tables, charts) scrolls inside
+     its own .ap-table-wrap; letting the shell scroll sideways would shrink the
+     scrollport and knock the sticky sidebar out of alignment with the header. */
+  overflow: hidden auto;
   z-index: 9000;
   background: var(--ap-bg);
   color: var(--ap-text);
@@ -538,8 +541,11 @@
 .ap-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 224px 1fr;
+  /* minmax(0, 1fr) lets the content column shrink past its min-content width so
+     wide children never stretch the grid and force a horizontal scrollbar. */
+  grid-template-columns: 224px minmax(0, 1fr);
   align-items: start;
+  min-height: calc(100vh - var(--ap-header-h));
 }
 
 .ap-side {
@@ -1743,7 +1749,7 @@
 
 @media (min-width: 901px) {
   .ap-body.is-collapsed {
-    grid-template-columns: 66px 1fr;
+    grid-template-columns: 66px minmax(0, 1fr);
   }
   .ap-body.is-collapsed .ap-side {
     padding: 12px 8px 14px;
@@ -1978,4 +1984,271 @@ form.ap-bar {
   .ap-logo-word {
     display: none;
   }
+}
+
+/* ==================================================== analytics add-ons === */
+
+/* banner tone variants (base .ap-banner is warn-coloured) */
+.ap-banner-danger {
+  background: var(--ap-danger-soft);
+  color: var(--ap-danger);
+  border-color: color-mix(in srgb, var(--ap-danger) 30%, transparent);
+}
+.ap-banner-ok {
+  background: var(--ap-ok-soft);
+  color: var(--ap-ok);
+  border-color: color-mix(in srgb, var(--ap-ok) 30%, transparent);
+}
+.ap-banner-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* KPI split line (e.g. "Search 1,204 · View 890") */
+.ap-kpi-split {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ap-text-soft);
+  flex-wrap: wrap;
+}
+.ap-kpi-split b {
+  color: var(--ap-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* dual-axis chart legend */
+.ap-dualaxis-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* histogram */
+.ap-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 200px;
+  padding-top: 8px;
+}
+.ap-histogram-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+  min-width: 0;
+}
+.ap-histogram-count {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ap-histogram-bar {
+  width: 100%;
+  max-width: 64px;
+  background: var(--ap-primary);
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+.ap-histogram-label {
+  font-size: 11px;
+  color: var(--ap-muted);
+  white-space: nowrap;
+}
+
+/* ranked horizontal bars */
+.ap-rankbars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.ap-rankbars li {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.ap-rankbars-label {
+  font-size: 12px;
+  color: var(--ap-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ap-rankbars-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ap-surface-2);
+  overflow: hidden;
+}
+.ap-rankbars-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ap-primary);
+}
+.ap-rankbars-value {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ap-rankbars-value em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ap-muted);
+  margin-left: 6px;
+}
+
+/* funnel */
+.ap-funnel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: fn;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ap-funnel-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 150px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.ap-funnel-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ap-funnel-bar {
+  height: 24px;
+  min-width: 3px;
+  background: var(--ap-primary);
+  border-radius: 6px;
+  opacity: 0.85;
+}
+.ap-funnel-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ap-funnel-drop {
+  display: block;
+  padding-left: 160px;
+  font-size: 11px;
+  color: var(--ap-muted);
+}
+@media (max-width: 560px) {
+  .ap-funnel-drop {
+    padding-left: 0;
+  }
+  .ap-rankbars li,
+  .ap-funnel-row {
+    grid-template-columns: minmax(72px, 110px) 1fr auto;
+  }
+}
+
+/* heatmap */
+.ap-heatmap-wrap {
+  overflow-x: auto;
+}
+.ap-heatmap {
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: 12px;
+}
+.ap-heatmap th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ap-muted);
+  text-align: left;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+.ap-heatmap tbody th {
+  position: sticky;
+  left: 0;
+  background: var(--ap-surface);
+}
+.ap-heatmap td {
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  border: 1px solid var(--ap-border);
+}
+
+/* Vendors — filter bar */
+.ap-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.ap-filters input,
+.ap-filters select {
+  width: auto;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.ap-filters .ap-filters-search {
+  flex: 1 1 200px;
+}
+.ap-filters-reset {
+  background: none;
+  border: 0;
+  color: var(--ap-primary-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+/* per-shop detail metrics */
+.ap-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+.ap-metric {
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ap-metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ap-muted);
+  font-weight: 700;
+}
+.ap-metric-value {
+  font-size: 18px;
+  font-weight: 800;
+}
+.ap-detail-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
 }

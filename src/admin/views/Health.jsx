@@ -6,12 +6,18 @@ const CHECKS = [
   ["admin_login_logs", "admin_login_logs table", "Login attempts are logged here (best-effort until it exists)"],
   ["shops_is_deleted", "shops.is_deleted column", "Soft delete for vendors — hard delete is never used"],
   ["shops_locality", "shops.locality column", "Enables the “Top performing area” card (decision 1)"],
+  ["shops_locality_source", "shops.locality_source column", "Geographic Intelligence — manual vs geocoded backfill health"],
+  ["shop_ratings", "shop_ratings table", "Ratings & Reviews moderation queue + distribution"],
+  ["admin_analytics_rpc", "admin_analytics() RPC", "Dashboard demand/supply cards + graphs — install via supabase/admin_analytics.sql"],
+  ["admin_search_analytics_rpc", "admin_search_analytics() RPC", "Search & Discovery tab — supabase/admin_analytics.sql"],
+  ["admin_ratings_analytics_rpc", "admin_ratings_analytics() RPC", "Ratings & Reviews tab — supabase/admin_analytics.sql"],
+  ["admin_geo_analytics_rpc", "admin_geo_analytics() RPC", "Geographic Intelligence tab — supabase/admin_analytics.sql"],
 ];
 
 const NOTES = [
   {
-    title: "Redundant triggers on shop_ratings",
-    body: "Three triggers (shop_ratings_aggregate, shop_ratings_refresh, trg_refresh_shop_rating) all call refresh_shop_rating() on insert. Harmless if idempotent, but it recalculates three times per rating. Drop two of the three next time you're in that migration.",
+    title: "shop_ratings refresh trigger — watch for duplicates",
+    body: "shops.rating_count is a rollup maintained by refresh_shop_rating() on insert. If more than one trigger calls it (a past migration added shop_ratings_aggregate / shop_ratings_refresh alongside trg_refresh_shop_rating), the count inflates. The Ratings tab now checks this live and shows a banner when the rollup and the actual review-row count diverge.",
   },
   {
     title: "categories.item_count may drift",
@@ -62,7 +68,8 @@ export default function Health() {
         </Async>
         {data && CHECKS.some(([k]) => !data[k]) && (
           <p className="ap-note">
-            Run <code>supabase/admin_panel.sql</code> in the Supabase SQL editor to install everything above.
+            Run <code>supabase/admin_panel.sql</code> then <code>supabase/admin_analytics.sql</code> in the
+            Supabase SQL editor to install everything above. Both are safe to re-run.
           </p>
         )}
       </section>

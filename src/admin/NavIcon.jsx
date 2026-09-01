@@ -65,6 +65,21 @@ const PATHS = {
       <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.5 5.5l2 2M16.5 16.5l2 2M5.5 18.5l2-2M16.5 7.5l2-2" />
     </>
   ),
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5 21 21" />
+    </>
+  ),
+  ratings: (
+    <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9L12 3.5Z" />
+  ),
+  geo: (
+    <>
+      <path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" />
+      <circle cx="12" cy="10" r="2.6" />
+    </>
+  ),
 };
 
 export default function NavIcon({ name }) {

@@ -505,3 +505,188 @@ export function ConfirmButton({ onConfirm, children, className = "ap-btn ap-btn-
     </button>
   );
 }
+
+/* ----------------------------------------------------- analytics add-ons --- */
+
+// One-line hint shown wherever an analytics RPC / column isn't installed yet.
+export function NeedsSetup({ what = "This metric", file = "supabase/admin_analytics.sql" }) {
+  return (
+    <p className="ap-async-empty">
+      {what} needs setup — run <code>{file}</code> in the Supabase SQL editor.
+    </p>
+  );
+}
+
+// Absolute-delta trend indicator. Renders even without a baseline (shows "new").
+export function TrendArrow({ now, prev, unit = "" }) {
+  const a = Number(now);
+  const b = Number(prev);
+  if (!Number.isFinite(a)) return null;
+  if (!Number.isFinite(b) || b === 0) return <span className="ap-delta is-up">▲ new</span>;
+  const pct = ((a - b) / b) * 100;
+  const up = pct >= 0;
+  return (
+    <span className={`ap-delta ${up ? "is-up" : "is-down"}`}>
+      {up ? "▲" : "▼"} {Math.abs(pct).toFixed(0)}%{unit}
+    </span>
+  );
+}
+
+// Two independently-scaled lines on a shared x-axis. `left` / `right` are
+// { key, label, format, color }.
+export function DualAxisChart({ data, xKey = "d", left, right }) {
+  if (!data || data.length < 2) return <div className="ap-async-empty">Not enough data yet.</div>;
+  const W = 640;
+  const H = 200;
+  const PL = 6;
+  const PT = 14;
+  const PB = 6;
+  const n = data.length - 1;
+  const sx = (W - PL * 2) / Math.max(1, n);
+  const x = (i) => PL + i * sx;
+  const series = (key) => data.map((d) => Number(d[key]) || 0);
+  const path = (vals) => {
+    const max = Math.max(1, ...vals);
+    const y = (v) => PT + (1 - v / max) * (H - PT - PB);
+    return { d: vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" "), max };
+  };
+  const L = path(series(left.key));
+  const R = path(series(right.key));
+  const lc = left.color || "var(--ap-primary)";
+  const rc = right.color || "var(--ap-primary-2)";
+  const fmtL = left.format || num;
+  const fmtR = right.format || num;
+
+  return (
+    <div className="ap-area">
+      <svg viewBox={`0 0 ${W} ${H}`} className="ap-area-svg" role="img" aria-label={`${left.label} and ${right.label}`}>
+        {[0.25, 0.5, 0.75, 1].map((f) => (
+          <line key={f} x1={PL} x2={W - PL} y1={PT + (1 - f) * (H - PT - PB)} y2={PT + (1 - f) * (H - PT - PB)} className="ap-area-grid" />
+        ))}
+        <path d={R.d} fill="none" style={{ stroke: rc }} strokeWidth="2" strokeDasharray="4 3" />
+        <path d={L.d} fill="none" style={{ stroke: lc }} strokeWidth="2.5" />
+      </svg>
+      <div className="ap-area-x">
+        <span>{fmtDate(data[0][xKey])}</span>
+        <span className="ap-dualaxis-legend">
+          <span style={{ color: lc }}>● {left.label} · peak {fmtL(L.max)}</span>
+          <span style={{ color: rc }}>┄ {right.label} · peak {fmtR(R.max)}</span>
+        </span>
+        <span>{fmtDate(data[data.length - 1][xKey])}</span>
+      </div>
+    </div>
+  );
+}
+
+// Vertical bar histogram — every label + count is shown (unlike BarChart).
+export function Histogram({ bins, format = num }) {
+  if (!bins || bins.length === 0) return <div className="ap-async-empty">No data.</div>;
+  const vals = bins.map((b) => Number(b.value) || 0);
+  const max = Math.max(1, ...vals);
+  return (
+    <div className="ap-histogram">
+      {bins.map((b, i) => (
+        <div className="ap-histogram-col" key={i}>
+          <span className="ap-histogram-count">{format(vals[i])}</span>
+          <span className="ap-histogram-bar" style={{ height: `${(vals[i] / max) * 100}%` }} />
+          <span className="ap-histogram-label">{b.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Horizontal ranked bars: [{ label, value, sub? }].
+export function RankBars({ rows, format = num, max: fixedMax }) {
+  if (!rows || rows.length === 0) return <div className="ap-async-empty">No data.</div>;
+  const max = fixedMax || Math.max(1, ...rows.map((r) => Number(r.value) || 0));
+  return (
+    <ul className="ap-rankbars">
+      {rows.map((r, i) => (
+        <li key={i}>
+          <span className="ap-rankbars-label" title={r.label}>{r.label}</span>
+          <span className="ap-rankbars-track">
+            <span className="ap-rankbars-fill" style={{ width: `${Math.max(2, ((Number(r.value) || 0) / max) * 100)}%` }} />
+          </span>
+          <span className="ap-rankbars-value">
+            {format(r.value)}
+            {r.sub != null && <em>{r.sub}</em>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Conversion funnel: [{ label, value }]. Shows drop vs the previous stage.
+export function Funnel({ stages }) {
+  const clean = (stages || []).filter((s) => s && s.value != null);
+  if (clean.length === 0) return <div className="ap-async-empty">Not tracked yet.</div>;
+  const top = Math.max(1, Number(clean[0].value) || 0);
+  return (
+    <ol className="ap-funnel">
+      {clean.map((s, i) => {
+        const v = Number(s.value) || 0;
+        const prev = i ? Number(clean[i - 1].value) || 0 : v;
+        const drop = i && prev ? (1 - v / prev) * 100 : 0;
+        return (
+          <li key={i}>
+            <div className="ap-funnel-row">
+              <span className="ap-funnel-label">{s.label}</span>
+              <span className="ap-funnel-bar" style={{ width: `${(v / top) * 100}%` }} />
+              <span className="ap-funnel-value">{num(v)}</span>
+            </div>
+            {i > 0 && (
+              <span className="ap-funnel-drop">
+                {((v / top) * 100).toFixed(0)}% of top{drop > 0 ? ` · ▼ ${drop.toFixed(0)}% from previous` : ""}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// Locality × event-type intensity grid. `data` = [{ row, col, count }].
+export function Heatmap({ data, format = num }) {
+  if (!data || data.length === 0) return <div className="ap-async-empty">No data.</div>;
+  const rows = [...new Set(data.map((d) => d.row))];
+  const cols = [...new Set(data.map((d) => d.col))];
+  const lookup = new Map(data.map((d) => [`${d.row} ${d.col}`, Number(d.count) || 0]));
+  const max = Math.max(1, ...data.map((d) => Number(d.count) || 0));
+  return (
+    <div className="ap-heatmap-wrap">
+      <table className="ap-heatmap">
+        <thead>
+          <tr>
+            <th />
+            {cols.map((c) => (
+              <th key={c}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r}>
+              <th>{r}</th>
+              {cols.map((c) => {
+                const v = lookup.get(`${r} ${c}`) || 0;
+                const pct = Math.round((v / max) * 100);
+                return (
+                  <td
+                    key={c}
+                    style={{ background: `color-mix(in srgb, var(--ap-primary) ${pct}%, transparent)`, color: pct > 55 ? "#fff" : "inherit" }}
+                    title={`${r} · ${c}: ${format(v)}`}
+                  >
+                    {v ? format(v) : ""}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

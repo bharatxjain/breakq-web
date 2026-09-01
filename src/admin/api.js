@@ -277,6 +277,28 @@ async function dashboardFallback() {
   };
 }
 
+/* -------------------------------------------------------------- analytics --- */
+// The four functions below are added by supabase/admin_analytics.sql. Until that
+// runs the RPC is absent — we return { _missing: true } so each view can show a
+// one-line "needs setup" hint instead of an error wall.
+
+function looksMissing(error) {
+  return /function|does not exist|could not find|schema cache|not authorized/i.test(error?.message || "");
+}
+
+async function rpcOrMissing(name, args) {
+  const { data, error } = await client().rpc(name, args);
+  if (!error) return data ?? {};
+  if (looksMissing(error)) return { _missing: true };
+  throw error;
+}
+
+export const fetchAnalytics = () => rpcOrMissing("admin_analytics");
+export const fetchSearchAnalytics = () => rpcOrMissing("admin_search_analytics");
+export const fetchRatingsAnalytics = () => rpcOrMissing("admin_ratings_analytics");
+export const fetchGeoAnalytics = () => rpcOrMissing("admin_geo_analytics");
+export const fetchShopMetrics = (shopId) => rpcOrMissing("admin_shop_metrics", { p_shop_id: shopId });
+
 /* ---------------------------------------------------------------- vendors --- */
 
 export async function fetchShops(status) {
@@ -285,6 +307,88 @@ export async function fetchShops(status) {
   const { data, error } = await q;
   if (error) throw error;
   return data ?? [];
+}
+
+// Searchable / filterable / paginated directory. Filters that map to a shops
+// column run server-side; `tier` is resolved via active subscriptions first.
+export async function fetchShopsPaged({
+  page = 0,
+  pageSize = 25,
+  search = "",
+  locality = "",
+  tierId = "",
+  status = "",
+  state = "any", // any | active | deleted
+  localitySource = "any", // any | geocoded | manual | none
+  ratingMin = "",
+  ratingMax = "",
+} = {}) {
+  const sb = client();
+
+  // tier filter → the shop_ids that currently hold an active subscription on it
+  let tierShopIds = null;
+  if (tierId) {
+    const { data, error } = await sb
+      .from("vendor_subscriptions")
+      .select("shop_id")
+      .eq("status", "active")
+      .eq("tier_id", tierId)
+      .limit(5000);
+    if (error) throw error;
+    tierShopIds = (data ?? []).map((r) => r.shop_id);
+    if (tierShopIds.length === 0) return { rows: [], total: 0 };
+  }
+
+  const from = page * pageSize;
+  let q = sb
+    .from("shops")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, from + pageSize - 1);
+
+  if (search.trim()) {
+    const t = search.trim().replace(/[%,]/g, "");
+    q = q.or(`name.ilike.%${t}%,owner_name.ilike.%${t}%,id.ilike.%${t}%,phone.ilike.%${t}%`);
+  }
+  if (locality.trim()) q = q.ilike("locality", `%${locality.trim()}%`);
+  if (status) q = q.eq("status", status);
+  if (state === "active") q = q.eq("is_deleted", false);
+  if (state === "deleted") q = q.eq("is_deleted", true);
+  if (localitySource === "none") q = q.is("locality_source", null);
+  else if (localitySource !== "any") q = q.eq("locality_source", localitySource);
+  if (ratingMin !== "") q = q.gte("avg_rating", Number(ratingMin));
+  if (ratingMax !== "") q = q.lte("avg_rating", Number(ratingMax));
+  if (tierShopIds) q = q.in("id", tierShopIds);
+
+  const { data, error, count } = await q;
+  if (error) throw error;
+  const rows = data ?? [];
+
+  // attach the current tier + last-activity for the visible page
+  if (rows.length) {
+    const ids = rows.map((s) => s.id);
+    const { data: subs } = await sb
+      .from("vendor_subscriptions")
+      .select("shop_id, subscription_tiers(display_name, price_rupees)")
+      .eq("status", "active")
+      .in("shop_id", ids);
+    const byShop = new Map((subs ?? []).map((s) => [s.shop_id, s.subscription_tiers]));
+
+    let lastActive = new Map();
+    try {
+      const { data: la } = await sb.rpc("admin_shops_last_active", { p_ids: ids });
+      lastActive = new Map((la ?? []).map((x) => [x.shop_id, x.last_active]));
+    } catch {
+      /* RPC not installed — column just shows "—" */
+    }
+
+    for (const s of rows) {
+      s._tier = byShop.get(s.id) || null;
+      s._last_active = lastActive.get(s.id) || null;
+    }
+  }
+
+  return { rows, total: count ?? 0 };
 }
 
 // Fire-and-forget: ask the edge function to email the vendor + log an in-app
@@ -613,7 +717,13 @@ export async function probeSchema() {
   };
   await probe("shops_is_deleted", () => client().from("shops").select("is_deleted").limit(1));
   await probe("shops_locality", () => client().from("shops").select("locality").limit(1));
+  await probe("shops_locality_source", () => client().from("shops").select("locality_source").limit(1));
+  await probe("shop_ratings", () => client().from("shop_ratings").select("id").limit(1));
   await probe("admin_login_logs", () => client().from("admin_login_logs").select("id").limit(1));
   await probe("admin_dashboard_rpc", () => client().rpc("admin_dashboard"));
+  await probe("admin_analytics_rpc", () => client().rpc("admin_analytics"));
+  await probe("admin_search_analytics_rpc", () => client().rpc("admin_search_analytics"));
+  await probe("admin_ratings_analytics_rpc", () => client().rpc("admin_ratings_analytics"));
+  await probe("admin_geo_analytics_rpc", () => client().rpc("admin_geo_analytics"));
   return out;
 }

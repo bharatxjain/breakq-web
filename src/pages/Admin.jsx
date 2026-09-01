@@ -20,6 +20,9 @@ import Payments from "../admin/views/Payments";
 import Promotions from "../admin/views/Promotions";
 import Coupons from "../admin/views/Coupons";
 import Categories from "../admin/views/Categories";
+import SearchDiscovery from "../admin/views/SearchDiscovery";
+import RatingsModeration from "../admin/views/RatingsModeration";
+import GeoIntelligence from "../admin/views/GeoIntelligence";
 import Health from "../admin/views/Health";
 import "./Admin.css";
 
@@ -45,6 +48,14 @@ const NAV = [
       { key: "promotions", label: "Promotions", el: Promotions },
       { key: "coupons", label: "Coupons", el: Coupons },
       { key: "categories", label: "Categories", el: Categories },
+    ],
+  },
+  {
+    group: "Analytics",
+    items: [
+      { key: "search", label: "Search & Discovery", el: SearchDiscovery },
+      { key: "ratings", label: "Ratings", el: RatingsModeration },
+      { key: "geo", label: "Geography", el: GeoIntelligence },
     ],
   },
   { group: "System", items: [{ key: "health", label: "System", el: Health }] },

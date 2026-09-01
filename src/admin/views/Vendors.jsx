@@ -1,35 +1,86 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   approveShop,
   enableCommission,
-  fetchShops,
+  fetchShopMetrics,
+  fetchShopsPaged,
+  fetchTiers,
   rejectShop,
   restoreShop,
   softDeleteShop,
 } from "../api";
 import {
+  AreaChart,
   Async,
   Badge,
   ConfirmDialog,
+  DualAxisChart,
   Field,
   Modal,
+  NeedsSetup,
   fmtDate,
   fmtDateTime,
+  num,
   statusTone,
   useAsync,
   useToast,
 } from "../ui";
 
-const TABS = ["pending", "approved", "rejected", "all"];
+const PAGE_SIZE = 25;
+const BLANK_FILTERS = {
+  search: "",
+  locality: "",
+  tierId: "",
+  status: "",
+  state: "any", // any | active | deleted
+  localitySource: "any", // any | geocoded | manual | none
+  ratingMin: "",
+  ratingMax: "",
+};
 
 export default function Vendors() {
-  const [tab, setTab] = useState("pending");
   const notify = useToast();
-  const { state, data, error, reload } = useAsync(() => fetchShops(tab), [tab]);
+  const [filters, setFilters] = useState(BLANK_FILTERS);
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(0);
   const [detail, setDetail] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const [confirm, setConfirm] = useState(null); // { kind: 'approve' | 'delete', shop }
   const [busy, setBusy] = useState(false);
+
+  const tiers = useAsync(fetchTiers, []);
+
+  // debounce the free-text search into the committed filter set
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters((f) => (f.search === searchInput ? f : { ...f, search: searchInput }));
+      setPage(0);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const key = useMemo(() => JSON.stringify({ ...filters, page }), [filters, page]);
+  const { state, data, error, reload } = useAsync(
+    () => fetchShopsPaged({ page, pageSize: PAGE_SIZE, ...filters }),
+    [key],
+  );
+
+  const rows = data?.rows || [];
+  const total = data?.total || 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const to = Math.min(total, (page + 1) * PAGE_SIZE);
+
+  const set = (patch) => {
+    setFilters((f) => ({ ...f, ...patch }));
+    setPage(0);
+  };
+  const resetFilters = () => {
+    setFilters(BLANK_FILTERS);
+    setSearchInput("");
+    setPage(0);
+  };
+  const dirty = JSON.stringify(filters) !== JSON.stringify(BLANK_FILTERS);
 
   async function run(label, fn) {
     setBusy(true);
@@ -47,20 +98,82 @@ export default function Vendors() {
     }
   }
 
-  const rows = data || [];
-
   return (
     <div className="ap-view">
       <div className="ap-view-head">
-        <h1>Vendors</h1>
+        <div>
+          <h1>Vendors</h1>
+          <p className="ap-view-sub">{num(total)} shops · searchable directory</p>
+        </div>
+        <button className="ap-btn ap-btn-ghost" onClick={reload}>
+          Refresh
+        </button>
       </div>
 
-      <div className="ap-tabs">
-        {TABS.map((t) => (
-          <button key={t} className={tab === t ? "is-active" : ""} onClick={() => setTab(t)}>
-            {t[0].toUpperCase() + t.slice(1)}
+      <div className="ap-filters">
+        <input
+          className="ap-filters-search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search name, owner, phone, id"
+          aria-label="Search vendors"
+        />
+        <input
+          value={filters.locality}
+          onChange={(e) => set({ locality: e.target.value })}
+          placeholder="Locality"
+          aria-label="Filter by locality"
+        />
+        <select value={filters.tierId} onChange={(e) => set({ tierId: e.target.value })} aria-label="Filter by tier">
+          <option value="">Any tier</option>
+          {(tiers.data || []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.display_name || t.tagline || t.id}
+            </option>
+          ))}
+        </select>
+        <select value={filters.status} onChange={(e) => set({ status: e.target.value })} aria-label="Filter by status">
+          <option value="">Any status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select value={filters.state} onChange={(e) => set({ state: e.target.value })} aria-label="Filter by state">
+          <option value="any">Active + deleted</option>
+          <option value="active">Active only</option>
+          <option value="deleted">Deleted only</option>
+        </select>
+        <select
+          value={filters.localitySource}
+          onChange={(e) => set({ localitySource: e.target.value })}
+          aria-label="Filter by locality source"
+        >
+          <option value="any">Any location source</option>
+          <option value="geocoded">Geocoded</option>
+          <option value="manual">Manual</option>
+          <option value="none">Never geocoded</option>
+        </select>
+        <select value={filters.ratingMin} onChange={(e) => set({ ratingMin: e.target.value })} aria-label="Minimum rating">
+          <option value="">Min ★</option>
+          {[1, 2, 3, 4, 4.5].map((r) => (
+            <option key={r} value={r}>
+              ≥ {r}
+            </option>
+          ))}
+        </select>
+        <select value={filters.ratingMax} onChange={(e) => set({ ratingMax: e.target.value })} aria-label="Maximum rating">
+          <option value="">Max ★</option>
+          {[2, 3, 4, 4.5, 5].map((r) => (
+            <option key={r} value={r}>
+              ≤ {r}
+            </option>
+          ))}
+        </select>
+        {dirty && (
+          <button className="ap-filters-reset" onClick={resetFilters}>
+            Clear filters
           </button>
-        ))}
+        )}
       </div>
 
       <Async
@@ -68,18 +181,19 @@ export default function Vendors() {
         error={error}
         onRetry={reload}
         isEmpty={rows.length === 0}
-        empty={`No ${tab === "all" ? "" : tab} shops.`}
+        empty="No shops match these filters."
       >
         <div className="ap-table-wrap">
           <table className="ap-table">
             <thead>
               <tr>
                 <th>Shop</th>
-                <th>Owner</th>
-                <th>Phone</th>
-                <th>Years</th>
-                <th>Registered</th>
+                <th>Locality</th>
+                <th>Tier</th>
+                <th className="ap-num">Rating</th>
                 <th>Status</th>
+                <th>Registered</th>
+                <th>Last active</th>
                 <th />
               </tr>
             </thead>
@@ -91,16 +205,24 @@ export default function Vendors() {
                       {s.name}
                     </button>
                     {s.is_deleted && <Badge tone="danger">deleted</Badge>}
+                    {s.owner_name && <div className="ap-muted-line">{s.owner_name}</div>}
                   </td>
-                  <td>{s.owner_name || "—"}</td>
-                  <td>{s.phone || "—"}</td>
-                  <td>{s.years_in_business ?? "—"}</td>
-                  <td>{fmtDate(s.created_at)}</td>
+                  <td>
+                    {s.locality || "—"}
+                    {s.locality_source && <div className="ap-muted-line">{s.locality_source}</div>}
+                  </td>
+                  <td>{s._tier?.display_name || "Free"}</td>
+                  <td className="ap-num">
+                    {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "—"}
+                    {s.rating_count ? <div className="ap-muted-line">{num(s.rating_count)} rated</div> : null}
+                  </td>
                   <td>
                     <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                   </td>
+                  <td>{fmtDate(s.created_at)}</td>
+                  <td>{s._last_active ? fmtDate(s._last_active) : "—"}</td>
                   <td className="ap-row-actions">
-                    {s.status === "pending" && (
+                    {s.status === "pending" && !s.is_deleted && (
                       <>
                         <button
                           className="ap-btn ap-btn-sm ap-btn-ok"
@@ -127,6 +249,27 @@ export default function Vendors() {
             </tbody>
           </table>
         </div>
+
+        <div className="ap-pager">
+          <span>
+            {from}–{to} of {num(total)}
+          </span>
+          <div className="ap-pager-btns">
+            <button className="ap-btn ap-btn-sm ap-btn-ghost" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              ← Prev
+            </button>
+            <span className="ap-pager-page">
+              Page {page + 1} / {pages}
+            </span>
+            <button
+              className="ap-btn ap-btn-sm ap-btn-ghost"
+              disabled={page + 1 >= pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
       </Async>
 
       {detail && (
@@ -144,12 +287,16 @@ export default function Vendors() {
               label="Commission enabled"
               value={detail.commission_enabled_at ? fmtDateTime(detail.commission_enabled_at) : "Not yet"}
             />
-            <Detail label="Locality" value={detail.locality || "—"} />
+            <Detail
+              label="Locality"
+              value={detail.locality ? `${detail.locality}${detail.locality_source ? ` (${detail.locality_source})` : ""}` : "—"}
+            />
+            <Detail label="Tier" value={detail._tier?.display_name || "Free"} />
             <Detail label="Address" value={detail.address} span />
-            {detail.rejection_reason && (
-              <Detail label="Rejection reason" value={detail.rejection_reason} span />
-            )}
+            {detail.rejection_reason && <Detail label="Rejection reason" value={detail.rejection_reason} span />}
           </div>
+
+          <ShopMetrics shop={detail} />
 
           <div className="ap-detail-files">
             {detail.image_url && (
@@ -158,19 +305,14 @@ export default function Vendors() {
               </a>
             )}
             {detail.business_proof_url && (
-              <a
-                href={detail.business_proof_url}
-                target="_blank"
-                rel="noreferrer"
-                className="ap-btn ap-btn-ghost"
-              >
+              <a href={detail.business_proof_url} target="_blank" rel="noreferrer" className="ap-btn ap-btn-ghost">
                 Business proof ↗
               </a>
             )}
           </div>
 
           <div className="ap-detail-actions">
-            {detail.status === "pending" && (
+            {detail.status === "pending" && !detail.is_deleted && (
               <>
                 <button
                   className="ap-btn ap-btn-ok"
@@ -179,11 +321,7 @@ export default function Vendors() {
                 >
                   Verify
                 </button>
-                <button
-                  className="ap-btn ap-btn-danger"
-                  disabled={busy}
-                  onClick={() => setRejecting(detail)}
-                >
+                <button className="ap-btn ap-btn-danger" disabled={busy} onClick={() => setRejecting(detail)}>
                   Reject…
                 </button>
               </>
@@ -215,6 +353,8 @@ export default function Vendors() {
               </button>
             )}
           </div>
+          {/* "Impersonate view" and "force re-geocode" intentionally omitted:
+              there is no customer-facing shop UI or geocode endpoint in this repo. */}
         </Modal>
       )}
 
@@ -238,8 +378,8 @@ export default function Vendors() {
           message={
             <>
               <strong>{confirm.shop.name}</strong> will go live for customers and the owner
-              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that
-              their shop is approved. Continue?
+              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that their shop is
+              approved. Continue?
             </>
           }
         />
@@ -255,15 +395,98 @@ export default function Vendors() {
           onConfirm={() => run("Vendor deleted", () => softDeleteShop(confirm.shop.id))}
           message={
             <>
-              This soft-deletes <strong>{confirm.shop.name}</strong> and stops it accepting orders. The
-              record is kept (orders and history stay intact) and can be restored later. The owner
-              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that
-              their shop was removed. Continue?
+              This soft-deletes <strong>{confirm.shop.name}</strong> and stops it accepting orders. The record is
+              kept (orders and history stay intact) and can be restored later. The owner
+              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that their shop was
+              removed. Continue?
             </>
           }
         />
       )}
     </div>
+  );
+}
+
+function daysSince(ts) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function ShopMetrics({ shop }) {
+  const { state, data, error, reload } = useAsync(() => fetchShopMetrics(shop.id), [shop.id]);
+  const missing = data?._missing;
+  const M = data && !missing ? data : null;
+
+  if (missing) return <NeedsSetup what="Per-shop metrics" />;
+
+  const stale = daysSince(M?.catalog_last_added);
+  const staleTone = stale == null ? "neutral" : stale > 90 ? "danger" : stale > 30 ? "warn" : "ok";
+  const activity = M?.activity || [];
+  const ratingTrend = M?.rating_trend || [];
+
+  return (
+    <Async state={state} error={error} onRetry={reload}>
+      <div className="ap-metric-grid">
+        <div className="ap-metric">
+          <span className="ap-metric-label">Catalog size</span>
+          <span className="ap-metric-value">{M?.catalog_size != null ? num(M.catalog_size) : "—"}</span>
+        </div>
+        <div className="ap-metric">
+          <span className="ap-metric-label">Newest catalog item</span>
+          <span className="ap-metric-value">{stale == null ? "—" : `${stale}d ago`}</span>
+          {stale != null && (
+            <Badge tone={staleTone}>
+              {stale > 90 ? "stale — check if dead" : stale > 30 ? "ageing" : "fresh"}
+            </Badge>
+          )}
+        </div>
+        <div className="ap-metric">
+          <span className="ap-metric-label">Last active</span>
+          <span className="ap-metric-value">{M?.last_active ? fmtDate(M.last_active) : "—"}</span>
+        </div>
+        <div className="ap-metric">
+          <span className="ap-metric-label">Rating (rollup)</span>
+          <span className="ap-metric-value">
+            {M?.rating_now?.avg ? Number(M.rating_now.avg).toFixed(1) : "—"}
+          </span>
+          {M?.rating_now?.count ? <span className="ap-metric-label">{num(M.rating_now.count)} ratings</span> : null}
+        </div>
+      </div>
+
+      <div className="ap-detail-charts">
+        <div>
+          <div className="ap-panel-head">
+            <h2>Views &amp; searches · 30 days</h2>
+          </div>
+          {activity.some((a) => a.views || a.searches) ? (
+            <DualAxisChart
+              data={activity}
+              left={{ key: "views", label: "Views", format: num }}
+              right={{ key: "searches", label: "Searches", format: num }}
+            />
+          ) : (
+            <div className="ap-async-empty">No events in the last 30 days.</div>
+          )}
+        </div>
+        <div>
+          <div className="ap-panel-head">
+            <h2>Rating trend · 180 days</h2>
+          </div>
+          {ratingTrend.length >= 2 ? (
+            <>
+              <AreaChart data={ratingTrend} metric="value" format={(v) => Number(v).toFixed(2)} />
+              <p className="ap-field-hint">
+                From review rows directly — safe even while the rollup count is inflated.
+              </p>
+            </>
+          ) : (
+            <div className="ap-async-empty">Not enough ratings yet.</div>
+          )}
+        </div>
+      </div>
+    </Async>
   );
 }
 

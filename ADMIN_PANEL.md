@@ -27,6 +27,25 @@ It creates:
 Re-run this file after pulling changes — it's idempotent, and later versions add
 fields (e.g. the dashboard's hourly / prior-period series) and the profile policies.
 
+### 1b. Analytics add-on
+
+After `admin_panel.sql`, also run [`supabase/admin_analytics.sql`](supabase/admin_analytics.sql)
+(same place, safe to re-run). It adds read-only `security definer` RPCs behind the
+extra Dashboard cards/graphs and the **Search & Discovery**, **Ratings**, and
+**Geography** tabs, plus per-shop metrics on the Vendors detail view. Every metric
+is wrapped in its own exception block — a schema mismatch nulls just that field and
+the panel shows a "needs setup" hint for it. The **System** tab lists which RPCs
+are installed.
+
+Notes on what the data can and can't show:
+- **Zero-result searches** — the event log has no result count, so this is a
+  proxy: a search by a signed-in visitor that produced no shop view within 30 min.
+- **Discovery funnel** — the "contact / visit" stage stays empty until
+  call / WhatsApp / directions taps are recorded as view events.
+- **MRR** — sum of active subscription tier prices where price > 0, treated as monthly.
+- **Impersonate view** and **force re-geocode** were requested but not built:
+  there's no customer-facing shop UI or geocode endpoint in this repo.
+
 Until it runs: the Dashboard shows a "not installed" message, login logging is
 silently skipped, and the delete/commission/tier controls will error. The
 **System** tab in the panel shows exactly which pieces are installed.
