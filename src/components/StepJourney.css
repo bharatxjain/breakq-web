@@ -3,7 +3,9 @@
 .sj-section {
   position: relative;
   background: var(--surface);
-  overflow-x: hidden;
+  /* `clip`, not `hidden`: `hidden` makes this a scroll container and
+     breaks `position: sticky` on `.sj-sticky` (the pinned stepper). */
+  overflow-x: clip;
 }
 
 /* ---------- centered title ---------- */
@@ -11,7 +13,7 @@
 .sj-head {
   max-width: 640px;
   margin: 0 auto;
-  padding-top: 96px;
+  padding-top: 56px;
   text-align: center;
 }
 
@@ -53,7 +55,10 @@
   top: 0;
   height: 100vh;
   display: flex;
-  align-items: center;
+  /* Sit near the top of the pinned view — kills the big gap under the
+     heading. The room left below is where the scooter drops away. */
+  align-items: flex-start;
+  padding-top: clamp(24px, 6vh, 64px);
 }
 
 .sj-grid {
@@ -73,13 +78,13 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 34px;
+  gap: 40px;
   min-width: 0;
 }
 
 .sj-line {
   position: absolute;
-  left: var(--sj-line-left, 15px);
+  left: var(--sj-line-left, 17px);
   top: var(--sj-line-top, 14px);
   height: var(--sj-line-height, calc(100% - 28px));
   width: 2px;
@@ -88,14 +93,125 @@
   background: var(--primary-light);
 }
 
+/* Filled portion of the track — grows behind the rider as you scroll. */
+.sj-line-fill {
+  position: absolute;
+  left: var(--sj-line-left, 17px);
+  top: var(--sj-line-top, 14px);
+  height: calc(var(--sj-progress, 0) * var(--sj-line-height, 0px));
+  width: 2px;
+  margin-left: -1px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  transition: height 0.12s linear;
+  z-index: 1;
+}
+
+/* The delivery-scooter marker riding down the track. Held upright while
+   travelling; after 80% it peels off and drives STRAIGHT down, its travel
+   tied to scroll (--sj-exit 0→1) so it keeps dropping until the next
+   section scrolls in. */
+.sj-rider {
+  position: absolute;
+  left: var(--sj-line-left, 17px);
+  top: calc(
+    var(--sj-line-top, 14px) + var(--sj-progress, 0) *
+      var(--sj-line-height, 0px)
+  );
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  transform: translate(-50%, calc(-50% + var(--sj-exit, 0) * 120vh))
+    rotate(calc(var(--sj-exit, 0) * -6deg));
+  transform-origin: 50% 72%;
+  filter: drop-shadow(0 5px 8px rgba(29, 26, 37, 0.22));
+  transition:
+    top 0.12s linear,
+    transform 0.12s linear,
+    opacity 0.3s ease;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.sj-rider-ico {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Exhaust puff as the scooter starts off. */
+.sj-rider::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 58%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(120, 110, 132, 0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* "Bike start" — a quick rev on the icon itself the moment it peels off.
+   Kept on the child so it never fights the parent's straight-down travel. */
+.sj-rider.is-finish .sj-rider-ico {
+  animation: sj-rev 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.sj-rider.is-finish::after {
+  animation: sj-puff 0.7s ease-out 0.15s 2 both;
+}
+
+@keyframes sj-rev {
+  0% {
+    transform: none;
+  }
+  18% {
+    transform: translateY(-6px) rotate(-14deg) scale(1.08);
+  }
+  42% {
+    transform: translateY(0) rotate(-2deg) scale(1);
+  }
+  62% {
+    transform: translateY(-3px) rotate(-8deg) scale(1.03);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes sj-puff {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.4) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9) translateX(-16px);
+  }
+}
+
+@keyframes sj-dot-celebrate {
+  0%,
+  100% {
+    box-shadow: 0 0 0 5px rgba(112, 1, 254, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(112, 1, 254, 0);
+  }
+}
+
 .sj-step {
   min-width: 0;
 }
 
 .sj-step-btn {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 30px 1fr;
-  gap: 18px;
+  grid-template-columns: 34px 1fr;
+  gap: 22px;
   align-items: start;
   width: 100%;
   padding: 4px 0;
@@ -112,9 +228,12 @@
 }
 
 .sj-dot {
-  width: 18px;
-  height: 18px;
-  margin-top: 4px;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  display: grid;
+  place-items: center;
   border-radius: var(--radius-full);
   background: var(--surface);
   border: 2px solid var(--primary-pill);
@@ -128,6 +247,33 @@
   background: var(--primary);
   border-color: var(--primary);
   box-shadow: 0 0 0 5px rgba(112, 1, 254, 0.14);
+}
+
+/* Completed step — fill the dot and pop a tick. */
+.sj-step.is-done .sj-dot {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.sj-dot-check {
+  width: 11px;
+  height: 11px;
+  color: var(--white);
+  opacity: 0;
+  transform: scale(0.3);
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sj-step.is-done .sj-dot-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Rider has reached the end — pulse the final dot. */
+.sj-step:last-child.is-done .sj-dot {
+  animation: sj-dot-celebrate 1.15s ease-out 2;
 }
 
 .sj-step-body {
@@ -166,7 +312,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 16px 0 0 48px;
+  margin: 20px 0 0 56px;
   padding: 12px 24px;
   border-radius: var(--radius-full);
   background: var(--primary);
@@ -583,6 +729,11 @@
   .sj-head {
     padding-top: 64px;
   }
+  /* No scroll pinning here, so the rider has nothing to travel along. */
+  .sj-rider,
+  .sj-line-fill {
+    display: none;
+  }
   .sj-tall {
     height: auto;
   }
@@ -613,7 +764,7 @@
     display: block;
   }
   .sj-cta {
-    margin-left: 48px;
+    margin-left: 56px;
   }
 }
 
@@ -649,16 +800,33 @@
 @media (prefers-reduced-motion: reduce) {
   .sj-card,
   .sj-dot,
+  .sj-dot-check,
   .sj-step-title,
   .sj-step-desc,
-  .sj-cta {
+  .sj-cta,
+  .sj-line-fill,
+  .sj-rider {
     transition: none;
   }
   .sj-card {
     transform: none;
   }
-  .sj-float {
+  .sj-float,
+  .sj-rider,
+  .sj-rider .sj-rider-ico,
+  .sj-rider.is-finish .sj-rider-ico,
+  .sj-rider.is-finish::after,
+  .sj-step:last-child.is-done .sj-dot {
     animation: none;
+  }
+  /* No ride-off — the scooter just parks at the finish line. */
+  .sj-rider,
+  .sj-rider.is-finish {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  .sj-rider .sj-rider-ico {
+    transform: none;
   }
   .sj-cta:hover {
     transform: none;

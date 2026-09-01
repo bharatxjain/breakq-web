@@ -17,7 +17,7 @@
   --radius-sm: 12px;
   --radius-full: 9999px;
   --max-width: 1200px;
-  --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -34,7 +34,9 @@ body {
   font-family: var(--font);
   color: var(--gray-900);
   background: var(--surface);
-  overflow-x: hidden;
+  /* `clip` contains horizontal overflow without creating a scroll
+     container, so `position: sticky` (How it works preview) still works. */
+  overflow-x: clip;
 }
 
 img {
@@ -99,7 +101,9 @@ ul {
   border-radius: 999px;
   font-weight: 600;
   font-size: 15px;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn:hover {

@@ -271,7 +271,18 @@
   }
   .sp-metrics {
     flex: 1 1 100%;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 0;
+  }
+  /* Split the pill evenly so the divider sits centred instead of the two
+     metrics being flung to opposite edges. */
+  .sp-metric {
+    flex: 1;
+    align-items: center;
+    text-align: center;
+  }
+  .sp-metric + .sp-metric {
+    padding-left: 0;
   }
   .sp-cta-btn {
     flex: 1 1 100%;
@@ -291,11 +302,7 @@
     max-width: none;
   }
   .sp-metrics {
-    gap: 16px;
     padding: 16px 18px;
-  }
-  .sp-metric + .sp-metric {
-    padding-left: 16px;
   }
 }
 
