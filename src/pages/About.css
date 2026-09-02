@@ -1,16 +1,37 @@
-/* About page — rebuilt around who we are / what we do / purpose + journey. */
+/* About page — who we are / what we do / purpose + journey.
+   Animation model: IntersectionObserver adds .is-visible → base fade-up, plus
+   directional variants for the split hero row. Decorative motion (icon float,
+   CTA gradient drift, glow pulse) only runs once a block is in view and is
+   fully removed under prefers-reduced-motion. Hover transforms are scoped to
+   .is-visible so they never fight the reveal transition. */
 
-/* scroll-reveal (IntersectionObserver → .is-visible), shared easing */
+/* ---------- scroll-reveal ---------- */
+
 .about-reveal {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(28px);
   transition:
-    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 
 .about-reveal.is-visible {
   opacity: 1;
+  transform: none;
+}
+
+/* directional entrances for the split "who we are" row */
+.about-who-text.about-reveal {
+  transform: translate3d(-28px, 20px, 0);
+}
+
+.about-glance.about-reveal {
+  transform: translate3d(28px, 20px, 0);
+}
+
+.about-who-text.about-reveal.is-visible,
+.about-glance.about-reveal.is-visible {
   transform: none;
 }
 
@@ -20,6 +41,27 @@
 
 .about-title-left {
   text-align: left;
+  position: relative;
+  padding-bottom: 14px;
+}
+
+/* underline that draws itself in when the heading reveals */
+.about-title-left::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s;
+}
+
+.about-who-text.is-visible .about-title-left::after {
+  transform: scaleX(1);
 }
 
 /* ---------- WHO WE ARE ---------- */
@@ -38,11 +80,20 @@
 }
 
 .about-glance {
+  position: relative;
   background: var(--white);
   border: 1px solid var(--gray-100);
   border-radius: var(--radius-lg);
   padding: 28px;
   box-shadow: 0 12px 32px rgba(112, 1, 254, 0.08);
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-glance.is-visible:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 44px rgba(112, 1, 254, 0.16);
 }
 
 .about-glance-label {
@@ -59,8 +110,15 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 14px 0;
+  padding: 14px 12px;
+  margin: 0 -12px;
   border-top: 1px solid var(--gray-100);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.about-glance-row:hover {
+  background: var(--gray-100);
 }
 
 .about-glance-row:first-of-type {
@@ -104,13 +162,18 @@
   border-radius: var(--radius-lg);
   padding: 28px 24px;
   box-shadow: 0 4px 16px rgba(112, 1, 254, 0.06);
-  /* transform is owned by .about-reveal; hover only touches the shadow so the
-     two transitions never fight over the same property */
-  transition: box-shadow 0.2s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease;
 }
 
-.about-do-card:hover {
-  box-shadow: 0 16px 32px rgba(112, 1, 254, 0.12);
+/* scoped to .is-visible so the hover transform can't collide with the
+   reveal's transform transition mid-animation */
+.about-do-card.is-visible:hover {
+  transform: translateY(-6px);
+  border-color: var(--primary-pill);
+  box-shadow: 0 20px 40px rgba(112, 1, 254, 0.16);
 }
 
 .about-do-icon {
@@ -123,6 +186,35 @@
   border-radius: var(--radius-sm);
   background: var(--primary-light);
   margin-bottom: 16px;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* gentle idle float once the card is on screen — staggered per card */
+.about-do-card.is-visible .about-do-icon {
+  animation: about-float 4s ease-in-out infinite;
+}
+
+.about-do-card:nth-child(2).is-visible .about-do-icon {
+  animation-delay: 0.6s;
+}
+
+.about-do-card:nth-child(3).is-visible .about-do-icon {
+  animation-delay: 1.2s;
+}
+
+.about-do-card.is-visible:hover .about-do-icon {
+  transform: scale(1.12) rotate(-6deg);
+  animation-play-state: paused;
+}
+
+@keyframes about-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .about-do-card h3 {
@@ -170,6 +262,16 @@
   border: 1px solid var(--gray-100);
   border-radius: var(--radius-md);
   border-top: 3px solid var(--primary);
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-top-width 0.2s ease;
+}
+
+.about-principles li.is-visible:hover {
+  transform: translateY(-5px);
+  border-top-width: 6px;
+  box-shadow: 0 18px 36px rgba(112, 1, 254, 0.14);
 }
 
 .about-principle-k {
@@ -187,10 +289,66 @@
 /* ---------- CTA ---------- */
 
 .about-cta-inner {
+  position: relative;
+  overflow: hidden;
   text-align: center;
-  background: linear-gradient(135deg, #9b4dff, #7001fe 60%, #5500c5);
+  background: linear-gradient(135deg, #9b4dff, #7001fe 45%, #5500c5, #9b4dff);
+  background-size: 220% 220%;
   border-radius: var(--radius-lg);
   padding: 56px 24px;
+}
+
+.about-cta-inner.is-visible {
+  animation: about-cta-drift 14s ease infinite;
+}
+
+@keyframes about-cta-drift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* soft pulsing glow behind the copy */
+.about-cta-glow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0) 70%
+  );
+  pointer-events: none;
+}
+
+.about-cta-inner.is-visible .about-cta-glow {
+  animation: about-glow 6s ease-in-out infinite;
+}
+
+@keyframes about-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(1.15);
+  }
+}
+
+.about-cta-inner h2,
+.about-cta-inner p,
+.about-cta-actions {
+  position: relative;
+  z-index: 1;
 }
 
 .about-cta-inner h2 {
@@ -219,18 +377,45 @@
 
 /* ---------- responsive ---------- */
 
+@media (max-width: 1024px) {
+  .about-who-inner {
+    gap: 40px;
+  }
+  .about-do-grid {
+    gap: 16px;
+  }
+  .about-do-card {
+    padding: 24px 20px;
+  }
+}
+
 @media (max-width: 900px) {
   .about-who-inner {
     grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 32px;
   }
   .about-do-grid,
   .about-principles {
     grid-template-columns: 1fr;
+    margin-top: 36px;
+  }
+  .about-title-left {
+    text-align: left;
+  }
+  .about-cta-inner {
+    padding: 48px 22px;
+  }
+  .about-cta-inner h2 {
+    font-size: 26px;
   }
   .about-cta-actions {
     flex-direction: column;
     align-items: center;
+  }
+  .about-cta-actions .btn {
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
   }
 }
 
@@ -238,12 +423,58 @@
   .about-title-left {
     font-size: 26px;
   }
+  .about-glance {
+    padding: 22px;
+  }
+  .about-do-card {
+    padding: 22px 18px;
+  }
+  .about-principles li {
+    padding: 20px;
+  }
+  .about-cta-inner {
+    padding: 40px 18px;
+  }
+  .about-cta-inner h2 {
+    font-size: 23px;
+  }
+  .about-cta-glow {
+    width: 300px;
+    height: 300px;
+  }
 }
 
+@media (max-width: 420px) {
+  .about-who-text p {
+    font-size: 14.5px;
+  }
+  .about-glance dd {
+    font-size: 14px;
+  }
+}
+
+/* ---------- reduced motion ---------- */
+
 @media (prefers-reduced-motion: reduce) {
-  .about-reveal {
+  .about-reveal,
+  .about-who-text.about-reveal,
+  .about-glance.about-reveal {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  .about-title-left::after {
+    transform: scaleX(1);
+    transition: none;
+  }
+  .about-do-card.is-visible .about-do-icon,
+  .about-cta-inner.is-visible,
+  .about-cta-inner.is-visible .about-cta-glow {
+    animation: none;
+  }
+  .about-glance.is-visible:hover,
+  .about-do-card.is-visible:hover,
+  .about-principles li.is-visible:hover {
+    transform: none;
   }
 }

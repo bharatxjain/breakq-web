@@ -19,7 +19,7 @@ const STEPS = [
     initials: "KK",
     color: "#7001fe",
     title: "A queue too long",
-    body: "Neighbours waiting outside a Kirana store for stock that was already sold out. The shop had everything — it just had no way to show it.",
+    body: "Neighbours waiting outside a Kirana store for stock that was already sold out. The shop had everything, it just had no way to show it.",
   },
   {
     code: "00:45",
@@ -28,7 +28,7 @@ const STEPS = [
     initials: "PD",
     color: "#38bdf8",
     title: "One storefront per shop",
-    body: "Every shop gets a live digital storefront — real catalogue, real prices, real stock — not a generic grocery list bolted onto a delivery app.",
+    body: "Every shop gets a live digital storefront real catalogue, real prices, real stock — not a generic grocery list bolted onto a delivery app.",
   },
   {
     code: "01:30",
@@ -46,7 +46,7 @@ const STEPS = [
     initials: "VN",
     color: "#fb923c",
     title: "Beyond groceries",
-    body: "Bakery, stationery, fashion, mobiles — any shop on the street, discoverable in seconds, in the language you actually think in.",
+    body: "Bakery, stationery, fashion, mobiles any shop on the street, discoverable in seconds, in the language you actually think in.",
   },
   {
     code: "03:10",
@@ -64,7 +64,7 @@ const STEPS = [
     initials: "YOU",
     color: "#f472b6",
     title: "Your street, online",
-    body: "More categories, more cities — same principle: the neighbourhood economy brought online without being taken over.",
+    body: "More categories, more cities same principle: the neighbourhood economy brought online without being taken over.",
   },
 ];
 
@@ -76,7 +76,7 @@ const EASE = 0.16; // per-frame approach to target
 export default function JourneyTimeline({
   eyebrow = "Our journey",
   title = "How BreakQ got here",
-  lead = "From a queue outside a Kirana store to a neighbourhood that shops itself online — one step at a time.",
+  lead = "From a queue outside a Kirana store to a neighbourhood that shops itself online one step at a time.",
 }) {
   const N = STEPS.length;
   const railRef = useRef(null);
@@ -114,7 +114,9 @@ export default function JourneyTimeline({
       const el = barRefs.current[i];
       if (!el) continue;
       const s = current.current[i];
-      el.style.transform = horizontal ? `scaleY(${s.toFixed(3)})` : `scaleX(${s.toFixed(3)})`;
+      el.style.transform = horizontal
+        ? `scaleY(${s.toFixed(3)})`
+        : `scaleX(${s.toFixed(3)})`;
       el.style.opacity = String(Math.min(1, 0.38 + s * 0.2));
     }
   }, [N, horizontal]);
@@ -153,7 +155,10 @@ export default function JourneyTimeline({
       if (idx !== activeRef.current) setActive(idx);
     }
     for (let i = 0; i < N; i += 1) {
-      liRefs.current[i]?.classList.toggle("is-crest", i === crest && focusIdx.current >= 0);
+      liRefs.current[i]?.classList.toggle(
+        "is-crest",
+        i === crest && focusIdx.current >= 0,
+      );
     }
 
     // Stop once nothing is moving (the pointer having left just relaxes the
@@ -210,7 +215,11 @@ export default function JourneyTimeline({
   const step = STEPS[active];
   const pct = ((active + 1) / N) * 100;
   const nn = String(active + 1).padStart(2, "0");
-  const hint = touched ? step.time.toUpperCase() : horizontal ? "Tap a step" : "Hover the rail";
+  const hint = touched
+    ? step.time.toUpperCase()
+    : horizontal
+      ? "Tap a step"
+      : "Hover the rail";
 
   return (
     <section className="jt" aria-labelledby="jt-title">
@@ -278,7 +287,11 @@ export default function JourneyTimeline({
           <div className="jt-preview" aria-live="polite">
             <article className="jt-card" key={active}>
               <div className="jt-card-top">
-                <span className="jt-avatar" style={{ background: step.color }} aria-hidden="true">
+                <span
+                  className="jt-avatar"
+                  style={{ background: step.color }}
+                  aria-hidden="true"
+                >
                   {step.initials}
                 </span>
                 <span className="jt-step-label">Step {nn}</span>
@@ -294,7 +307,10 @@ export default function JourneyTimeline({
                 aria-valuenow={active + 1}
                 aria-label={`Step ${active + 1} of ${N}`}
               >
-                <span className="jt-progress-fill" style={{ width: `${pct}%` }} />
+                <span
+                  className="jt-progress-fill"
+                  style={{ width: `${pct}%` }}
+                />
               </div>
               <div className="jt-card-foot">
                 <span className="jt-timecode">{step.code}</span>

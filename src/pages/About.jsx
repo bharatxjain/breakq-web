@@ -28,7 +28,7 @@ const doing = [
   {
     icon: "🛍️",
     title: "For shoppers",
-    desc: "Discover the actual shops around you, browse a specific storefront, search across categories in your own language, and collect from the counter — no queue, no guesswork.",
+    desc: "Discover the actual shops around you, browse a specific storefront, search across categories in your own language, and collect from the counter no queue, no guesswork.",
   },
   {
     icon: "🏪",
@@ -45,7 +45,7 @@ const doing = [
 const principles = [
   {
     k: "Shop-first",
-    v: "You choose a shop, then its catalogue — not an anonymous pile of SKUs. The relationship you already have with a store carries over.",
+    v: "You choose a shop, then its catalogue not an anonymous pile of SKUs. The relationship you already have with a store carries over.",
   },
   {
     k: "Local-first",
@@ -63,7 +63,7 @@ export default function About() {
       <PageHeader
         eyebrow="About BreakQ"
         title="The neighbourhood economy, brought online."
-        subtitle="BreakQ is a multi-vendor platform that connects the local shops you already know — Kirana, dairy, medical, electrical and more — with the people who live around them."
+        subtitle="BreakQ is a multi-vendor platform that connects the local shops you already know - Kirana, dairy, medical, electrical and more with the people who live around them."
       />
 
       {/* WHO WE ARE */}
@@ -75,14 +75,16 @@ export default function About() {
               A small team, obsessed with the shop on the corner
             </h2>
             <p>
-              We grew up buying from neighbourhood stores — the ones that know your name and keep
-              your usual aside. Those shops carry everything a street needs, but online they were
-              invisible, flattened into a generic grocery list on someone else&rsquo;s app.
+              We grew up buying from neighbourhood stores - the ones that know
+              your name and keep your usual aside. Those shops carry everything
+              a street needs, but online they were invisible, flattened into a
+              generic grocery list on someone else&rsquo;s app.
             </p>
             <p>
-              BreakQ, operated by KKS Private Limited, exists to fix that. We give every kind of
-              local store — not just groceries — a real presence online, and give shoppers a fast,
-              honest way to find what&rsquo;s in stock right now, a short walk away.
+              BreakQ, operated by KKS Private Limited, exists to fix that. We
+              give every kind of local store not just groceries a real presence
+              online, and give shoppers a fast, honest way to find what&rsquo;s
+              in stock right now, a short walk away.
             </p>
           </Reveal>
 
@@ -105,16 +107,24 @@ export default function About() {
         <div className="container">
           <Reveal>
             <span className="eyebrow">What we do</span>
-            <h2 className="section-title">One platform, three sides of the same street</h2>
+            <h2 className="section-title">
+              One platform, three sides of the same street
+            </h2>
             <p className="section-subtitle">
-              BreakQ only works if it works for everyone on the block — the person shopping, the
-              person behind the counter, and the neighbourhood they share.
+              BreakQ only works if it works for everyone on the block the person
+              shopping, the person behind the counter, and the neighbourhood
+              they share.
             </p>
           </Reveal>
 
           <div className="about-do-grid">
             {doing.map((d, i) => (
-              <Reveal as="article" className="about-do-card" key={d.title} delay={i * 90}>
+              <Reveal
+                as="article"
+                className="about-do-card"
+                key={d.title}
+                delay={i * 90}
+              >
                 <span className="about-do-icon" aria-hidden="true">
                   {d.icon}
                 </span>
@@ -131,11 +141,14 @@ export default function About() {
         <div className="container about-purpose-inner">
           <Reveal>
             <span className="eyebrow">Our purpose</span>
-            <h2 className="section-title">Keep the local economy local — just easier to reach.</h2>
+            <h2 className="section-title">
+              Keep the local economy local just easier to reach.
+            </h2>
             <p className="about-purpose-lead">
-              Quick commerce usually means replacing the corner shop. We want the opposite: the same
-              shops, the same trust, with the convenience of an app on top. Success for us is a
-              busier Kirana store, not an emptier one.
+              Quick commerce usually means replacing the corner shop. We want
+              the opposite: the same shops, the same trust, with the convenience
+              of an app on top. Success for us is a busier Kirana store, not an
+              emptier one.
             </p>
           </Reveal>
 
@@ -155,7 +168,7 @@ export default function About() {
         <JourneyTimeline
           eyebrow="Our journey"
           title="How BreakQ got here"
-          lead="From a queue outside a Kirana store to a neighbourhood that shops itself online — hover the rail to walk through it."
+          lead="From a queue outside a Kirana store to a neighbourhood that shops itself online hover the rail to walk through it."
         />
       </Reveal>
 
@@ -163,10 +176,13 @@ export default function About() {
       <section className="section about-cta">
         <div className="container">
           <Reveal className="about-cta-inner">
-            <h2>Support your local community, however it shows up on your street</h2>
+            <span className="about-cta-glow" aria-hidden="true" />
+            <h2>
+              Support your local community, however it shows up on your street
+            </h2>
             <p>
-              Experience the future of neighbourhood retail. Download BreakQ today and bring your
-              local market home.
+              Experience the future of neighbourhood retail. Download BreakQ
+              today and bring your local market home.
             </p>
             <div className="about-cta-actions">
               <a
