@@ -1,157 +1,59 @@
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import PhotoPlaceholder from "../components/PhotoPlaceholder";
+import JourneyTimeline from "../components/JourneyTimeline";
+import useReveal from "../hooks/useReveal";
 import "./About.css";
 
-const steps = [
+function Reveal({ as: Tag = "div", className = "", delay = 0, children }) {
+  const [ref, inView] = useReveal();
+  return (
+    <Tag
+      ref={ref}
+      className={`about-reveal ${className} ${inView ? "is-visible" : ""}`.trim()}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+const glance = [
+  ["Operated by", "KKS Private Limited"],
+  ["Model", "Multi-vendor local commerce"],
+  ["Categories", "Kirana, Dairy, Medical, Electrical, Bakery & more"],
+  ["Fulfilment", "Store pickup & in-person visit"],
+];
+
+const doing = [
   {
-    title: "Discover stores nearby",
-    text: "Browse verified Kirana, Dairy, Medical, Electrical & more shops around you",
-    icon: "📍",
+    icon: "🛍️",
+    title: "For shoppers",
+    desc: "Discover the actual shops around you, browse a specific storefront, search across categories in your own language, and collect from the counter — no queue, no guesswork.",
   },
   {
-    title: "Pick a vendor",
-    text: "Open your favorite store’s digital storefront and explore its catalog",
-    icon: "🏬",
+    icon: "🏪",
+    title: "For shop owners",
+    desc: "A digital storefront plus a dashboard to manage catalogue, prices and live orders, and see daily GMV. The tools of a big platform, kept in the shop owner's hands.",
   },
   {
-    title: "Search & add to cart",
-    text: "Find exactly what you need in seconds with lightning-fast search",
-    icon: "🔍",
-  },
-  {
-    title: "Pickup from Vendor.",
-    text: "Visit in person with Live map tracking & call support",
-    icon: "🚴",
+    icon: "🧭",
+    title: "For the neighbourhood",
+    desc: "Every order keeps money on your street. BreakQ makes the local market discoverable online without pulling it into a warehouse somewhere else.",
   },
 ];
 
-const vendorFeatures = [
+const principles = [
   {
-    icon: "🗂️",
-    title: "Vendor Dashboard",
-    desc: "A dedicated hub to manage your products, update prices, and track inventory, tailored to your store type.",
+    k: "Shop-first",
+    v: "You choose a shop, then its catalogue — not an anonymous pile of SKUs. The relationship you already have with a store carries over.",
   },
   {
-    icon: "📦",
-    title: "Live Order Management",
-    desc: "Receive and process orders in real-time with status updates for your customers.",
+    k: "Local-first",
+    v: "Stock, prices and pickup are real and nearby. No dark stores, no hidden middle layer between you and the shop.",
   },
   {
-    icon: "📊",
-    title: "Business Insights",
-    desc: "View your daily GMV and order analytics to grow your business effectively.",
-  },
-];
-
-function AppIconsVisual() {
-  const icons = [
-    { label: "Kirana", color: "#7001FE", glyph: "🛒" },
-    { label: "Dairy", color: "#38bdf8", glyph: "🥛" },
-    { label: "Medical", color: "#f87171", glyph: "💊" },
-    { label: "Electrical", color: "#facc15", glyph: "💡" },
-    { label: "Bakery", color: "#fb923c", glyph: "🍞" },
-    { label: "Stationery", color: "#34d399", glyph: "📚" },
-    { label: "Fashion", color: "#f472b6", glyph: "👕" },
-    { label: "Mobiles", color: "#a78bfa", glyph: "📱" },
-  ];
-  return (
-    <div className="visual-phone-mini">
-      <div className="mini-status">9:41</div>
-      <div className="mini-icons">
-        {icons.map((ic) => (
-          <div
-            key={ic.label}
-            className="mini-icon"
-            style={{ background: ic.color }}
-          >
-            <span>{ic.glyph}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function VendorPickerVisual() {
-  return (
-    <div className="visual-card-mini">
-      <p className="visual-mini-title">Nearby Stores</p>
-      <div className="delivery-option active">
-        <span>🏪 Sharma Kirana Store</span>
-        <small>⭐ 4.8 · 0.4 km away</small>
-      </div>
-      <div className="delivery-option">
-        <span>💊 City Medical Store</span>
-        <small>⭐ 4.6 · 0.7 km away</small>
-      </div>
-    </div>
-  );
-}
-
-function SearchOrbVisual() {
-  return (
-    <div className="visual-orb-mini">
-      <p>
-        Searching nearby stores
-        <br />
-        for "toned milk"...
-      </p>
-      <div className="mini-orb" />
-      <span className="mini-float f1">🥛</span>
-      <span className="mini-float f2">🔍</span>
-      <span className="mini-float f3">🏬</span>
-    </div>
-  );
-}
-
-const cards = [
-  {
-    title: "Multi-Vendor, Multi-Category Discovery",
-    desc: "Explore a wide network of verified local stores - Kirana, Dairy, Medical, Electrical, and more all in your area.",
-    visual: <AppIconsVisual />,
-  },
-  {
-    title: "Shop-First Experience",
-    desc: "Select your favorite specific vendor to browse their unique digital storefront and catalog.",
-    visual: <VendorPickerVisual />,
-  },
-  {
-    title: "Smart Search & Categories",
-    desc: "Find exactly what you need - from Atta and Dal to medicines, dairy products, and electrical fittings using our lightning-fast search.",
-    visual: <SearchOrbVisual />,
-    tall: true,
-  },
-  {
-    title: "Secure Authentication",
-    desc: "Enjoy a safe shopping experience with our verified email OTP login system.",
-    visual: (
-      <div className="visual-coin-mini">
-        <div className="coin">🔐</div>
-      </div>
-    ),
-  },
-  {
-    title: "Direct Store Access",
-    desc: "Need to visit in person? Get precise map directions and instant call support for every partner store.",
-    visual: (
-      <div className="visual-docs-mini">
-        <div className="store-access-icons">
-          <span>📍</span>
-          <span>📞</span>
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: "Clean & Premium UI",
-    desc: "A modern, clutter-free interface designed for speed and ease of use across every store category.",
-    visual: (
-      <div className="visual-phone-mini bag-visual">
-        <div className="mini-status">9:41</div>
-        <div className="bag-icon">🛍️</div>
-      </div>
-    ),
+    k: "Trust-first",
+    v: "Verified stores, email-OTP login, industry-standard encryption, and in-app account deletion. You stay in control of your data.",
   },
 ];
 
@@ -159,111 +61,112 @@ export default function About() {
   return (
     <>
       <PageHeader
-        eyebrow="Welcome to BreakQ"
-        title="Your Neighborhood's Digital Marketplace!"
-        subtitle="A professional multi-vendor quick-commerce platform designed to bridge the gap between local stores and neighborhood shoppers."
+        eyebrow="About BreakQ"
+        title="The neighbourhood economy, brought online."
+        subtitle="BreakQ is a multi-vendor platform that connects the local shops you already know — Kirana, dairy, medical, electrical and more — with the people who live around them."
       />
 
-      <section className="section about-story">
-        <div className="container about-story-inner">
-          <div className="about-story-text">
-            <span className="eyebrow">Who we are</span>
-            <h2 className="section-title" style={{ textAlign: "left" }}>
-              Empowering every local shop owner
+      {/* WHO WE ARE */}
+      <section className="section about-who">
+        <div className="container about-who-inner">
+          <Reveal className="about-who-text">
+            <span className="eyebrow about-eyebrow-left">Who we are</span>
+            <h2 className="section-title about-title-left">
+              A small team, obsessed with the shop on the corner
             </h2>
             <p>
-              We empower local shop owners from Kirana stores to dairies,
-              medical shops, and electrical stores with the technology to go
-              digital, while giving you the convenience of shopping from the
-              vendors you already know and trust.
+              We grew up buying from neighbourhood stores — the ones that know your name and keep
+              your usual aside. Those shops carry everything a street needs, but online they were
+              invisible, flattened into a generic grocery list on someone else&rsquo;s app.
             </p>
             <p>
-              Unlike generic grocery-only apps, BreakQ puts your entire local
-              community first. We believe in the "Shop Local" movement, giving
-              you direct access to the freshest stock and real-time inventory
-              across every kind of neighborhood store not just groceries.
+              BreakQ, operated by KKS Private Limited, exists to fix that. We give every kind of
+              local store — not just groceries — a real presence online, and give shoppers a fast,
+              honest way to find what&rsquo;s in stock right now, a short walk away.
             </p>
-          </div>
-          <PhotoPlaceholder
-            label="Local shop owner going digital with BreakQ"
-            tone="green"
-          />
-        </div>
-      </section>
+          </Reveal>
 
-      <section className="section features">
-        <div className="container">
-          <span className="eyebrow">Why choose BreakQ</span>
-          <h2 className="section-title">
-            Everything your neighborhood needs, in one app
-          </h2>
-          <p className="section-subtitle">
-            Unlike generic grocery-only apps, BreakQ puts your entire local
-            community first - Kirana, Dairy, Medical, Electrical, and more, not
-            just groceries.
-          </p>
-
-          <div className="features-grid">
-            {cards.map((c) => (
-              <div className="feature-card" key={c.title}>
-                <h3>{c.title}</h3>
-                <p>{c.desc}</p>
-                <div className="feature-visual">{c.visual}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section how-it-works">
-        <div className="container">
-          <span className="eyebrow">Simple & fast</span>
-          <h2 className="section-title">How it works</h2>
-          <p className="section-subtitle">
-            From discovery to Pickup, in four easy steps
-          </p>
-
-          <div className="steps-grid">
-            {steps.map((s, i) => (
-              <div className="step-card" key={s.title}>
-                <div className="step-number">
-                  {String(i + 1).padStart(2, "0")}
+          <Reveal as="aside" className="about-glance" delay={120}>
+            <span className="about-glance-label">At a glance</span>
+            <dl>
+              {glance.map(([k, v]) => (
+                <div className="about-glance-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
                 </div>
-                <div className="step-icon">{s.icon}</div>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
-                {i < steps.length - 1 && (
-                  <div className="step-connector" aria-hidden="true" />
-                )}
-              </div>
+              ))}
+            </dl>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* WHAT WE DO */}
+      <section className="section about-do">
+        <div className="container">
+          <Reveal>
+            <span className="eyebrow">What we do</span>
+            <h2 className="section-title">One platform, three sides of the same street</h2>
+            <p className="section-subtitle">
+              BreakQ only works if it works for everyone on the block — the person shopping, the
+              person behind the counter, and the neighbourhood they share.
+            </p>
+          </Reveal>
+
+          <div className="about-do-grid">
+            {doing.map((d, i) => (
+              <Reveal as="article" className="about-do-card" key={d.title} delay={i * 90}>
+                <span className="about-do-icon" aria-hidden="true">
+                  {d.icon}
+                </span>
+                <h3>{d.title}</h3>
+                <p>{d.desc}</p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="section about-security">
-        <div className="container about-security-inner">
-          <div className="value-icon">🔒</div>
-          <span className="eyebrow">Trust &amp; safety</span>
-          <h2 className="section-title">Platform security &amp; compliance</h2>
-          <p>
-            BreakQ is operated by KKS PVT and is built on a foundation of trust.
-            We use industry-standard encryption to protect your data and offer
-            transparent account management, including easy in-app account
-            deletion to keep you in control of your information.
-          </p>
+      {/* OUR PURPOSE */}
+      <section className="section about-purpose">
+        <div className="container about-purpose-inner">
+          <Reveal>
+            <span className="eyebrow">Our purpose</span>
+            <h2 className="section-title">Keep the local economy local — just easier to reach.</h2>
+            <p className="about-purpose-lead">
+              Quick commerce usually means replacing the corner shop. We want the opposite: the same
+              shops, the same trust, with the convenience of an app on top. Success for us is a
+              busier Kirana store, not an emptier one.
+            </p>
+          </Reveal>
+
+          <ul className="about-principles">
+            {principles.map((p, i) => (
+              <Reveal as="li" key={p.k} delay={i * 90}>
+                <span className="about-principle-k">{p.k}</span>
+                <span className="about-principle-v">{p.v}</span>
+              </Reveal>
+            ))}
+          </ul>
         </div>
       </section>
 
+      {/* JOURNEY TIMELINE */}
+      <Reveal>
+        <JourneyTimeline
+          eyebrow="Our journey"
+          title="How BreakQ got here"
+          lead="From a queue outside a Kirana store to a neighbourhood that shops itself online — hover the rail to walk through it."
+        />
+      </Reveal>
+
+      {/* CTA */}
       <section className="section about-cta">
         <div className="container">
-          <div className="about-cta-inner">
-            <h2>
-              Support your local community, however it shows up on your street
-            </h2>
+          <Reveal className="about-cta-inner">
+            <h2>Support your local community, however it shows up on your street</h2>
             <p>
-              Experience the future of neighborhood retail. Download BreakQ
-              today and bring your local market home!
+              Experience the future of neighbourhood retail. Download BreakQ today and bring your
+              local market home.
             </p>
             <div className="about-cta-actions">
               <a
@@ -278,7 +181,7 @@ export default function About() {
                 Become a partner
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
     </>
