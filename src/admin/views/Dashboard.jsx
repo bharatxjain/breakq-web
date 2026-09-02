@@ -4,6 +4,7 @@ import {
   AreaChart,
   Async,
   BarChart,
+  ComparisonBars,
   DeltaChip,
   Donut,
   DualAxisChart,
@@ -51,7 +52,8 @@ export default function Dashboard() {
   const [grain, setGrain] = useState("week");
   const [evWin, setEvWin] = useState("e7"); // e24 | e7
 
-  const A = an.state === "done" && an.data && !an.data._missing ? an.data : null;
+  const A =
+    an.state === "done" && an.data && !an.data._missing ? an.data : null;
   const anMissing = an.state === "error" || !!an.data?._missing;
   const series = data?.daily_series || [];
   const commission = Number(data?.commission_30d) || 0;
@@ -94,12 +96,29 @@ export default function Dashboard() {
 
             {A?.rating_integrity?.inflated && (
               <div className="ap-banner ap-banner-danger">
-                Rating counts look inflated — the stored rollup totals{" "}
+                Rating counts look inflated - the stored rollup totals{" "}
                 <strong>{num(A.rating_integrity.rollup)}</strong> against{" "}
                 <strong>{num(A.rating_integrity.reviews)}</strong> actual
                 reviews. Treat shop rating counts as unreliable until the
                 duplicate rating-trigger migration ships. See the{" "}
                 <strong>Ratings</strong> and <strong>System</strong> tabs.
+              </div>
+            )}
+
+            {A?.coupon_watch?.length > 0 && (
+              <div className="ap-banner">
+                {A.coupon_watch.length === 1 ? "A promo code is" : `${A.coupon_watch.length} promo codes are`}{" "}
+                at high global usage — promo codes have no per-vendor targeting, so one code applies
+                platform-wide:{" "}
+                {A.coupon_watch.map((c, i) => (
+                  <span key={c.code}>
+                    {i > 0 && ", "}
+                    <strong className="ap-mono">{c.code}</strong> ({num(c.redemptions)}
+                    {c.usage_limit ? ` / ${num(c.usage_limit)}` : ""}
+                    {c.pct != null ? `, ${c.pct}%` : ""} · {c.reason})
+                  </span>
+                ))}
+                . Review in the <strong>Coupons</strong> tab.
               </div>
             )}
 
@@ -374,7 +393,7 @@ export default function Dashboard() {
               <MiniStat label="Platform fee · 30 days" value={money(fee)} />
             </section>
 
-            {/* main trend — line chart vs prior 30 days */}
+            {/* main trend — bar comparison, last 30 days vs prior 30 days */}
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Last 30 days vs prior 30 days</h2>
@@ -394,11 +413,12 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
-              <AreaChart
-                data={series}
-                compare={data.daily_series_prev || []}
+              <ComparisonBars
+                current={series}
+                prior={data.daily_series_prev || []}
                 metric={metric}
                 format={metric === "orders" ? num : money}
+                now={data.generated_at}
               />
             </section>
 
@@ -449,7 +469,7 @@ export default function Dashboard() {
               ) : (
                 <div className="ap-async-empty">
                   {data._fallback && data.users_total == null
-                    ? "User growth needs full analytics — run admin_panel.sql."
+                    ? "User growth needs full analytics - run admin_panel.sql."
                     : "Not enough signup history yet."}
                 </div>
               )}
@@ -525,7 +545,7 @@ export default function Dashboard() {
                 )}
                 {A?.funnel && A.funnel.contact == null && (
                   <p className="ap-field-hint" style={{ marginTop: 8 }}>
-                    No contact/visit events are being recorded — the last stage
+                    No contact/visit events are being recorded - the last stage
                     will populate once call / WhatsApp / directions taps are
                     tracked.
                   </p>
@@ -550,22 +570,32 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(data.top_rated_shops || []).length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="ap-td-empty">
-                            No rated shops yet.
-                          </td>
-                        </tr>
-                      )}
-                      {(data.top_rated_shops || []).map((s, i) => (
-                        <tr key={i}>
-                          <td>{s.name}</td>
-                          <td className="ap-num">
-                            {Number(s.avg_rating).toFixed(2)}
-                          </td>
-                          <td className="ap-num">{num(s.rating_count)}</td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        // Prefer the analytics figure (counted from review rows);
+                        // fall back to admin_dashboard's rollup-based list.
+                        const top =
+                          (A?.top_rated_shops?.length && A.top_rated_shops) ||
+                          data.top_rated_shops ||
+                          [];
+                        if (top.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={3} className="ap-td-empty">
+                                No rated shops yet.
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return top.map((s, i) => (
+                          <tr key={i}>
+                            <td>{s.name}</td>
+                            <td className="ap-num">
+                              {Number(s.avg_rating).toFixed(2)}
+                            </td>
+                            <td className="ap-num">{num(s.rating_count)}</td>
+                          </tr>
+                        ));
+                      })()}
                     </tbody>
                   </table>
                 </div>

@@ -4,7 +4,10 @@
 import { supabase } from "../lib/supabaseClient";
 
 function client() {
-  if (!supabase) throw new Error("Supabase isn't configured — check VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env");
+  if (!supabase)
+    throw new Error(
+      "Supabase isn't configured - check VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env",
+    );
   return supabase;
 }
 
@@ -39,7 +42,11 @@ export async function getRole() {
     data: { user },
   } = await client().auth.getUser();
   if (!user) return null;
-  const { data, error } = await client().from("profiles").select("role").eq("id", user.id).single();
+  const { data, error } = await client()
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
   if (error) return null;
   return data?.role ?? null;
 }
@@ -51,7 +58,9 @@ export async function logLoginAttempt(success) {
     const {
       data: { user },
     } = await client().auth.getUser();
-    await client().from("admin_login_logs").insert({ admin_id: user?.id ?? null, success });
+    await client()
+      .from("admin_login_logs")
+      .insert({ admin_id: user?.id ?? null, success });
   } catch {
     /* ignore */
   }
@@ -80,7 +89,11 @@ export async function getMyProfile() {
     data: { user },
   } = await client().auth.getUser();
   if (!user) return null;
-  const { data, error } = await client().from("profiles").select("*").eq("id", user.id).single();
+  const { data, error } = await client()
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
   if (error) throw error;
   return { ...data, email: data?.email ?? user.email };
 }
@@ -90,7 +103,10 @@ export async function updateMyProfile(patch) {
     data: { user },
   } = await client().auth.getUser();
   if (!user) throw new Error("No session.");
-  const { error } = await client().from("profiles").update(patch).eq("id", user.id);
+  const { error } = await client()
+    .from("profiles")
+    .update(patch)
+    .eq("id", user.id);
   if (error) throw error;
 }
 
@@ -102,7 +118,10 @@ export async function fetchDashboard() {
 
   // RPC not installed yet → fall back to a limited, client-computed view so the
   // dashboard still renders something instead of dead-ending.
-  const notInstalled = /function|does not exist|could not find|schema cache/i.test(error.message || "");
+  const notInstalled =
+    /function|does not exist|could not find|schema cache/i.test(
+      error.message || "",
+    );
   if (!notInstalled) throw error;
   try {
     const fb = await dashboardFallback();
@@ -123,7 +142,10 @@ async function dashboardFallback() {
   const iso = (ms) => new Date(now - ms).toISOString();
 
   const count = async (from, to) => {
-    let q = sb.from("orders").select("id", { count: "exact", head: true }).gte("created_at", from);
+    let q = sb
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", from);
     if (to) q = q.lt("created_at", to);
     const { count: c, error } = await q;
     if (error) throw error;
@@ -156,8 +178,14 @@ async function dashboardFallback() {
   for (const r of list) {
     const d = new Date(r.created_at);
     const key = d.toISOString().slice(0, 10);
-    const pr = (Number(r.commission_rupees) || 0) + (Number(r.platform_fee_rupees) || 0);
-    const cur = byDay.get(key) || { d: key, orders: 0, revenue: 0, platform_revenue: 0 };
+    const pr =
+      (Number(r.commission_rupees) || 0) + (Number(r.platform_fee_rupees) || 0);
+    const cur = byDay.get(key) || {
+      d: key,
+      orders: 0,
+      revenue: 0,
+      platform_revenue: 0,
+    };
     cur.orders += 1;
     cur.revenue += Number(r.total_amount) || 0;
     cur.platform_revenue += pr;
@@ -187,8 +215,15 @@ async function dashboardFallback() {
     const pm = new Map();
     for (const r of prevRows || []) {
       const key = new Date(r.created_at).toISOString().slice(0, 10);
-      const pr = (Number(r.commission_rupees) || 0) + (Number(r.platform_fee_rupees) || 0);
-      const cur = pm.get(key) || { d: key, orders: 0, revenue: 0, platform_revenue: 0 };
+      const pr =
+        (Number(r.commission_rupees) || 0) +
+        (Number(r.platform_fee_rupees) || 0);
+      const cur = pm.get(key) || {
+        d: key,
+        orders: 0,
+        revenue: 0,
+        platform_revenue: 0,
+      };
       cur.orders += 1;
       cur.revenue += Number(r.total_amount) || 0;
       cur.platform_revenue += pr;
@@ -218,7 +253,9 @@ async function dashboardFallback() {
   let usersBeforeWindow = 0;
   let userSignups = [];
   try {
-    const { count } = await sb.from("profiles").select("id", { count: "exact", head: true });
+    const { count } = await sb
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
     usersTotal = count ?? null;
   } catch {
     /* ignore */
@@ -243,7 +280,9 @@ async function dashboardFallback() {
       const key = new Date(r.created_at).toISOString().slice(0, 10);
       m.set(key, (m.get(key) || 0) + 1);
     }
-    userSignups = [...m.entries()].map(([d, count]) => ({ d, count })).sort((a, b) => a.d.localeCompare(b.d));
+    userSignups = [...m.entries()]
+      .map(([d, count]) => ({ d, count }))
+      .sort((a, b) => a.d.localeCompare(b.d));
   } catch {
     /* ignore */
   }
@@ -283,7 +322,9 @@ async function dashboardFallback() {
 // one-line "needs setup" hint instead of an error wall.
 
 function looksMissing(error) {
-  return /function|does not exist|could not find|schema cache|not authorized/i.test(error?.message || "");
+  return /function|does not exist|could not find|schema cache|not authorized/i.test(
+    error?.message || "",
+  );
 }
 
 async function rpcOrMissing(name, args) {
@@ -294,15 +335,24 @@ async function rpcOrMissing(name, args) {
 }
 
 export const fetchAnalytics = () => rpcOrMissing("admin_analytics");
-export const fetchSearchAnalytics = () => rpcOrMissing("admin_search_analytics");
-export const fetchRatingsAnalytics = () => rpcOrMissing("admin_ratings_analytics");
+export const fetchSearchAnalytics = () =>
+  rpcOrMissing("admin_search_analytics");
+export const fetchRatingsAnalytics = () =>
+  rpcOrMissing("admin_ratings_analytics");
 export const fetchGeoAnalytics = () => rpcOrMissing("admin_geo_analytics");
-export const fetchShopMetrics = (shopId) => rpcOrMissing("admin_shop_metrics", { p_shop_id: shopId });
+export const fetchShopMetrics = (shopId) =>
+  rpcOrMissing("admin_shop_metrics", { p_shop_id: shopId });
+export const fetchUserRoleCounts = () => rpcOrMissing("admin_user_role_counts");
+export const fetchCouponStats = () => rpcOrMissing("admin_coupon_stats");
 
 /* ---------------------------------------------------------------- vendors --- */
 
 export async function fetchShops(status) {
-  let q = client().from("shops").select("*").order("created_at", { ascending: false }).limit(500);
+  let q = client()
+    .from("shops")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(500);
   if (status && status !== "all") q = q.eq("status", status);
   const { data, error } = await q;
   if (error) throw error;
@@ -348,14 +398,17 @@ export async function fetchShopsPaged({
 
   if (search.trim()) {
     const t = search.trim().replace(/[%,]/g, "");
-    q = q.or(`name.ilike.%${t}%,owner_name.ilike.%${t}%,id.ilike.%${t}%,phone.ilike.%${t}%`);
+    q = q.or(
+      `name.ilike.%${t}%,owner_name.ilike.%${t}%,id.ilike.%${t}%,phone.ilike.%${t}%`,
+    );
   }
   if (locality.trim()) q = q.ilike("locality", `%${locality.trim()}%`);
   if (status) q = q.eq("status", status);
   if (state === "active") q = q.eq("is_deleted", false);
   if (state === "deleted") q = q.eq("is_deleted", true);
   if (localitySource === "none") q = q.is("locality_source", null);
-  else if (localitySource !== "any") q = q.eq("locality_source", localitySource);
+  else if (localitySource !== "any")
+    q = q.eq("locality_source", localitySource);
   if (ratingMin !== "") q = q.gte("avg_rating", Number(ratingMin));
   if (ratingMax !== "") q = q.lte("avg_rating", Number(ratingMax));
   if (tierShopIds) q = q.in("id", tierShopIds);
@@ -372,11 +425,15 @@ export async function fetchShopsPaged({
       .select("shop_id, subscription_tiers(display_name, price_rupees)")
       .eq("status", "active")
       .in("shop_id", ids);
-    const byShop = new Map((subs ?? []).map((s) => [s.shop_id, s.subscription_tiers]));
+    const byShop = new Map(
+      (subs ?? []).map((s) => [s.shop_id, s.subscription_tiers]),
+    );
 
     let lastActive = new Map();
     try {
-      const { data: la } = await sb.rpc("admin_shops_last_active", { p_ids: ids });
+      const { data: la } = await sb.rpc("admin_shops_last_active", {
+        p_ids: ids,
+      });
       lastActive = new Map((la ?? []).map((x) => [x.shop_id, x.last_active]));
     } catch {
       /* RPC not installed — column just shows "—" */
@@ -516,7 +573,10 @@ export async function saveTier(tier) {
   const payload = pick(tier, TIER_FIELDS);
   let res;
   if (tier.id) {
-    res = await client().from("subscription_tiers").update(payload).eq("id", tier.id);
+    res = await client()
+      .from("subscription_tiers")
+      .update(payload)
+      .eq("id", tier.id);
   } else {
     res = await client().from("subscription_tiers").insert(payload);
   }
@@ -559,7 +619,10 @@ export async function fetchPayments() {
 
 export async function updatePaymentStatus(id, status) {
   // status is the ONLY field the panel is allowed to change here.
-  const { error } = await client().from("subscription_payments").update({ status }).eq("id", id);
+  const { error } = await client()
+    .from("subscription_payments")
+    .update({ status })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -576,19 +639,24 @@ export async function fetchPromotions() {
 }
 
 export async function createPromotion(p) {
-  const { error } = await client().from("promoted_placements").insert({
-    shop_id: p.shop_id,
-    daily_budget_rupees: Number(p.daily_budget_rupees),
-    active_from: p.active_from,
-    active_to: p.active_to,
-    is_active: true,
-    total_charged_rupees: 0,
-  });
+  const { error } = await client()
+    .from("promoted_placements")
+    .insert({
+      shop_id: p.shop_id,
+      daily_budget_rupees: Number(p.daily_budget_rupees),
+      active_from: p.active_from,
+      active_to: p.active_to,
+      is_active: true,
+      total_charged_rupees: 0,
+    });
   if (error) throw error;
 }
 
 export async function deactivatePromotion(id) {
-  const { error } = await client().from("promoted_placements").update({ is_active: false }).eq("id", id);
+  const { error } = await client()
+    .from("promoted_placements")
+    .update({ is_active: false })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -616,7 +684,10 @@ export async function saveCoupon(coupon, isNew) {
 }
 
 export async function deleteCoupon(code) {
-  const { error } = await client().from("promo_codes").delete().eq("code", code);
+  const { error } = await client()
+    .from("promo_codes")
+    .delete()
+    .eq("code", code);
   if (error) throw error;
 }
 
@@ -633,7 +704,10 @@ export async function couponUsage(code) {
 /* ------------------------------------------------------------ categories --- */
 
 export async function fetchCategories() {
-  const { data, error } = await client().from("categories").select("*").order("name", { ascending: true });
+  const { data, error } = await client()
+    .from("categories")
+    .select("*")
+    .order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
@@ -653,7 +727,10 @@ export async function deleteCategory(id) {
 
 // Live tally of the category names actually in use on shops (shops.primary_category).
 export async function fetchShopCategoryUsage() {
-  const { data, error } = await client().from("shops").select("primary_category").limit(5000);
+  const { data, error } = await client()
+    .from("shops")
+    .select("primary_category")
+    .limit(5000);
   if (error) throw error;
   const counts = new Map();
   for (const row of data || []) {
@@ -661,7 +738,9 @@ export async function fetchShopCategoryUsage() {
     if (!c) continue;
     counts.set(c, (counts.get(c) || 0) + 1);
   }
-  return [...counts.entries()].map(([name, shops]) => ({ name, shops })).sort((a, b) => b.shops - a.shops);
+  return [...counts.entries()]
+    .map(([name, shops]) => ({ name, shops }))
+    .sort((a, b) => b.shops - a.shops);
 }
 
 // The standard BreakQ shop categories (mirrors the Become-a-Partner form).
@@ -680,7 +759,9 @@ export const DEFAULT_CATEGORIES = [
 export async function seedCategories() {
   const existing = await fetchCategories();
   const have = new Set(existing.map((c) => c.name.toLowerCase()));
-  const toAdd = DEFAULT_CATEGORIES.filter((c) => !have.has(c.name.toLowerCase()));
+  const toAdd = DEFAULT_CATEGORIES.filter(
+    (c) => !have.has(c.name.toLowerCase()),
+  );
   if (toAdd.length === 0) return 0;
   const { error } = await client().from("categories").insert(toAdd);
   if (error) throw error;
@@ -689,7 +770,12 @@ export async function seedCategories() {
 
 /* --------------------------------------------------- users (read-only) --- */
 
-export async function fetchUsers({ page = 0, pageSize = 50, search = "" } = {}) {
+export async function fetchUsers({
+  page = 0,
+  pageSize = 50,
+  search = "",
+  role = "",
+} = {}) {
   const from = page * pageSize;
   const to = from + pageSize - 1;
   let q = client()
@@ -698,6 +784,8 @@ export async function fetchUsers({ page = 0, pageSize = 50, search = "" } = {}) 
     .order("created_at", { ascending: false })
     .range(from, to);
   if (search.trim()) q = q.ilike("email", `%${search.trim()}%`);
+  if (role === "unknown") q = q.is("role", null);
+  else if (role) q = q.eq("role", role);
   const { data, error, count } = await q;
   if (error) throw error;
   return { rows: data ?? [], total: count ?? 0 };
@@ -715,15 +803,35 @@ export async function probeSchema() {
       out[key] = false;
     }
   };
-  await probe("shops_is_deleted", () => client().from("shops").select("is_deleted").limit(1));
-  await probe("shops_locality", () => client().from("shops").select("locality").limit(1));
-  await probe("shops_locality_source", () => client().from("shops").select("locality_source").limit(1));
-  await probe("shop_ratings", () => client().from("shop_ratings").select("id").limit(1));
-  await probe("admin_login_logs", () => client().from("admin_login_logs").select("id").limit(1));
+  await probe("shops_is_deleted", () =>
+    client().from("shops").select("is_deleted").limit(1),
+  );
+  await probe("shops_locality", () =>
+    client().from("shops").select("locality").limit(1),
+  );
+  await probe("shops_locality_source", () =>
+    client().from("shops").select("locality_source").limit(1),
+  );
+  await probe("shop_ratings", () =>
+    client().from("shop_ratings").select("id").limit(1),
+  );
+  await probe("admin_login_logs", () =>
+    client().from("admin_login_logs").select("id").limit(1),
+  );
   await probe("admin_dashboard_rpc", () => client().rpc("admin_dashboard"));
   await probe("admin_analytics_rpc", () => client().rpc("admin_analytics"));
-  await probe("admin_search_analytics_rpc", () => client().rpc("admin_search_analytics"));
-  await probe("admin_ratings_analytics_rpc", () => client().rpc("admin_ratings_analytics"));
-  await probe("admin_geo_analytics_rpc", () => client().rpc("admin_geo_analytics"));
+  await probe("admin_search_analytics_rpc", () =>
+    client().rpc("admin_search_analytics"),
+  );
+  await probe("admin_ratings_analytics_rpc", () =>
+    client().rpc("admin_ratings_analytics"),
+  );
+  await probe("admin_geo_analytics_rpc", () =>
+    client().rpc("admin_geo_analytics"),
+  );
+  await probe("admin_user_role_counts_rpc", () =>
+    client().rpc("admin_user_role_counts"),
+  );
+  await probe("admin_coupon_stats_rpc", () => client().rpc("admin_coupon_stats"));
   return out;
 }

@@ -12,14 +12,20 @@ export default function SearchDiscovery() {
   const zero = A?.zero_result_terms || [];
   const lowCtr = A?.low_ctr_terms || [];
   const conv = A?.conversion_by_locality || [];
-  const heat = (A?.heatmap || []).map((h) => ({ row: h.locality, col: h.event_type, count: h.count }));
+  const heat = (A?.heatmap || []).map((h) => ({
+    row: h.locality,
+    col: h.event_type,
+    count: h.count,
+  }));
 
   return (
     <div className="ap-view">
       <div className="ap-view-head">
         <div>
           <h1>Search &amp; Discovery</h1>
-          <p className="ap-view-sub">What customers look for, and where supply isn&rsquo;t meeting demand</p>
+          <p className="ap-view-sub">
+            What customers look for, and where supply isn&rsquo;t meeting demand
+          </p>
         </div>
         <button className="ap-btn ap-btn-ghost" onClick={reload}>
           Refresh
@@ -34,7 +40,10 @@ export default function SearchDiscovery() {
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Searches with no results</h2>
-                <span className="ap-view-sub">ranked by frequency · last 30 days · direct vendor-acquisition targets</span>
+                <span className="ap-view-sub">
+                  ranked by frequency · last 30 days · direct vendor-acquisition
+                  targets
+                </span>
               </div>
               {zero.length ? (
                 <div className="ap-table-wrap">
@@ -58,7 +67,9 @@ export default function SearchDiscovery() {
                   </table>
                 </div>
               ) : (
-                <div className="ap-async-empty">No unmatched searches recorded yet.</div>
+                <div className="ap-async-empty">
+                  No unmatched searches recorded yet.
+                </div>
               )}
             </section>
 
@@ -66,7 +77,8 @@ export default function SearchDiscovery() {
               <div className="ap-panel-head">
                 <h2>Results, but low view-through</h2>
                 <span className="ap-view-sub">
-                  terms customers search often yet rarely open a shop for — a catalog / pricing / photo problem
+                  terms customers search often yet rarely open a shop for - a
+                  catalog / pricing / photo problem
                 </span>
               </div>
               {lowCtr.length ? (
@@ -93,7 +105,9 @@ export default function SearchDiscovery() {
                   </table>
                 </div>
               ) : (
-                <div className="ap-async-empty">Nothing flagged — view-through looks healthy.</div>
+                <div className="ap-async-empty">
+                  Nothing flagged - view-through looks healthy.
+                </div>
               )}
             </section>
 
@@ -101,7 +115,9 @@ export default function SearchDiscovery() {
               <div className="ap-panel">
                 <div className="ap-panel-head">
                   <h2>Search → view conversion by locality</h2>
-                  <span className="ap-view-sub">last 30 days · where supply matches demand</span>
+                  <span className="ap-view-sub">
+                    last 30 days · where supply matches demand
+                  </span>
                 </div>
                 {conv.length ? (
                   <RankBars
@@ -114,7 +130,9 @@ export default function SearchDiscovery() {
                     max={100}
                   />
                 ) : (
-                  <div className="ap-async-empty">No locality-tagged events yet.</div>
+                  <div className="ap-async-empty">
+                    No locality-tagged events yet.
+                  </div>
                 )}
               </div>
 
@@ -126,15 +144,18 @@ export default function SearchDiscovery() {
                 {heat.length ? (
                   <Heatmap data={heat} />
                 ) : (
-                  <div className="ap-async-empty">No locality-tagged events yet.</div>
+                  <div className="ap-async-empty">
+                    No locality-tagged events yet.
+                  </div>
                 )}
               </div>
             </section>
 
             <p className="ap-note">
-              &ldquo;No results&rdquo; is inferred: the event log has no result count, so a search counts as
-              unmatched when the same visitor opened no shop within 30 minutes of it. Anonymous searches
-              are excluded.
+              &ldquo;No results&rdquo; is inferred: the event log has no result
+              count, so a search counts as unmatched when the same visitor
+              opened no shop within 30 minutes of it. Anonymous searches are
+              excluded.
             </p>
           </>
         )}

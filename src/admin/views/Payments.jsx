@@ -1,10 +1,26 @@
 import { useState } from "react";
 import { fetchPayments, updatePaymentStatus } from "../api";
-import { Async, Badge, Modal, fmtDateTime, money, statusTone, useAsync, useToast } from "../ui";
+import {
+  Async,
+  Badge,
+  Modal,
+  fmtDateTime,
+  money,
+  statusTone,
+  useAsync,
+  useToast,
+} from "../ui";
 
 // Only status is ever editable here — signature / payment-id fields are a
 // payment-integrity risk and stay read-only.
-const STATUSES = ["created", "authorized", "captured", "paid", "failed", "refunded"];
+const STATUSES = [
+  "created",
+  "authorized",
+  "captured",
+  "paid",
+  "failed",
+  "refunded",
+];
 
 export default function Payments() {
   const notify = useToast();
@@ -49,7 +65,9 @@ export default function Payments() {
                   <td>{fmtDateTime(p.created_at)}</td>
                   <td className="ap-mono">{p.razorpay_order_id || "—"}</td>
                   <td className="ap-mono">{p.razorpay_payment_id || "—"}</td>
-                  <td className="ap-num">{money(p.amount_rupees ?? p.amount)}</td>
+                  <td className="ap-num">
+                    {money(p.amount_rupees ?? p.amount)}
+                  </td>
                   <td>
                     <Badge tone={statusTone(p.status)}>{p.status}</Badge>
                   </td>
@@ -109,20 +127,27 @@ function AdjustModal({ row, onClose, onDone, onError }) {
           <button className="ap-btn ap-btn-ghost" onClick={onClose}>
             Cancel
           </button>
-          <button className="ap-btn ap-btn-primary" onClick={submit} disabled={busy || status === row.status}>
+          <button
+            className="ap-btn ap-btn-primary"
+            onClick={submit}
+            disabled={busy || status === row.status}
+          >
             {busy ? "Saving…" : "Save status"}
           </button>
         </>
       }
     >
       <p className="ap-note">
-        Reconciliation only — e.g. marking a stuck <code>created</code> as <code>failed</code> after manual
-        verification. Signature and payment-id fields cannot be changed here.
+        Reconciliation only - e.g. marking a stuck <code>created</code> as{" "}
+        <code>failed</code> after manual verification. Signature and payment-id
+        fields cannot be changed here.
       </p>
       <div className="ap-detail-grid">
         <div className="ap-detail ap-detail-span">
           <span className="ap-detail-label">Razorpay signature</span>
-          <span className="ap-detail-value ap-mono">{row.razorpay_signature || "—"}</span>
+          <span className="ap-detail-value ap-mono">
+            {row.razorpay_signature || "—"}
+          </span>
         </div>
       </div>
       <label className="ap-field">

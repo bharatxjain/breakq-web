@@ -578,6 +578,70 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
   );
 }
 
+// Grouped comparison bars: the selected metric summed into weekly buckets for
+// the current 30-day window vs the prior 30-day window, aligned by day-offset so
+// week N lines up with week N. Tolerates sparse daily data (gaps = 0).
+export function ComparisonBars({ current = [], prior = [], metric, format = num, now }) {
+  const DAY = 86400000;
+  const SPAN = 30;
+  const N = 5;
+  const size = Math.ceil(SPAN / N); // 6-day buckets
+
+  const start = now ? new Date(now) : new Date();
+  start.setHours(0, 0, 0, 0);
+  const startCur = new Date(start);
+  startCur.setDate(startCur.getDate() - (SPAN - 1));
+  const startPri = new Date(startCur);
+  startPri.setDate(startPri.getDate() - SPAN);
+
+  const bucketize = (rows, originMs) => {
+    const out = new Array(N).fill(0);
+    for (const r of rows || []) {
+      const t = new Date(r.d).getTime();
+      if (!Number.isFinite(t)) continue;
+      let idx = Math.floor((t - originMs) / DAY / size);
+      idx = Math.max(0, Math.min(N - 1, idx));
+      out[idx] += Number(r[metric]) || 0;
+    }
+    return out;
+  };
+
+  const cur = bucketize(current, startCur.getTime());
+  const pri = bucketize(prior, startPri.getTime());
+  const max = Math.max(1, ...cur, ...pri);
+  const curTotal = cur.reduce((a, b) => a + b, 0);
+  const priTotal = pri.reduce((a, b) => a + b, 0);
+
+  return (
+    <div className="ap-cmpbars">
+      <div className="ap-cmpbars-head">
+        <span>
+          <i className="ap-cmpbars-key is-cur" />
+          Last 30 days <b>{format(curTotal)}</b>
+        </span>
+        <span>
+          <i className="ap-cmpbars-key is-pri" />
+          Prior 30 days <b>{format(priTotal)}</b>
+        </span>
+        <DeltaChip now={curTotal} prev={priTotal} />
+      </div>
+      <div className="ap-cmpbars-plot">
+        {cur.map((_, i) => (
+          <div
+            className="ap-cmpbars-group"
+            key={i}
+            title={`Days ${i * size + 1}–${Math.min(SPAN, (i + 1) * size)}\nLast: ${format(cur[i])}\nPrior: ${format(pri[i])}`}
+          >
+            <span className="ap-cmpbars-bar is-cur" style={{ height: `${(cur[i] / max) * 100}%` }} />
+            <span className="ap-cmpbars-bar is-pri" style={{ height: `${(pri[i] / max) * 100}%` }} />
+            <span className="ap-cmpbars-label">Wk {i + 1}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Vertical bar histogram — every label + count is shown (unlike BarChart).
 export function Histogram({ bins, format = num }) {
   if (!bins || bins.length === 0) return <div className="ap-async-empty">No data.</div>;

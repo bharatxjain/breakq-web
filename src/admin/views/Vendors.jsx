@@ -53,13 +53,18 @@ export default function Vendors() {
   // debounce the free-text search into the committed filter set
   useEffect(() => {
     const t = setTimeout(() => {
-      setFilters((f) => (f.search === searchInput ? f : { ...f, search: searchInput }));
+      setFilters((f) =>
+        f.search === searchInput ? f : { ...f, search: searchInput },
+      );
       setPage(0);
     }, 350);
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const key = useMemo(() => JSON.stringify({ ...filters, page }), [filters, page]);
+  const key = useMemo(
+    () => JSON.stringify({ ...filters, page }),
+    [filters, page],
+  );
   const { state, data, error, reload } = useAsync(
     () => fetchShopsPaged({ page, pageSize: PAGE_SIZE, ...filters }),
     [key],
@@ -103,7 +108,9 @@ export default function Vendors() {
       <div className="ap-view-head">
         <div>
           <h1>Vendors</h1>
-          <p className="ap-view-sub">{num(total)} shops · searchable directory</p>
+          <p className="ap-view-sub">
+            {num(total)} shops · searchable directory
+          </p>
         </div>
         <button className="ap-btn ap-btn-ghost" onClick={reload}>
           Refresh
@@ -124,7 +131,11 @@ export default function Vendors() {
           placeholder="Locality"
           aria-label="Filter by locality"
         />
-        <select value={filters.tierId} onChange={(e) => set({ tierId: e.target.value })} aria-label="Filter by tier">
+        <select
+          value={filters.tierId}
+          onChange={(e) => set({ tierId: e.target.value })}
+          aria-label="Filter by tier"
+        >
           <option value="">Any tier</option>
           {(tiers.data || []).map((t) => (
             <option key={t.id} value={t.id}>
@@ -132,13 +143,21 @@ export default function Vendors() {
             </option>
           ))}
         </select>
-        <select value={filters.status} onChange={(e) => set({ status: e.target.value })} aria-label="Filter by status">
+        <select
+          value={filters.status}
+          onChange={(e) => set({ status: e.target.value })}
+          aria-label="Filter by status"
+        >
           <option value="">Any status</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
-        <select value={filters.state} onChange={(e) => set({ state: e.target.value })} aria-label="Filter by state">
+        <select
+          value={filters.state}
+          onChange={(e) => set({ state: e.target.value })}
+          aria-label="Filter by state"
+        >
           <option value="any">Active + deleted</option>
           <option value="active">Active only</option>
           <option value="deleted">Deleted only</option>
@@ -153,7 +172,11 @@ export default function Vendors() {
           <option value="manual">Manual</option>
           <option value="none">Never geocoded</option>
         </select>
-        <select value={filters.ratingMin} onChange={(e) => set({ ratingMin: e.target.value })} aria-label="Minimum rating">
+        <select
+          value={filters.ratingMin}
+          onChange={(e) => set({ ratingMin: e.target.value })}
+          aria-label="Minimum rating"
+        >
           <option value="">Min ★</option>
           {[1, 2, 3, 4, 4.5].map((r) => (
             <option key={r} value={r}>
@@ -161,7 +184,11 @@ export default function Vendors() {
             </option>
           ))}
         </select>
-        <select value={filters.ratingMax} onChange={(e) => set({ ratingMax: e.target.value })} aria-label="Maximum rating">
+        <select
+          value={filters.ratingMax}
+          onChange={(e) => set({ ratingMax: e.target.value })}
+          aria-label="Maximum rating"
+        >
           <option value="">Max ★</option>
           {[2, 3, 4, 4.5, 5].map((r) => (
             <option key={r} value={r}>
@@ -205,16 +232,24 @@ export default function Vendors() {
                       {s.name}
                     </button>
                     {s.is_deleted && <Badge tone="danger">deleted</Badge>}
-                    {s.owner_name && <div className="ap-muted-line">{s.owner_name}</div>}
+                    {s.owner_name && (
+                      <div className="ap-muted-line">{s.owner_name}</div>
+                    )}
                   </td>
                   <td>
                     {s.locality || "—"}
-                    {s.locality_source && <div className="ap-muted-line">{s.locality_source}</div>}
+                    {s.locality_source && (
+                      <div className="ap-muted-line">{s.locality_source}</div>
+                    )}
                   </td>
                   <td>{s._tier?.display_name || "Free"}</td>
                   <td className="ap-num">
                     {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "—"}
-                    {s.rating_count ? <div className="ap-muted-line">{num(s.rating_count)} rated</div> : null}
+                    {s.rating_count ? (
+                      <div className="ap-muted-line">
+                        {num(s.rating_count)} rated
+                      </div>
+                    ) : null}
                   </td>
                   <td>
                     <Badge tone={statusTone(s.status)}>{s.status}</Badge>
@@ -227,7 +262,9 @@ export default function Vendors() {
                         <button
                           className="ap-btn ap-btn-sm ap-btn-ok"
                           disabled={busy}
-                          onClick={() => setConfirm({ kind: "approve", shop: s })}
+                          onClick={() =>
+                            setConfirm({ kind: "approve", shop: s })
+                          }
                         >
                           Verify
                         </button>
@@ -240,7 +277,10 @@ export default function Vendors() {
                         </button>
                       </>
                     )}
-                    <button className="ap-btn ap-btn-sm ap-btn-ghost" onClick={() => setDetail(s)}>
+                    <button
+                      className="ap-btn ap-btn-sm ap-btn-ghost"
+                      onClick={() => setDetail(s)}
+                    >
                       Details
                     </button>
                   </td>
@@ -255,7 +295,11 @@ export default function Vendors() {
             {from}–{to} of {num(total)}
           </span>
           <div className="ap-pager-btns">
-            <button className="ap-btn ap-btn-sm ap-btn-ghost" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            <button
+              className="ap-btn ap-btn-sm ap-btn-ghost"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
               ← Prev
             </button>
             <span className="ap-pager-page">
@@ -275,37 +319,75 @@ export default function Vendors() {
       {detail && (
         <Modal title={detail.name} onClose={() => setDetail(null)} wide>
           <div className="ap-detail-grid">
-            <Detail label="Status" value={<Badge tone={statusTone(detail.status)}>{detail.status}</Badge>} />
+            <Detail
+              label="Status"
+              value={
+                <Badge tone={statusTone(detail.status)}>{detail.status}</Badge>
+              }
+            />
             <Detail label="Owner" value={detail.owner_name} />
             <Detail label="Phone" value={detail.phone} />
             <Detail label="Category" value={detail.primary_category} />
-            <Detail label="Years in business" value={detail.years_in_business} />
+            <Detail
+              label="Years in business"
+              value={detail.years_in_business}
+            />
             <Detail label="Registered" value={fmtDateTime(detail.created_at)} />
-            <Detail label="Accepting orders" value={String(detail.accepting_orders)} />
-            <Detail label="Hours" value={`${detail.open_time || "?"} – ${detail.close_time || "?"}`} />
+            <Detail
+              label="Accepting orders"
+              value={String(detail.accepting_orders)}
+            />
+            <Detail
+              label="Hours"
+              value={`${detail.open_time || "?"} – ${detail.close_time || "?"}`}
+            />
             <Detail
               label="Commission enabled"
-              value={detail.commission_enabled_at ? fmtDateTime(detail.commission_enabled_at) : "Not yet"}
+              value={
+                detail.commission_enabled_at
+                  ? fmtDateTime(detail.commission_enabled_at)
+                  : "Not yet"
+              }
             />
             <Detail
               label="Locality"
-              value={detail.locality ? `${detail.locality}${detail.locality_source ? ` (${detail.locality_source})` : ""}` : "—"}
+              value={
+                detail.locality
+                  ? `${detail.locality}${detail.locality_source ? ` (${detail.locality_source})` : ""}`
+                  : "—"
+              }
             />
             <Detail label="Tier" value={detail._tier?.display_name || "Free"} />
             <Detail label="Address" value={detail.address} span />
-            {detail.rejection_reason && <Detail label="Rejection reason" value={detail.rejection_reason} span />}
+            {detail.rejection_reason && (
+              <Detail
+                label="Rejection reason"
+                value={detail.rejection_reason}
+                span
+              />
+            )}
           </div>
 
           <ShopMetrics shop={detail} />
 
           <div className="ap-detail-files">
             {detail.image_url && (
-              <a href={detail.image_url} target="_blank" rel="noreferrer" className="ap-btn ap-btn-ghost">
+              <a
+                href={detail.image_url}
+                target="_blank"
+                rel="noreferrer"
+                className="ap-btn ap-btn-ghost"
+              >
                 Shop photo ↗
               </a>
             )}
             {detail.business_proof_url && (
-              <a href={detail.business_proof_url} target="_blank" rel="noreferrer" className="ap-btn ap-btn-ghost">
+              <a
+                href={detail.business_proof_url}
+                target="_blank"
+                rel="noreferrer"
+                className="ap-btn ap-btn-ghost"
+              >
                 Business proof ↗
               </a>
             )}
@@ -321,7 +403,11 @@ export default function Vendors() {
                 >
                   Verify
                 </button>
-                <button className="ap-btn ap-btn-danger" disabled={busy} onClick={() => setRejecting(detail)}>
+                <button
+                  className="ap-btn ap-btn-danger"
+                  disabled={busy}
+                  onClick={() => setRejecting(detail)}
+                >
                   Reject…
                 </button>
               </>
@@ -330,7 +416,9 @@ export default function Vendors() {
               <button
                 className="ap-btn ap-btn-primary"
                 disabled={busy}
-                onClick={() => run("Commission enabled", () => enableCommission(detail.id))}
+                onClick={() =>
+                  run("Commission enabled", () => enableCommission(detail.id))
+                }
               >
                 Enable commission
               </button>
@@ -339,7 +427,9 @@ export default function Vendors() {
               <button
                 className="ap-btn ap-btn-ghost"
                 disabled={busy}
-                onClick={() => run("Shop restored", () => restoreShop(detail.id))}
+                onClick={() =>
+                  run("Shop restored", () => restoreShop(detail.id))
+                }
               >
                 Restore
               </button>
@@ -363,7 +453,9 @@ export default function Vendors() {
           shop={rejecting}
           busy={busy}
           onClose={() => setRejecting(null)}
-          onSubmit={(reason) => run("Shop rejected", () => rejectShop(rejecting.id, reason))}
+          onSubmit={(reason) =>
+            run("Shop rejected", () => rejectShop(rejecting.id, reason))
+          }
         />
       )}
 
@@ -374,12 +466,17 @@ export default function Vendors() {
           confirmLabel="Verify vendor"
           busy={busy}
           onClose={() => setConfirm(null)}
-          onConfirm={() => run("Vendor verified", () => approveShop(confirm.shop.id))}
+          onConfirm={() =>
+            run("Vendor verified", () => approveShop(confirm.shop.id))
+          }
           message={
             <>
-              <strong>{confirm.shop.name}</strong> will go live for customers and the owner
-              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that their shop is
-              approved. Continue?
+              <strong>{confirm.shop.name}</strong> will go live for customers
+              and the owner
+              {confirm.shop.owner_name
+                ? ` (${confirm.shop.owner_name})`
+                : ""}{" "}
+              will be emailed that their shop is approved. Continue?
             </>
           }
         />
@@ -392,13 +489,18 @@ export default function Vendors() {
           confirmLabel="Delete vendor"
           busy={busy}
           onClose={() => setConfirm(null)}
-          onConfirm={() => run("Vendor deleted", () => softDeleteShop(confirm.shop.id))}
+          onConfirm={() =>
+            run("Vendor deleted", () => softDeleteShop(confirm.shop.id))
+          }
           message={
             <>
-              This soft-deletes <strong>{confirm.shop.name}</strong> and stops it accepting orders. The record is
-              kept (orders and history stay intact) and can be restored later. The owner
-              {confirm.shop.owner_name ? ` (${confirm.shop.owner_name})` : ""} will be emailed that their shop was
-              removed. Continue?
+              This soft-deletes <strong>{confirm.shop.name}</strong> and stops
+              it accepting orders. The record is kept (orders and history stay
+              intact) and can be restored later. The owner
+              {confirm.shop.owner_name
+                ? ` (${confirm.shop.owner_name})`
+                : ""}{" "}
+              will be emailed that their shop was removed. Continue?
             </>
           }
         />
@@ -415,14 +517,24 @@ function daysSince(ts) {
 }
 
 function ShopMetrics({ shop }) {
-  const { state, data, error, reload } = useAsync(() => fetchShopMetrics(shop.id), [shop.id]);
+  const { state, data, error, reload } = useAsync(
+    () => fetchShopMetrics(shop.id),
+    [shop.id],
+  );
   const missing = data?._missing;
   const M = data && !missing ? data : null;
 
   if (missing) return <NeedsSetup what="Per-shop metrics" />;
 
   const stale = daysSince(M?.catalog_last_added);
-  const staleTone = stale == null ? "neutral" : stale > 90 ? "danger" : stale > 30 ? "warn" : "ok";
+  const staleTone =
+    stale == null
+      ? "neutral"
+      : stale > 90
+        ? "danger"
+        : stale > 30
+          ? "warn"
+          : "ok";
   const activity = M?.activity || [];
   const ratingTrend = M?.rating_trend || [];
 
@@ -431,27 +543,41 @@ function ShopMetrics({ shop }) {
       <div className="ap-metric-grid">
         <div className="ap-metric">
           <span className="ap-metric-label">Catalog size</span>
-          <span className="ap-metric-value">{M?.catalog_size != null ? num(M.catalog_size) : "—"}</span>
+          <span className="ap-metric-value">
+            {M?.catalog_size != null ? num(M.catalog_size) : "—"}
+          </span>
         </div>
         <div className="ap-metric">
           <span className="ap-metric-label">Newest catalog item</span>
-          <span className="ap-metric-value">{stale == null ? "—" : `${stale}d ago`}</span>
+          <span className="ap-metric-value">
+            {stale == null ? "—" : `${stale}d ago`}
+          </span>
           {stale != null && (
             <Badge tone={staleTone}>
-              {stale > 90 ? "stale — check if dead" : stale > 30 ? "ageing" : "fresh"}
+              {stale > 90
+                ? "stale — check if dead"
+                : stale > 30
+                  ? "ageing"
+                  : "fresh"}
             </Badge>
           )}
         </div>
         <div className="ap-metric">
           <span className="ap-metric-label">Last active</span>
-          <span className="ap-metric-value">{M?.last_active ? fmtDate(M.last_active) : "—"}</span>
+          <span className="ap-metric-value">
+            {M?.last_active ? fmtDate(M.last_active) : "—"}
+          </span>
         </div>
         <div className="ap-metric">
           <span className="ap-metric-label">Rating (rollup)</span>
           <span className="ap-metric-value">
             {M?.rating_now?.avg ? Number(M.rating_now.avg).toFixed(1) : "—"}
           </span>
-          {M?.rating_now?.count ? <span className="ap-metric-label">{num(M.rating_now.count)} ratings</span> : null}
+          {M?.rating_now?.count ? (
+            <span className="ap-metric-label">
+              {num(M.rating_now.count)} ratings
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -476,9 +602,14 @@ function ShopMetrics({ shop }) {
           </div>
           {ratingTrend.length >= 2 ? (
             <>
-              <AreaChart data={ratingTrend} metric="value" format={(v) => Number(v).toFixed(2)} />
+              <AreaChart
+                data={ratingTrend}
+                metric="value"
+                format={(v) => Number(v).toFixed(2)}
+              />
               <p className="ap-field-hint">
-                From review rows directly — safe even while the rollup count is inflated.
+                From review rows directly — safe even while the rollup count is
+                inflated.
               </p>
             </>
           ) : (
@@ -508,7 +639,11 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
       onClose={onClose}
       footer={
         <>
-          <button className="ap-btn ap-btn-ghost" onClick={onClose} disabled={busy}>
+          <button
+            className="ap-btn ap-btn-ghost"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </button>
           <button
@@ -528,9 +663,15 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
       }
     >
       <p className="ap-confirm-msg">
-        <strong>{shop.name}</strong> will be marked rejected and the owner emailed with the reason below.
+        <strong>{shop.name}</strong> will be marked rejected and the owner
+        emailed with the reason below.
       </p>
-      <Field label="Reason for rejection" required error={err} hint="Shown to the vendor in the app and email.">
+      <Field
+        label="Reason for rejection"
+        required
+        error={err}
+        hint="Shown to the vendor in the app and email."
+      >
         <textarea
           rows={4}
           value={reason}

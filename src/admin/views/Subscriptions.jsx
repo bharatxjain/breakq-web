@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  fetchSubscribers,
-  fetchTiers,
-  overrideTier,
-  saveTier,
-} from "../api";
+import { fetchSubscribers, fetchTiers, overrideTier, saveTier } from "../api";
 import {
   Async,
   Badge,
@@ -49,10 +44,16 @@ export default function Subscriptions() {
         <h1>Subscriptions</h1>
       </div>
       <div className="ap-tabs">
-        <button className={sub === "tiers" ? "is-active" : ""} onClick={() => setSub("tiers")}>
+        <button
+          className={sub === "tiers" ? "is-active" : ""}
+          onClick={() => setSub("tiers")}
+        >
           Tiers
         </button>
-        <button className={sub === "subs" ? "is-active" : ""} onClick={() => setSub("subs")}>
+        <button
+          className={sub === "subs" ? "is-active" : ""}
+          onClick={() => setSub("subs")}
+        >
           Subscribers
         </button>
       </div>
@@ -72,12 +73,21 @@ function Tiers() {
   return (
     <>
       <div className="ap-bar">
-        <button className="ap-btn ap-btn-primary" onClick={() => setEditing({ ...BLANK_TIER })}>
+        <button
+          className="ap-btn ap-btn-primary"
+          onClick={() => setEditing({ ...BLANK_TIER })}
+        >
           + New tier
         </button>
       </div>
 
-      <Async state={state} error={error} onRetry={reload} isEmpty={rows.length === 0} empty="No tiers defined.">
+      <Async
+        state={state}
+        error={error}
+        onRetry={reload}
+        isEmpty={rows.length === 0}
+        empty="No tiers defined."
+      >
         <div className="ap-table-wrap">
           <table className="ap-table">
             <thead>
@@ -96,7 +106,9 @@ function Tiers() {
                   <td>
                     <strong>{t.display_name}</strong>
                     {t.is_limited_time && <Badge tone="warn">limited</Badge>}
-                    {t.tagline && <div className="ap-muted-line">{t.tagline}</div>}
+                    {t.tagline && (
+                      <div className="ap-muted-line">{t.tagline}</div>
+                    )}
                   </td>
                   <td className="ap-num">{money(t.price_rupees)}</td>
                   <td className="ap-num">{t.item_cap}</td>
@@ -108,11 +120,16 @@ function Tiers() {
                           {l}
                         </span>
                       ))}
-                      {FLAGS.filter(([k]) => t[k]).length === 0 && <span className="ap-muted-line">—</span>}
+                      {FLAGS.filter(([k]) => t[k]).length === 0 && (
+                        <span className="ap-muted-line">—</span>
+                      )}
                     </span>
                   </td>
                   <td>
-                    <button className="ap-btn ap-btn-sm ap-btn-ghost" onClick={() => setEditing({ ...t })}>
+                    <button
+                      className="ap-btn ap-btn-sm ap-btn-ghost"
+                      onClick={() => setEditing({ ...t })}
+                    >
                       Edit
                     </button>
                   </td>
@@ -177,7 +194,11 @@ function TierModal({ tier, onClose, onSaved, onError }) {
           <button className="ap-btn ap-btn-ghost" onClick={onClose}>
             Cancel
           </button>
-          <button className="ap-btn ap-btn-primary" onClick={submit} disabled={busy}>
+          <button
+            className="ap-btn ap-btn-primary"
+            onClick={submit}
+            disabled={busy}
+          >
             {busy ? "Saving…" : "Save tier"}
           </button>
         </>
@@ -185,13 +206,27 @@ function TierModal({ tier, onClose, onSaved, onError }) {
     >
       <div className="ap-form-grid">
         <Field label="Display name" required>
-          <input value={form.display_name} onChange={(e) => set("display_name", e.target.value)} />
+          <input
+            value={form.display_name}
+            onChange={(e) => set("display_name", e.target.value)}
+          />
         </Field>
         <Field label="Price (₹)">
-          <input type="number" value={form.price_rupees} onChange={(e) => set("price_rupees", e.target.value)} />
+          <input
+            type="number"
+            value={form.price_rupees}
+            onChange={(e) => set("price_rupees", e.target.value)}
+          />
         </Field>
-        <Field label="Item cap" hint="Max products a shop on this tier can list. Use -1 for unlimited.">
-          <input type="number" value={form.item_cap} onChange={(e) => set("item_cap", e.target.value)} />
+        <Field
+          label="Item cap"
+          hint="Max products a shop on this tier can list. Use -1 for unlimited."
+        >
+          <input
+            type="number"
+            value={form.item_cap}
+            onChange={(e) => set("item_cap", e.target.value)}
+          />
         </Field>
         <Field label="Commission %">
           <input
@@ -206,7 +241,12 @@ function TierModal({ tier, onClose, onSaved, onError }) {
       <h4 className="ap-form-section">Feature flags</h4>
       <div className="ap-toggle-grid">
         {FLAGS.map(([k, l]) => (
-          <Toggle key={k} label={l} checked={!!form[k]} onChange={(v) => set(k, v)} />
+          <Toggle
+            key={k}
+            label={l}
+            checked={!!form[k]}
+            onChange={(v) => set(k, v)}
+          />
         ))}
       </div>
 
@@ -220,12 +260,17 @@ function TierModal({ tier, onClose, onSaved, onError }) {
         <Field label="Offer ends at">
           <input
             type="datetime-local"
-            value={form.offer_ends_at ? String(form.offer_ends_at).slice(0, 16) : ""}
+            value={
+              form.offer_ends_at ? String(form.offer_ends_at).slice(0, 16) : ""
+            }
             onChange={(e) => set("offer_ends_at", e.target.value)}
           />
         </Field>
         <Field label="Tagline" hint='e.g. "Diwali offer — 40% off"'>
-          <input value={form.tagline || ""} onChange={(e) => set("tagline", e.target.value)} />
+          <input
+            value={form.tagline || ""}
+            onChange={(e) => set("tagline", e.target.value)}
+          />
         </Field>
       </div>
     </Modal>
@@ -251,7 +296,7 @@ function Subscribers() {
   return (
     <>
       <p className="ap-view-sub">
-        Paid subscribers only — vendors on the free tier are not listed.
+        Paid subscribers only - vendors on the free tier are not listed.
       </p>
 
       <Async
@@ -342,7 +387,7 @@ function ChangeTierModal({ row, tiers, onClose, onDone, onError }) {
     } catch (e) {
       onError(
         e.message?.includes("function")
-          ? "admin_override_tier isn't installed — run supabase/admin_panel.sql"
+          ? "admin_override_tier isn't installed - run supabase/admin_panel.sql"
           : e.message || "Change failed",
       );
     } finally {
@@ -359,28 +404,40 @@ function ChangeTierModal({ row, tiers, onClose, onDone, onError }) {
           <button className="ap-btn ap-btn-ghost" onClick={onClose}>
             Cancel
           </button>
-          <button className="ap-btn ap-btn-primary" onClick={submit} disabled={busy}>
+          <button
+            className="ap-btn ap-btn-primary"
+            onClick={submit}
+            disabled={busy}
+          >
             {busy ? "Applying…" : "Apply change"}
           </button>
         </>
       }
     >
       <p className="ap-note">
-        Expires the current active subscription and inserts a new active row
-        (<code>payment_ref = manual-admin-override</code>) in one transaction.
+        Expires the current active subscription and inserts a new active row (
+        <code>payment_ref = manual-admin-override</code>) in one transaction.
       </p>
       <Field label="New tier" required>
         <select value={tierId} onChange={(e) => setTierId(e.target.value)}>
           <option value="">Select…</option>
           {tiers.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.display_name} — {money(t.price_rupees)} / {t.commission_percent}%
+              {t.display_name} — {money(t.price_rupees)} /{" "}
+              {t.commission_percent}%
             </option>
           ))}
         </select>
       </Field>
-      <Field label="Amount paid (₹)" hint="Recorded on the new subscription row.">
-        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <Field
+        label="Amount paid (₹)"
+        hint="Recorded on the new subscription row."
+      >
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
       </Field>
     </Modal>
   );

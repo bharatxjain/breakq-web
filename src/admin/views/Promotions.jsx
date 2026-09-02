@@ -35,9 +35,14 @@ export default function Promotions() {
       <div className="ap-view-head">
         <div>
           <h1>Promoted placements</h1>
-          <p className="ap-view-sub">Pay-per-day shop promotion · spend is kept for revenue history</p>
+          <p className="ap-view-sub">
+            Pay-per-day shop promotion · spend is kept for revenue history
+          </p>
         </div>
-        <button className="ap-btn ap-btn-primary" onClick={() => setCreating(true)}>
+        <button
+          className="ap-btn ap-btn-primary"
+          onClick={() => setCreating(true)}
+        >
           + New promotion
         </button>
       </div>
@@ -64,9 +69,18 @@ export default function Promotions() {
             </thead>
             <tbody>
               {rows.map((p) => {
-                const live = p.is_active && new Date(p.active_to).getTime() > now;
-                const budgetToDate = (Number(p.daily_budget_rupees) || 0) * daysElapsed(p.active_from);
-                const pct = budgetToDate > 0 ? Math.min(100, (Number(p.total_charged_rupees) / budgetToDate) * 100) : 0;
+                const live =
+                  p.is_active && new Date(p.active_to).getTime() > now;
+                const budgetToDate =
+                  (Number(p.daily_budget_rupees) || 0) *
+                  daysElapsed(p.active_from);
+                const pct =
+                  budgetToDate > 0
+                    ? Math.min(
+                        100,
+                        (Number(p.total_charged_rupees) / budgetToDate) * 100,
+                      )
+                    : 0;
                 return (
                   <tr key={p.id}>
                     <td>{p.shops?.name || p.shop_id}</td>
@@ -76,12 +90,17 @@ export default function Promotions() {
                       {fmtDate(p.active_from)} → {fmtDate(p.active_to)}
                     </td>
                     <td>
-                      <div className="ap-meter" title={`${money(p.total_charged_rupees)} of ${money(budgetToDate)} budgeted to date`}>
+                      <div
+                        className="ap-meter"
+                        title={`${money(p.total_charged_rupees)} of ${money(budgetToDate)} budgeted to date`}
+                      >
                         <span style={{ width: `${pct}%` }} />
                       </div>
                     </td>
                     <td>
-                      <Badge tone={live ? "ok" : "neutral"}>{live ? "active" : "inactive"}</Badge>
+                      <Badge tone={live ? "ok" : "neutral"}>
+                        {live ? "active" : "inactive"}
+                      </Badge>
                     </td>
                     <td>
                       {p.is_active && (
@@ -127,7 +146,13 @@ export default function Promotions() {
 
 function CreateModal({ onClose, onDone, onError }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({ shop_id: "", shop_name: "", daily_budget_rupees: "", active_from: today, active_to: "" });
+  const [form, setForm] = useState({
+    shop_id: "",
+    shop_name: "",
+    daily_budget_rupees: "",
+    active_from: today,
+    active_to: "",
+  });
   const [term, setTerm] = useState("");
   const [results, setResults] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -148,9 +173,11 @@ function CreateModal({ onClose, onDone, onError }) {
 
   async function submit() {
     if (!form.shop_id) return onError("Pick a shop.");
-    if (!(Number(form.daily_budget_rupees) > 0)) return onError("Daily budget must be greater than 0.");
+    if (!(Number(form.daily_budget_rupees) > 0))
+      return onError("Daily budget must be greater than 0.");
     if (!form.active_from || !form.active_to) return onError("Set both dates.");
-    if (form.active_to < form.active_from) return onError("End date is before start date.");
+    if (form.active_to < form.active_from)
+      return onError("End date is before start date.");
     setBusy(true);
     try {
       await createPromotion(form);
@@ -171,14 +198,26 @@ function CreateModal({ onClose, onDone, onError }) {
           <button className="ap-btn ap-btn-ghost" onClick={onClose}>
             Cancel
           </button>
-          <button className="ap-btn ap-btn-primary" onClick={submit} disabled={busy}>
+          <button
+            className="ap-btn ap-btn-primary"
+            onClick={submit}
+            disabled={busy}
+          >
             {busy ? "Creating…" : "Create"}
           </button>
         </>
       }
     >
-      <Field label="Shop" required hint={form.shop_name ? `Selected: ${form.shop_name}` : "Search by name"}>
-        <input value={term} onChange={(e) => doSearch(e.target.value)} placeholder="Type a shop name…" />
+      <Field
+        label="Shop"
+        required
+        hint={form.shop_name ? `Selected: ${form.shop_name}` : "Search by name"}
+      >
+        <input
+          value={term}
+          onChange={(e) => doSearch(e.target.value)}
+          placeholder="Type a shop name…"
+        />
       </Field>
       {results.length > 0 && (
         <ul className="ap-search-results">
@@ -208,10 +247,18 @@ function CreateModal({ onClose, onDone, onError }) {
           />
         </Field>
         <Field label="Active from" required>
-          <input type="date" value={form.active_from} onChange={(e) => set("active_from", e.target.value)} />
+          <input
+            type="date"
+            value={form.active_from}
+            onChange={(e) => set("active_from", e.target.value)}
+          />
         </Field>
         <Field label="Active to" required>
-          <input type="date" value={form.active_to} onChange={(e) => set("active_to", e.target.value)} />
+          <input
+            type="date"
+            value={form.active_to}
+            onChange={(e) => set("active_to", e.target.value)}
+          />
         </Field>
       </div>
     </Modal>
