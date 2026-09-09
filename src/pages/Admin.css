@@ -1445,6 +1445,22 @@
   padding: 14px 18px;
   border-top: 1px solid var(--ap-border);
 }
+/* "Send test to me" sits apart on the left of the footer row */
+.ap-modal-foot .ap-btn-test {
+  margin-right: auto;
+}
+.ap-advanced > summary {
+  list-style: none;
+}
+.ap-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+.ap-advanced > summary::before {
+  content: "▸ ";
+}
+.ap-advanced[open] > summary::before {
+  content: "▾ ";
+}
 
 /* ------------------------------------------------------------------ forms */
 

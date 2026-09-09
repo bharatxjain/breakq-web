@@ -18,6 +18,7 @@ import Vendors from "../admin/views/Vendors";
 import Subscriptions from "../admin/views/Subscriptions";
 import Payments from "../admin/views/Payments";
 import Promotions from "../admin/views/Promotions";
+import Notifications from "../admin/views/Notifications";
 import Coupons from "../admin/views/Coupons";
 import Categories from "../admin/views/Categories";
 import SearchDiscovery from "../admin/views/SearchDiscovery";
@@ -46,6 +47,7 @@ const NAV = [
       { key: "subscriptions", label: "Subscriptions", el: Subscriptions },
       { key: "payments", label: "Payments", el: Payments },
       { key: "promotions", label: "Promotions", el: Promotions },
+      { key: "notifications", label: "Notifications", el: Notifications },
       { key: "coupons", label: "Coupons", el: Coupons },
       { key: "categories", label: "Categories", el: Categories },
     ],

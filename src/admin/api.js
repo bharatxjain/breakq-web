@@ -791,6 +791,141 @@ export async function fetchUsers({
   return { rows: data ?? [], total: count ?? 0 };
 }
 
+/* ------------------------------------------------- notification campaigns --- */
+// Backed by supabase/notifications_campaigns.sql + the `push-campaign` edge
+// function. Until the SQL runs, fetchCampaigns throws a "needs setup" error the
+// view catches and turns into a one-line hint.
+
+export async function fetchCampaigns() {
+  const { data, error } = await client()
+    .from("notification_campaigns")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) {
+    if (/relation|does not exist|schema cache/i.test(error.message || "")) {
+      throw new Error(
+        "Run supabase/notifications_campaigns.sql in the Supabase SQL editor to enable Notifications.",
+      );
+    }
+    throw error;
+  }
+  return data ?? [];
+}
+
+// Rough recipient count for the compose form (profiles in the chosen audience).
+export async function estimateAudience(audience) {
+  if (audience === "user") return 1;
+  let q = client()
+    .from("profiles")
+    .select("id", { count: "exact", head: true });
+  if (audience === "customer" || audience === "vendor") q = q.eq("role", audience);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+// Look up one user by email or id for the "specific user" audience.
+export async function findUser(term) {
+  const t = (term || "").trim();
+  if (!t) return null;
+  const isId = /^[0-9a-f-]{32,36}$/i.test(t);
+  const { data, error } = await client()
+    .from("profiles")
+    .select("id, email, role")
+    .eq(isId ? "id" : "email", isId ? t : t.toLowerCase())
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
+}
+
+const CAMPAIGN_FIELDS = [
+  "title",
+  "body",
+  "image_url",
+  "audience",
+  "target_user_id",
+  "channels",
+  "route",
+  "data",
+  "email_subject",
+  "email_html",
+  "scheduled_at",
+  "status",
+];
+
+export async function createCampaign(input) {
+  const me = await getMyId();
+  const payload = { created_by: me };
+  for (const f of CAMPAIGN_FIELDS) if (input[f] !== undefined) payload[f] = input[f];
+  const { data, error } = await client()
+    .from("notification_campaigns")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCampaign(id, patch) {
+  const payload = {};
+  for (const f of CAMPAIGN_FIELDS) if (patch[f] !== undefined) payload[f] = patch[f];
+  const { error } = await client()
+    .from("notification_campaigns")
+    .update(payload)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function cancelCampaign(id) {
+  const { error } = await client()
+    .from("notification_campaigns")
+    .update({ status: "canceled" })
+    .eq("id", id)
+    .in("status", ["draft", "scheduled"]);
+  if (error) throw error;
+}
+
+export async function deleteCampaign(id) {
+  const { error } = await client()
+    .from("notification_campaigns")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Ask the edge function to start sending now. The cron tick finishes any
+// remainder for large audiences.
+export async function sendCampaignNow(id) {
+  const { data, error } = await client().functions.invoke("push-campaign", {
+    body: { action: "enqueue", campaignId: id },
+  });
+  if (error) throw new Error(await readFnError(error, "Send failed"));
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function sendTestNotification(input) {
+  const { data, error } = await client().functions.invoke("push-campaign", {
+    body: { action: "send_test", ...input },
+  });
+  if (error) throw new Error(await readFnError(error, "Test send failed"));
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+// supabase-js wraps a non-2xx function response in a FunctionsHttpError whose
+// real message sits on error.context (a Response). Pull it out when we can.
+async function readFnError(error, fallback) {
+  try {
+    const body = await error.context?.json?.();
+    if (body?.error) return body.error;
+  } catch {
+    /* ignore */
+  }
+  return error.message || fallback;
+}
+
 /* ---------------------------------------------------------------- health --- */
 
 export async function probeSchema() {
