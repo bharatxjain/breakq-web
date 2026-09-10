@@ -17,6 +17,8 @@ export default function RatingsModeration() {
 
   const dist = A?.distribution || [];
   const low = A?.low_ratings || [];
+  const topRated = A?.top_rated || [];
+  const topRatedUnavailable = A && !("top_rated" in A);
   const integ = A?.integrity;
   const totalRatings = dist.reduce((s, b) => s + (Number(b.count) || 0), 0);
   const weighted = dist.reduce(
@@ -92,6 +94,48 @@ export default function RatingsModeration() {
                 />
               ) : (
                 <div className="ap-async-empty">No reviews yet.</div>
+              )}
+            </section>
+
+            <section className="ap-panel">
+              <div className="ap-panel-head">
+                <h2>Top 10 rated shops</h2>
+                <span className="ap-view-sub">
+                  highest average stars · counted from review rows · min 1 review
+                </span>
+              </div>
+              {topRated.length ? (
+                <div className="ap-table-wrap">
+                  <table className="ap-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 48 }}>#</th>
+                        <th>Shop</th>
+                        <th className="ap-num">Avg rating</th>
+                        <th className="ap-num">Reviews</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topRated.map((s, i) => (
+                        <tr key={`${s.name}-${i}`}>
+                          <td>{i + 1}</td>
+                          <td>{s.name}</td>
+                          <td className="ap-num">
+                            {Number(s.avg_rating).toFixed(2)}
+                            {STAR}
+                          </td>
+                          <td className="ap-num">{num(s.rating_count)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="ap-async-empty">
+                  {topRatedUnavailable
+                    ? "Re-run supabase/admin_analytics.sql to enable this list."
+                    : "No shops with reviews yet."}
+                </div>
               )}
             </section>
 
