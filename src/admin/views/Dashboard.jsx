@@ -16,6 +16,7 @@ import {
   Spark,
   TrendArrow,
   hourLabel,
+  fmtDate,
   money,
   num,
   fmtDateTime,
@@ -107,13 +108,16 @@ export default function Dashboard() {
 
             {A?.coupon_watch?.length > 0 && (
               <div className="ap-banner">
-                {A.coupon_watch.length === 1 ? "A promo code is" : `${A.coupon_watch.length} promo codes are`}{" "}
-                at high global usage — promo codes have no per-vendor targeting, so one code applies
-                platform-wide:{" "}
+                {A.coupon_watch.length === 1
+                  ? "A promo code is"
+                  : `${A.coupon_watch.length} promo codes are`}{" "}
+                at high global usage — promo codes have no per-vendor targeting,
+                so one code applies platform-wide:{" "}
                 {A.coupon_watch.map((c, i) => (
                   <span key={c.code}>
                     {i > 0 && ", "}
-                    <strong className="ap-mono">{c.code}</strong> ({num(c.redemptions)}
+                    <strong className="ap-mono">{c.code}</strong> (
+                    {num(c.redemptions)}
                     {c.usage_limit ? ` / ${num(c.usage_limit)}` : ""}
                     {c.pct != null ? `, ${c.pct}%` : ""} · {c.reason})
                   </span>
@@ -133,7 +137,15 @@ export default function Dashboard() {
                   />
                 </div>
                 <span className="ap-kpi-value">{num(data.orders_30d)}</span>
-                <MiniBars values={series.map((d) => d.orders)} />
+                <MiniBars
+                  values={series.map((d) => d.orders)}
+                  labels={series.map((d) => fmtDate(d.d))}
+                  unit="orders"
+                />
+                <span className="ap-chart-legend">
+                  <i aria-hidden="true" /> Daily orders · hover a bar for
+                  details
+                </span>
               </div>
 
               <div className="ap-kpi">
@@ -389,7 +401,11 @@ export default function Dashboard() {
                     : "no data"
                 }
               />
-              <MiniStat label="Total users" value={num(data.users_total)} />
+              <MiniStat
+                label="Total customers"
+                value={num(data.customers_total)}
+              />
+              <MiniStat label="Total vendors" value={num(shopsTotal)} />
               <MiniStat label="Platform fee · 30 days" value={money(fee)} />
             </section>
 
@@ -468,7 +484,7 @@ export default function Dashboard() {
                 <AreaChart data={growth} metric="value" format={num} />
               ) : (
                 <div className="ap-async-empty">
-                  {data._fallback && data.users_total == null
+                  {data._fallback && data.customers_total == null
                     ? "User growth needs full analytics - run admin_panel.sql."
                     : "Not enough signup history yet."}
                 </div>

@@ -250,6 +250,7 @@ async function dashboardFallback() {
 
   // users: total + daily signups over the last 180 days + a baseline count
   let usersTotal = null;
+  let customersTotal = null;
   let usersBeforeWindow = 0;
   let userSignups = [];
   try {
@@ -257,6 +258,15 @@ async function dashboardFallback() {
       .from("profiles")
       .select("id", { count: "exact", head: true });
     usersTotal = count ?? null;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const { count } = await sb
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "customer");
+    customersTotal = count ?? null;
   } catch {
     /* ignore */
   }
@@ -307,6 +317,7 @@ async function dashboardFallback() {
     daily_series_prev: dailyPrev,
     hourly,
     users_total: usersTotal,
+    customers_total: customersTotal,
     users_before_window: usersBeforeWindow,
     user_signups: userSignups,
     top_area: null,
@@ -340,6 +351,91 @@ export const fetchSearchAnalytics = () =>
 export const fetchRatingsAnalytics = () =>
   rpcOrMissing("admin_ratings_analytics");
 export const fetchGeoAnalytics = () => rpcOrMissing("admin_geo_analytics");
+
+function extractPincode(address) {
+  const match = String(address || "").match(/\b(\d{6})\b/);
+  return match?.[1] || "";
+}
+
+function firstLocality(address) {
+  const a = address?.address || {};
+  return (
+    a.neighbourhood ||
+    a.suburb ||
+    a.village ||
+    a.town ||
+    a.city_district ||
+    a.city ||
+    a.county ||
+    ""
+  );
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Resolve shops missing locality data. Coordinates are preferred; India Post
+// is used when the address has a PIN but reverse geocoding produces no area.
+export async function resolveShopLocalities() {
+  const sb = client();
+  const { data: shops, error } = await sb
+    .from("shops")
+    .select("id,address,lat,lng,locality,locality_source")
+    .eq("is_deleted", false)
+    .is("locality", null)
+    .limit(100);
+  if (error) throw error;
+
+  let resolved = 0;
+  for (const shop of shops || []) {
+    let locality = "";
+    let source = "";
+
+    if (
+      Number.isFinite(Number(shop.lat)) &&
+      Number.isFinite(Number(shop.lng))
+    ) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${shop.lat}&lon=${shop.lng}`,
+        );
+        if (response.ok) locality = firstLocality(await response.json());
+        if (locality) source = "geocoded";
+      } catch {
+        /* fall through to PIN lookup */
+      }
+      await wait(1100);
+    }
+
+    if (!locality) {
+      const pincode = extractPincode(shop.address);
+      if (pincode) {
+        try {
+          const response = await fetch(
+            `https://api.postalpincode.in/pincode/${pincode}`,
+          );
+          const result = response.ok ? await response.json() : [];
+          const postOffice = result?.[0]?.PostOffice?.[0];
+          locality =
+            postOffice?.Name || postOffice?.Block || postOffice?.District || "";
+          if (locality) source = "pincode";
+        } catch {
+          /* leave this shop for a later retry */
+        }
+      }
+    }
+
+    if (locality) {
+      const { error: updateError } = await sb
+        .from("shops")
+        .update({ locality, locality_source: source })
+        .eq("id", shop.id);
+      if (updateError) throw updateError;
+      resolved += 1;
+    }
+  }
+
+  return { scanned: shops?.length || 0, resolved };
+}
 export const fetchShopMetrics = (shopId) =>
   rpcOrMissing("admin_shop_metrics", { p_shop_id: shopId });
 export const fetchUserRoleCounts = () => rpcOrMissing("admin_user_role_counts");
@@ -819,7 +915,8 @@ export async function estimateAudience(audience) {
   let q = client()
     .from("profiles")
     .select("id", { count: "exact", head: true });
-  if (audience === "customer" || audience === "vendor") q = q.eq("role", audience);
+  if (audience === "customer" || audience === "vendor")
+    q = q.eq("role", audience);
   const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
@@ -857,7 +954,8 @@ const CAMPAIGN_FIELDS = [
 export async function createCampaign(input) {
   const me = await getMyId();
   const payload = { created_by: me };
-  for (const f of CAMPAIGN_FIELDS) if (input[f] !== undefined) payload[f] = input[f];
+  for (const f of CAMPAIGN_FIELDS)
+    if (input[f] !== undefined) payload[f] = input[f];
   const { data, error } = await client()
     .from("notification_campaigns")
     .insert(payload)
@@ -869,7 +967,8 @@ export async function createCampaign(input) {
 
 export async function updateCampaign(id, patch) {
   const payload = {};
-  for (const f of CAMPAIGN_FIELDS) if (patch[f] !== undefined) payload[f] = patch[f];
+  for (const f of CAMPAIGN_FIELDS)
+    if (patch[f] !== undefined) payload[f] = patch[f];
   const { error } = await client()
     .from("notification_campaigns")
     .update(payload)
@@ -967,6 +1066,8 @@ export async function probeSchema() {
   await probe("admin_user_role_counts_rpc", () =>
     client().rpc("admin_user_role_counts"),
   );
-  await probe("admin_coupon_stats_rpc", () => client().rpc("admin_coupon_stats"));
+  await probe("admin_coupon_stats_rpc", () =>
+    client().rpc("admin_coupon_stats"),
+  );
   return out;
 }

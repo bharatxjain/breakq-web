@@ -18,7 +18,7 @@ export default function RatingsModeration() {
   const dist = A?.distribution || [];
   const low = A?.low_ratings || [];
   const topRated = A?.top_rated || [];
-  const topRatedUnavailable = A && !("top_rated" in A);
+  const lowestRated = A?.lowest_rated || [];
   const integ = A?.integrity;
   const totalRatings = dist.reduce((s, b) => s + (Number(b.count) || 0), 0);
   const weighted = dist.reduce(
@@ -99,12 +99,50 @@ export default function RatingsModeration() {
 
             <section className="ap-panel">
               <div className="ap-panel-head">
-                <h2>Top 10 rated shops</h2>
+                <h2>Top 5 rated shops</h2>
                 <span className="ap-view-sub">
-                  highest average stars · counted from review rows · min 1 review
+                  highest average rating · counted from review rows
                 </span>
               </div>
               {topRated.length ? (
+                <div className="ap-table-wrap">
+                  <table className="ap-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 48 }}>#</th>
+                        <th>Shop</th>
+                        <th className="ap-num">Average rating</th>
+                        <th className="ap-num">Reviews</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topRated.map((shop, i) => (
+                        <tr key={`${shop.name}-${i}`}>
+                          <td>{i + 1}</td>
+                          <td>{shop.name}</td>
+                          <td className="ap-num">
+                            {Number(shop.avg_rating).toFixed(2)}
+                            {STAR}
+                          </td>
+                          <td className="ap-num">{num(shop.rating_count)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="ap-async-empty">No rated shops yet.</div>
+              )}
+            </section>
+
+            <section className="ap-panel">
+              <div className="ap-panel-head">
+                <h2>Top 10 lowest-rated shops</h2>
+                <span className="ap-view-sub">
+                  lowest average rating · shops with at least 1 rating
+                </span>
+              </div>
+              {lowestRated.length ? (
                 <div className="ap-table-wrap">
                   <table className="ap-table">
                     <thead>
@@ -116,7 +154,7 @@ export default function RatingsModeration() {
                       </tr>
                     </thead>
                     <tbody>
-                      {topRated.map((s, i) => (
+                      {lowestRated.map((s, i) => (
                         <tr key={`${s.name}-${i}`}>
                           <td>{i + 1}</td>
                           <td>{s.name}</td>
@@ -131,11 +169,7 @@ export default function RatingsModeration() {
                   </table>
                 </div>
               ) : (
-                <div className="ap-async-empty">
-                  {topRatedUnavailable
-                    ? "Re-run supabase/admin_analytics.sql to enable this list."
-                    : "No shops with reviews yet."}
-                </div>
+                <div className="ap-async-empty">No rated shops yet.</div>
               )}
             </section>
 

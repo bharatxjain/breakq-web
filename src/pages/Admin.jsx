@@ -29,7 +29,8 @@ import "./Admin.css";
 
 // The page password is a shared pre-filter, NOT the identity check — it lives
 // in the client bundle. Real authorization is profiles.role === 'admin' below.
-const GATE_PASSWORD = import.meta.env.VITE_ADMIN_GATE_PASSWORD || "breakq-admin";
+const GATE_PASSWORD =
+  import.meta.env.VITE_ADMIN_GATE_PASSWORD || "breakq-admin";
 const VIEW_KEY = "ap_view";
 
 const NAV = [
@@ -75,7 +76,8 @@ function resolveTheme() {
     /* storage unavailable */
   }
   try {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches)
+      return "dark";
   } catch {
     /* matchMedia unavailable */
   }
@@ -175,45 +177,67 @@ function GateScreen({ onPass }) {
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (verifying) return;
+    if (pw !== GATE_PASSWORD) {
+      setErr("Incorrect password.");
+      return;
+    }
+
+    setErr("");
+    setVerifying(true);
+    window.setTimeout(onPass, 700);
+  }
+
   return (
-    <AuthShell step="Step 1 of 2" title="Access password" lead="Enter the shared password to reach the sign-in screen.">
-      <form
-        className="ap-auth-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (pw === GATE_PASSWORD) onPass();
-          else setErr("Incorrect password.");
-        }}
-      >
-        <label className="ap-field">
-          <span className="ap-field-label">Access password</span>
-          <span className="ap-input-reveal">
-            <input
-              type={show ? "text" : "password"}
-              autoFocus
-              value={pw}
-              onChange={(e) => {
-                setPw(e.target.value);
-                setErr("");
-              }}
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              className="ap-reveal-btn"
-              onClick={() => setShow((v) => !v)}
-              aria-label={show ? "Hide password" : "Show password"}
-              aria-pressed={show}
-            >
-              {show ? "Hide" : "Show"}
-            </button>
-          </span>
-          {err && <span className="ap-field-error">{err}</span>}
-        </label>
-        <button type="submit" className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg">
-          Continue
-        </button>
-      </form>
+    <AuthShell
+      step="Step 1 of 2"
+      title="Access password"
+      lead="Enter the shared password to reach the sign-in screen."
+    >
+      {verifying ? (
+        <div className="ap-auth-verifying" role="status" aria-live="polite">
+          <span className="ap-spinner" aria-hidden="true" />
+          <strong>Verifying password...</strong>
+        </div>
+      ) : (
+        <form className="ap-auth-form" onSubmit={handleSubmit}>
+          <label className="ap-field">
+            <span className="ap-field-label">Access password</span>
+            <span className="ap-input-reveal">
+              <input
+                type={show ? "text" : "password"}
+                autoFocus
+                value={pw}
+                onChange={(e) => {
+                  setPw(e.target.value);
+                  setErr("");
+                }}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="ap-reveal-btn"
+                onClick={() => setShow((v) => !v)}
+                aria-label={show ? "Hide password" : "Show password"}
+                aria-pressed={show}
+              >
+                {show ? "Hide" : "Show"}
+              </button>
+            </span>
+            {err && <span className="ap-field-error">{err}</span>}
+          </label>
+          <button
+            type="submit"
+            className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg"
+          >
+            Continue
+          </button>
+        </form>
+      )}
     </AuthShell>
   );
 }
@@ -295,7 +319,11 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
 
   if (phase === "otp") {
     return (
-      <AuthShell step="Step 2 of 2" title="Enter your code" lead={`We sent a 6-digit code to ${email}.`}>
+      <AuthShell
+        step="Step 2 of 2"
+        title="Enter your code"
+        lead={`We sent a 6-digit code to ${email}.`}
+      >
         <form className="ap-auth-form" onSubmit={handleVerify}>
           <label className="ap-field">
             <span className="ap-field-label">Verification code</span>
@@ -303,14 +331,20 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
               inputMode="numeric"
               autoFocus
               value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               placeholder="000000"
               className="ap-otp"
             />
             {info && !err && <span className="ap-field-hint">{info}</span>}
             {err && <span className="ap-field-error">{err}</span>}
           </label>
-          <button type="submit" className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg" disabled={busy}>
+          <button
+            type="submit"
+            className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg"
+            disabled={busy}
+          >
             {busy ? "Verifying…" : "Verify & sign in"}
           </button>
           <button
@@ -330,7 +364,11 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
   }
 
   return (
-    <AuthShell step="Step 2 of 2" title="Sign in" lead="We’ll email you a one-time code.">
+    <AuthShell
+      step="Step 2 of 2"
+      title="Sign in"
+      lead="We’ll email you a one-time code."
+    >
       <form className="ap-auth-form" onSubmit={handleSend}>
         <label className="ap-field">
           <span className="ap-field-label">Admin email</span>
@@ -343,7 +381,11 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
           />
           {err && <span className="ap-field-error">{err}</span>}
         </label>
-        <button type="submit" className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg" disabled={busy}>
+        <button
+          type="submit"
+          className="ap-btn ap-btn-primary ap-btn-block ap-btn-lg"
+          disabled={busy}
+        >
           {busy ? "Sending…" : "Send code"}
         </button>
       </form>
@@ -384,7 +426,8 @@ function Shell({ onSignOut }) {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       const el = document.activeElement;
       const tag = el?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || el?.isContentEditable) return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || el?.isContentEditable)
+        return;
       e.preventDefault();
       searchRef.current?.focus();
     };
@@ -421,7 +464,9 @@ function Shell({ onSignOut }) {
   const current = ALL_VIEWS.find((n) => n.key === view) ?? ALL_VIEWS[0];
   const Active = current.el;
   const q = filter.trim().toLowerCase();
-  const matches = q ? ALL_VIEWS.filter((n) => n.label.toLowerCase().includes(q)) : [];
+  const matches = q
+    ? ALL_VIEWS.filter((n) => n.label.toLowerCase().includes(q))
+    : [];
 
   const go = (key) => {
     setView(key);
@@ -433,7 +478,11 @@ function Shell({ onSignOut }) {
     <div className="ap ap-shell" data-theme={theme}>
       <header className="ap-header">
         <div className="ap-header-left">
-          <button className="ap-burger" onClick={() => setNavOpen((v) => !v)} aria-label="Menu">
+          <button
+            className="ap-burger"
+            onClick={() => setNavOpen((v) => !v)}
+            aria-label="Menu"
+          >
             ☰
           </button>
           <div className="ap-header-brand">
@@ -447,14 +496,31 @@ function Shell({ onSignOut }) {
 
         <div className="ap-header-search">
           <svg className="ap-search-ico" viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
-            <line x1="13.5" y1="13.5" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle
+              cx="9"
+              cy="9"
+              r="6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <line
+              x1="13.5"
+              y1="13.5"
+              x2="18"
+              y2="18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
           <input
             ref={searchRef}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            onKeyDown={(e) => e.key === "Escape" && (setFilter(""), e.currentTarget.blur())}
+            onKeyDown={(e) =>
+              e.key === "Escape" && (setFilter(""), e.currentTarget.blur())
+            }
             placeholder="Jump to a section"
             aria-label="Jump to a section"
           />
@@ -467,7 +533,9 @@ function Shell({ onSignOut }) {
                   {n.label}
                 </button>
               ))}
-              {matches.length === 0 && <span className="ap-search-empty">No section</span>}
+              {matches.length === 0 && (
+                <span className="ap-search-empty">No section</span>
+              )}
             </div>
           )}
         </div>
@@ -490,7 +558,10 @@ function Shell({ onSignOut }) {
             </button>
             {menuOpen && (
               <>
-                <div className="ap-menu-backdrop" onClick={() => setMenuOpen(false)} />
+                <div
+                  className="ap-menu-backdrop"
+                  onClick={() => setMenuOpen(false)}
+                />
                 <div className="ap-menu" role="menu">
                   <div className="ap-menu-head">
                     <Avatar name={pname} email={email} size={38} />
@@ -511,11 +582,19 @@ function Shell({ onSignOut }) {
                   <button
                     role="menuitemcheckbox"
                     aria-checked={theme === "dark"}
-                    onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+                    onClick={() =>
+                      setTheme((t) => (t === "dark" ? "light" : "dark"))
+                    }
                   >
-                    {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    {theme === "dark"
+                      ? "Switch to light mode"
+                      : "Switch to dark mode"}
                   </button>
-                  <button role="menuitem" className="ap-menu-danger" onClick={onSignOut}>
+                  <button
+                    role="menuitem"
+                    className="ap-menu-danger"
+                    onClick={onSignOut}
+                  >
                     Sign out
                   </button>
                 </div>
@@ -546,7 +625,11 @@ function Shell({ onSignOut }) {
             ))}
           </nav>
 
-          <button className="ap-user-card" onClick={() => setProfileOpen(true)} title="Edit profile">
+          <button
+            className="ap-user-card"
+            onClick={() => setProfileOpen(true)}
+            title="Edit profile"
+          >
             <Avatar name={pname} email={email} size={34} />
             <span className="ap-user-meta">
               <strong>{pname || "Admin"}</strong>
@@ -576,7 +659,9 @@ function Shell({ onSignOut }) {
           </div>
         </main>
 
-        {navOpen && <div className="ap-side-scrim" onClick={() => setNavOpen(false)} />}
+        {navOpen && (
+          <div className="ap-side-scrim" onClick={() => setNavOpen(false)} />
+        )}
       </div>
 
       {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}

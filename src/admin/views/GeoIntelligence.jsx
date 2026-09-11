@@ -1,4 +1,13 @@
-import { fetchGeoAnalytics } from "../api";
+import { fetchGeoAnalytics, resolveShopLocalities } from "../api";
+import { useEffect, useState } from "react";
+import {
+  CircleMarker,
+  MapContainer,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   Async,
   Donut,
@@ -7,6 +16,7 @@ import {
   RankBars,
   fmtDate,
   num,
+  useToast,
   useAsync,
 } from "../ui";
 
@@ -17,10 +27,17 @@ const BASIS_LABEL = {
   none: "unknown",
 };
 
-// Lightweight proportional-symbol plot from shop coordinates. A real tiled map
-// needs a maps layer that isn't bundled in this app; this still shows the
-// geographic concentration the single-locality pilot decision hinges on.
-function BubbleMap({ points }) {
+function FitMap({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    const bounds = points.map((p) => [Number(p.lat), Number(p.lng)]);
+    if (bounds.length)
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+  }, [map, points]);
+  return null;
+}
+
+function ShopMap({ points }) {
   const pts = points.filter(
     (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)),
   );
@@ -30,65 +47,51 @@ function BubbleMap({ points }) {
         Not enough shops with coordinates to plot.
       </div>
     );
-  const lats = pts.map((p) => Number(p.lat));
-  const lngs = pts.map((p) => Number(p.lng));
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const W = 640;
-  const H = 320;
-  const P = 24;
-  const sx = (v) => P + ((v - minLng) / (maxLng - minLng || 1)) * (W - P * 2);
-  const sy = (v) =>
-    H - P - ((v - minLat) / (maxLat - minLat || 1)) * (H - P * 2);
-  const maxShops = Math.max(...pts.map((p) => Number(p.shops) || 1));
+  const center = [
+    pts.reduce((sum, p) => sum + Number(p.lat), 0) / pts.length,
+    pts.reduce((sum, p) => sum + Number(p.lng), 0) / pts.length,
+  ];
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="ap-area-svg"
-      role="img"
-      aria-label="Shop density by area"
-    >
-      <rect
-        x="0"
-        y="0"
-        width={W}
-        height={H}
-        fill="var(--ap-surface-2)"
-        rx="10"
-      />
-      {pts.map((p, i) => {
-        const r = 6 + Math.sqrt((Number(p.shops) || 1) / maxShops) * 26;
-        return (
-          <g key={i}>
-            <circle
-              cx={sx(Number(p.lng))}
-              cy={sy(Number(p.lat))}
-              r={r}
-              fill="var(--ap-primary)"
-              fillOpacity="0.28"
-              stroke="var(--ap-primary)"
-            />
-            <text
-              x={sx(Number(p.lng))}
-              y={sy(Number(p.lat)) - r - 3}
-              textAnchor="middle"
-              fontSize="10"
-              fill="var(--ap-text-soft)"
-            >
-              {p.locality} ({num(p.shops)})
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+    <div className="ap-map" role="region" aria-label="Exact shop locations">
+      <MapContainer
+        center={center}
+        zoom={12}
+        scrollWheelZoom={false}
+        className="ap-map-canvas"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitMap points={pts} />
+        {pts.map((p) => (
+          <CircleMarker
+            key={p.id}
+            center={[Number(p.lat), Number(p.lng)]}
+            radius={8}
+            pathOptions={{
+              color: "#7001fe",
+              fillColor: "#7001fe",
+              fillOpacity: 0.72,
+            }}
+          >
+            <Popup>
+              <strong>{p.name || "Unnamed shop"}</strong>
+              <br />
+              {p.locality || "Locality not resolved"}
+            </Popup>
+          </CircleMarker>
+        ))}
+      </MapContainer>
+    </div>
   );
 }
 
 export default function GeoIntelligence() {
   const { state, data, error, reload } = useAsync(fetchGeoAnalytics, []);
+  const toast = useToast();
+  const [resolving, setResolving] = useState(false);
   const missing = data?._missing;
   const A = data && !missing ? data : null;
 
@@ -96,6 +99,23 @@ export default function GeoIntelligence() {
   const res = A?.resolution;
   const src = A?.locality_source;
   const ungeocoded = A?.ungeocoded || [];
+  const mapPoints = A?.map_points || [];
+
+  async function resolveLocalities() {
+    setResolving(true);
+    try {
+      const result = await resolveShopLocalities();
+      toast(
+        `Resolved ${result.resolved} of ${result.scanned} shops.`,
+        result.resolved ? "success" : "info",
+      );
+      reload();
+    } catch (e) {
+      toast(e.message || "Could not resolve localities.", "danger");
+    } finally {
+      setResolving(false);
+    }
+  }
 
   return (
     <div className="ap-view">
@@ -107,9 +127,18 @@ export default function GeoIntelligence() {
             coordinates
           </p>
         </div>
-        <button className="ap-btn ap-btn-ghost" onClick={reload}>
-          Refresh
-        </button>
+        <div className="ap-view-actions">
+          <button
+            className="ap-btn ap-btn-ghost"
+            onClick={resolveLocalities}
+            disabled={resolving}
+          >
+            {resolving ? "Resolving..." : "Resolve localities"}
+          </button>
+          <button className="ap-btn ap-btn-ghost" onClick={reload}>
+            Refresh
+          </button>
+        </div>
       </div>
 
       <Async state={state} error={error} onRetry={reload}>
@@ -124,10 +153,12 @@ export default function GeoIntelligence() {
                   bubble size = shop count · positioned by coordinates
                 </span>
               </div>
-              {density.length ? (
-                <BubbleMap points={density} />
+              {mapPoints.length ? (
+                <ShopMap points={mapPoints} />
               ) : (
-                <div className="ap-async-empty">No placeable shops.</div>
+                <div className="ap-async-empty">
+                  No shops with exact coordinates.
+                </div>
               )}
             </section>
 

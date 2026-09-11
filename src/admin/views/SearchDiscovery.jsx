@@ -1,5 +1,13 @@
 import { fetchSearchAnalytics } from "../api";
-import { Async, Heatmap, NeedsSetup, RankBars, num, useAsync } from "../ui";
+import {
+  Async,
+  Heatmap,
+  NeedsSetup,
+  RankBars,
+  fmtDateTime,
+  num,
+  useAsync,
+} from "../ui";
 
 // Search & Discovery — the pre-payments demand signal. Everything here is
 // derived from customer search / view events; each block degrades to a "needs
@@ -11,6 +19,7 @@ export default function SearchDiscovery() {
 
   const zero = A?.zero_result_terms || [];
   const lowCtr = A?.low_ctr_terms || [];
+  const recent = A?.recent_searches || [];
   const conv = A?.conversion_by_locality || [];
   const heat = (A?.heatmap || []).map((h) => ({
     row: h.locality,
@@ -39,10 +48,51 @@ export default function SearchDiscovery() {
           <>
             <section className="ap-panel">
               <div className="ap-panel-head">
+                <h2>Recent search history</h2>
+                <span className="ap-view-sub">
+                  recorded search events · last 30 days · anonymous searches
+                  included
+                </span>
+              </div>
+              {recent.length ? (
+                <div className="ap-table-wrap">
+                  <table className="ap-table">
+                    <thead>
+                      <tr>
+                        <th>Search term</th>
+                        <th className="ap-num">Searches</th>
+                        <th className="ap-num">Known searchers</th>
+                        <th>Last searched</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recent.map((t) => (
+                        <tr key={t.term}>
+                          <td>{t.term}</td>
+                          <td className="ap-num">{num(t.searches)}</td>
+                          <td className="ap-num">{num(t.unique_searchers)}</td>
+                          <td>{fmtDateTime(t.last_searched)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="ap-async-empty">
+                  No search events were recorded in the last 30 days. The mobile
+                  app must write
+                  <code>event_type = &quot;search&quot;</code> rows to{" "}
+                  <code>shop_view_events</code>.
+                </div>
+              )}
+            </section>
+
+            <section className="ap-panel">
+              <div className="ap-panel-head">
                 <h2>Searches with no results</h2>
                 <span className="ap-view-sub">
-                  ranked by frequency · last 30 days · direct vendor-acquisition
-                  targets
+                  inferred from no shop view within 30 minutes · known visitors
+                  only
                 </span>
               </div>
               {zero.length ? (

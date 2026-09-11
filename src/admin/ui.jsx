@@ -1,6 +1,13 @@
 // Shared admin-panel UI primitives + formatters.
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 /* --------------------------------------------------------- formatters --- */
 
@@ -20,7 +27,11 @@ export function fmtDate(s) {
   if (!s) return "—";
   const d = new Date(s);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function fmtDateTime(s) {
@@ -126,7 +137,12 @@ export function Async({ state, error, onRetry, isEmpty, empty, children }) {
         )}
       </div>
     );
-  if (isEmpty) return <div className="ap-async ap-async-empty">{empty || "Nothing here yet."}</div>;
+  if (isEmpty)
+    return (
+      <div className="ap-async ap-async-empty">
+        {empty || "Nothing here yet."}
+      </div>
+    );
   return children;
 }
 
@@ -212,9 +228,11 @@ export function Badge({ children, tone = "neutral" }) {
 
 export function statusTone(status) {
   const s = String(status || "").toLowerCase();
-  if (["approved", "active", "paid", "captured", "success"].includes(s)) return "ok";
+  if (["approved", "active", "paid", "captured", "success"].includes(s))
+    return "ok";
   if (["pending", "created", "processing"].includes(s)) return "warn";
-  if (["rejected", "failed", "expired", "cancelled", "canceled"].includes(s)) return "danger";
+  if (["rejected", "failed", "expired", "cancelled", "canceled"].includes(s))
+    return "danger";
   return "neutral";
 }
 
@@ -254,17 +272,23 @@ export function Toggle({ checked, onChange, label }) {
 // Good enough for an at-a-glance internal trend; not a full analytics viz.
 
 export function Bars({ data, metric, format = num, height = 150 }) {
-  if (!data || data.length === 0) return <div className="ap-async-empty">No data in the last 30 days.</div>;
+  if (!data || data.length === 0)
+    return <div className="ap-async-empty">No data in the last 30 days.</div>;
   const vals = data.map((d) => Number(d[metric]) || 0);
   const max = Math.max(1, ...vals);
   const w = 100 / data.length;
 
   return (
     <div className="ap-bars" style={{ height }}>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="ap-bars-svg" aria-hidden="true">
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="ap-bars-svg"
+        aria-hidden="true"
+      >
         <line x1="0" y1="99.5" x2="100" y2="99.5" className="ap-bars-axis" />
         {data.map((d, i) => {
-          const h = (Number(d[metric]) || 0) / max * 96;
+          const h = ((Number(d[metric]) || 0) / max) * 96;
           return (
             <rect
               key={i}
@@ -272,7 +296,9 @@ export function Bars({ data, metric, format = num, height = 150 }) {
               y={100 - h}
               width={w * 0.68}
               height={Math.max(h, 0.4)}
-              className={i === data.length - 1 ? "ap-bar ap-bar-last" : "ap-bar"}
+              className={
+                i === data.length - 1 ? "ap-bar ap-bar-last" : "ap-bar"
+              }
             />
           );
         })}
@@ -303,7 +329,7 @@ export function DeltaChip({ now, prev }) {
 
 /* ---------------------------------------------------------- mini charts --- */
 
-export function MiniBars({ values, tone = "primary" }) {
+export function MiniBars({ values, labels = [], tone = "primary", unit = "" }) {
   if (!values || values.length === 0) return null;
   const max = Math.max(1, ...values);
   return (
@@ -312,8 +338,17 @@ export function MiniBars({ values, tone = "primary" }) {
         <span
           key={i}
           className={i === values.length - 1 ? "is-last" : ""}
+          aria-label={`${labels[i] || `Bar ${i + 1}`}: ${num(v)}${unit ? ` ${unit}` : ""}`}
           style={{ height: `${Math.max(4, ((Number(v) || 0) / max) * 100)}%` }}
-        />
+        >
+          <span className="ap-minibar-tooltip" role="tooltip">
+            <strong>{labels[i] || `Bar ${i + 1}`}</strong>
+            <span>
+              {num(v)}
+              {unit ? ` ${unit}` : ""}
+            </span>
+          </span>
+        </span>
       ))}
     </div>
   );
@@ -327,38 +362,62 @@ export function Spark({ values, tone = "primary" }) {
   const max = Math.max(1, ...vs);
   const step = vs.length > 1 ? W / (vs.length - 1) : 0;
   const pts = vs.map((v, i) => [i * step, H - 3 - (v / max) * (H - 6)]);
-  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const line = pts
+    .map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`)
+    .join(" ");
   const area = `${line} L ${W} ${H} L 0 ${H} Z`;
   return (
-    <svg className={`ap-spark ap-spark-${tone}`} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className={`ap-spark ap-spark-${tone}`}
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <path d={area} className="ap-spark-fill" />
-      <path d={line} className="ap-spark-line" vectorEffect="non-scaling-stroke" fill="none" />
+      <path
+        d={line}
+        className="ap-spark-line"
+        vectorEffect="non-scaling-stroke"
+        fill="none"
+      />
     </svg>
   );
 }
 
 export function AreaChart({ data, metric, format = num, compare }) {
-  if (!data || data.length === 0) return <div className="ap-async-empty">No data in the last 30 days.</div>;
+  if (!data || data.length === 0)
+    return <div className="ap-async-empty">No data in the last 30 days.</div>;
   const W = 640;
   const H = 200;
   const PL = 6;
   const PT = 14;
   const PB = 6;
   const cur = data.map((d) => Number(d[metric]) || 0);
-  const cmp = compare && compare.length >= 2 ? compare.map((d) => Number(d[metric]) || 0) : null;
+  const cmp =
+    compare && compare.length >= 2
+      ? compare.map((d) => Number(d[metric]) || 0)
+      : null;
   const max = Math.max(1, ...cur, ...(cmp || []));
   const n = (cmp ? Math.max(data.length, cmp.length) : data.length) - 1;
   const stepX = (W - PL * 2) / Math.max(1, n);
   const x = (i) => PL + i * stepX;
   const y = (v) => PT + (1 - v / max) * (H - PT - PB);
-  const toPath = (arr) => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const toPath = (arr) =>
+    arr
+      .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`)
+      .join(" ");
   const line = toPath(cur);
   const area = `${line} L ${x(cur.length - 1).toFixed(1)} ${H - PB} L ${PL} ${H - PB} Z`;
   const last = [x(cur.length - 1), y(cur[cur.length - 1])];
 
   return (
     <div className="ap-area">
-      <svg viewBox={`0 0 ${W} ${H}`} className="ap-area-svg" role="img" aria-label={`${metric} over the last 30 days`}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="ap-area-svg"
+        role="img"
+        aria-label={`${metric} over the last 30 days`}
+      >
         <defs>
           <linearGradient id="apAreaGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" className="ap-area-g0" />
@@ -366,7 +425,14 @@ export function AreaChart({ data, metric, format = num, compare }) {
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75, 1].map((f) => (
-          <line key={f} x1={PL} x2={W - PL} y1={y(max * f)} y2={y(max * f)} className="ap-area-grid" />
+          <line
+            key={f}
+            x1={PL}
+            x2={W - PL}
+            y1={y(max * f)}
+            y2={y(max * f)}
+            className="ap-area-grid"
+          />
         ))}
         <path d={area} fill="url(#apAreaGrad)" />
         {cmp && <path d={toPath(cmp)} className="ap-area-cmp" fill="none" />}
@@ -386,7 +452,8 @@ export function AreaChart({ data, metric, format = num, compare }) {
 }
 
 export function BarChart({ data, format = num, height = 190, unit = "" }) {
-  if (!data || data.length === 0) return <div className="ap-async-empty">No data.</div>;
+  if (!data || data.length === 0)
+    return <div className="ap-async-empty">No data.</div>;
   const vals = data.map((d) => Number(d.value) || 0);
   const max = Math.max(1, ...vals);
   const peak = vals.indexOf(Math.max(...vals));
@@ -394,7 +461,11 @@ export function BarChart({ data, format = num, height = 190, unit = "" }) {
     <div className="ap-barchart">
       <div className="ap-barchart-plot" style={{ height }}>
         {data.map((d, i) => (
-          <div className="ap-barchart-col" key={i} title={`${d.label}${unit ? ` ${unit}` : ""}: ${format(vals[i])}`}>
+          <div
+            className="ap-barchart-col"
+            key={i}
+            title={`${d.label}${unit ? ` ${unit}` : ""}: ${format(vals[i])}`}
+          >
             <span
               className={`ap-barchart-bar ${i === peak ? "is-peak" : ""}`}
               style={{ height: `${Math.max(1.5, (vals[i] / max) * 100)}%` }}
@@ -404,7 +475,9 @@ export function BarChart({ data, format = num, height = 190, unit = "" }) {
       </div>
       <div className="ap-barchart-x">
         {data.map((d, i) => (
-          <span key={i}>{i % Math.ceil(data.length / 8) === 0 ? d.label : ""}</span>
+          <span key={i}>
+            {i % Math.ceil(data.length / 8) === 0 ? d.label : ""}
+          </span>
         ))}
       </div>
     </div>
@@ -430,7 +503,11 @@ export function Donut({ segments, centerLabel, centerSub }) {
                 cy="66"
                 r={R}
                 className="ap-donut-seg"
-                style={{ stroke: seg.color, strokeDasharray: `${dash} ${C - dash}`, strokeDashoffset: -acc }}
+                style={{
+                  stroke: seg.color,
+                  strokeDasharray: `${dash} ${C - dash}`,
+                  strokeDashoffset: -acc,
+                }}
               />
             );
             acc += dash;
@@ -461,17 +538,33 @@ export function Legend({ rows }) {
 
 /* ----------------------------------------------------------- confirm --- */
 
-export function ConfirmDialog({ title, message, confirmLabel, tone = "primary", busy, onConfirm, onClose }) {
+export function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  tone = "primary",
+  busy,
+  onConfirm,
+  onClose,
+}) {
   return (
     <Modal
       title={title}
       onClose={onClose}
       footer={
         <>
-          <button className="ap-btn ap-btn-ghost" onClick={onClose} disabled={busy}>
+          <button
+            className="ap-btn ap-btn-ghost"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </button>
-          <button className={`ap-btn ap-btn-${tone}`} onClick={onConfirm} disabled={busy}>
+          <button
+            className={`ap-btn ap-btn-${tone}`}
+            onClick={onConfirm}
+            disabled={busy}
+          >
             {busy ? "Working…" : confirmLabel}
           </button>
         </>
@@ -482,7 +575,12 @@ export function ConfirmDialog({ title, message, confirmLabel, tone = "primary", 
   );
 }
 
-export function ConfirmButton({ onConfirm, children, className = "ap-btn ap-btn-danger", confirmLabel = "Confirm?" }) {
+export function ConfirmButton({
+  onConfirm,
+  children,
+  className = "ap-btn ap-btn-danger",
+  confirmLabel = "Confirm?",
+}) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
     if (!armed) return;
@@ -509,7 +607,10 @@ export function ConfirmButton({ onConfirm, children, className = "ap-btn ap-btn-
 /* ----------------------------------------------------- analytics add-ons --- */
 
 // One-line hint shown wherever an analytics RPC / column isn't installed yet.
-export function NeedsSetup({ what = "This metric", file = "supabase/admin_analytics.sql" }) {
+export function NeedsSetup({
+  what = "This metric",
+  file = "supabase/admin_analytics.sql",
+}) {
   return (
     <p className="ap-async-empty">
       {what} needs setup — run <code>{file}</code> in the Supabase SQL editor.
@@ -522,7 +623,8 @@ export function TrendArrow({ now, prev, unit = "" }) {
   const a = Number(now);
   const b = Number(prev);
   if (!Number.isFinite(a)) return null;
-  if (!Number.isFinite(b) || b === 0) return <span className="ap-delta is-up">▲ new</span>;
+  if (!Number.isFinite(b) || b === 0)
+    return <span className="ap-delta is-up">▲ new</span>;
   const pct = ((a - b) / b) * 100;
   const up = pct >= 0;
   return (
@@ -535,7 +637,8 @@ export function TrendArrow({ now, prev, unit = "" }) {
 // Two independently-scaled lines on a shared x-axis. `left` / `right` are
 // { key, label, format, color }.
 export function DualAxisChart({ data, xKey = "d", left, right }) {
-  if (!data || data.length < 2) return <div className="ap-async-empty">Not enough data yet.</div>;
+  if (!data || data.length < 2)
+    return <div className="ap-async-empty">Not enough data yet.</div>;
   const W = 640;
   const H = 200;
   const PL = 6;
@@ -548,7 +651,12 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
   const path = (vals) => {
     const max = Math.max(1, ...vals);
     const y = (v) => PT + (1 - v / max) * (H - PT - PB);
-    return { d: vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" "), max };
+    return {
+      d: vals
+        .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`)
+        .join(" "),
+      max,
+    };
   };
   const L = path(series(left.key));
   const R = path(series(right.key));
@@ -559,18 +667,40 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
 
   return (
     <div className="ap-area">
-      <svg viewBox={`0 0 ${W} ${H}`} className="ap-area-svg" role="img" aria-label={`${left.label} and ${right.label}`}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="ap-area-svg"
+        role="img"
+        aria-label={`${left.label} and ${right.label}`}
+      >
         {[0.25, 0.5, 0.75, 1].map((f) => (
-          <line key={f} x1={PL} x2={W - PL} y1={PT + (1 - f) * (H - PT - PB)} y2={PT + (1 - f) * (H - PT - PB)} className="ap-area-grid" />
+          <line
+            key={f}
+            x1={PL}
+            x2={W - PL}
+            y1={PT + (1 - f) * (H - PT - PB)}
+            y2={PT + (1 - f) * (H - PT - PB)}
+            className="ap-area-grid"
+          />
         ))}
-        <path d={R.d} fill="none" style={{ stroke: rc }} strokeWidth="2" strokeDasharray="4 3" />
+        <path
+          d={R.d}
+          fill="none"
+          style={{ stroke: rc }}
+          strokeWidth="2"
+          strokeDasharray="4 3"
+        />
         <path d={L.d} fill="none" style={{ stroke: lc }} strokeWidth="2.5" />
       </svg>
       <div className="ap-area-x">
         <span>{fmtDate(data[0][xKey])}</span>
         <span className="ap-dualaxis-legend">
-          <span style={{ color: lc }}>● {left.label} · peak {fmtL(L.max)}</span>
-          <span style={{ color: rc }}>┄ {right.label} · peak {fmtR(R.max)}</span>
+          <span style={{ color: lc }}>
+            ● {left.label} · peak {fmtL(L.max)}
+          </span>
+          <span style={{ color: rc }}>
+            ┄ {right.label} · peak {fmtR(R.max)}
+          </span>
         </span>
         <span>{fmtDate(data[data.length - 1][xKey])}</span>
       </div>
@@ -581,7 +711,13 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
 // Grouped comparison bars: the selected metric summed into weekly buckets for
 // the current 30-day window vs the prior 30-day window, aligned by day-offset so
 // week N lines up with week N. Tolerates sparse daily data (gaps = 0).
-export function ComparisonBars({ current = [], prior = [], metric, format = num, now }) {
+export function ComparisonBars({
+  current = [],
+  prior = [],
+  metric,
+  format = num,
+  now,
+}) {
   const DAY = 86400000;
   const SPAN = 30;
   const N = 5;
@@ -632,8 +768,14 @@ export function ComparisonBars({ current = [], prior = [], metric, format = num,
             key={i}
             title={`Days ${i * size + 1}–${Math.min(SPAN, (i + 1) * size)}\nLast: ${format(cur[i])}\nPrior: ${format(pri[i])}`}
           >
-            <span className="ap-cmpbars-bar is-cur" style={{ height: `${(cur[i] / max) * 100}%` }} />
-            <span className="ap-cmpbars-bar is-pri" style={{ height: `${(pri[i] / max) * 100}%` }} />
+            <span
+              className="ap-cmpbars-bar is-cur"
+              style={{ height: `${(cur[i] / max) * 100}%` }}
+            />
+            <span
+              className="ap-cmpbars-bar is-pri"
+              style={{ height: `${(pri[i] / max) * 100}%` }}
+            />
             <span className="ap-cmpbars-label">Wk {i + 1}</span>
           </div>
         ))}
@@ -644,7 +786,8 @@ export function ComparisonBars({ current = [], prior = [], metric, format = num,
 
 // Vertical bar histogram — every label + count is shown (unlike BarChart).
 export function Histogram({ bins, format = num }) {
-  if (!bins || bins.length === 0) return <div className="ap-async-empty">No data.</div>;
+  if (!bins || bins.length === 0)
+    return <div className="ap-async-empty">No data.</div>;
   const vals = bins.map((b) => Number(b.value) || 0);
   const max = Math.max(1, ...vals);
   return (
@@ -652,7 +795,10 @@ export function Histogram({ bins, format = num }) {
       {bins.map((b, i) => (
         <div className="ap-histogram-col" key={i}>
           <span className="ap-histogram-count">{format(vals[i])}</span>
-          <span className="ap-histogram-bar" style={{ height: `${(vals[i] / max) * 100}%` }} />
+          <span
+            className="ap-histogram-bar"
+            style={{ height: `${(vals[i] / max) * 100}%` }}
+          />
           <span className="ap-histogram-label">{b.label}</span>
         </div>
       ))}
@@ -662,15 +808,23 @@ export function Histogram({ bins, format = num }) {
 
 // Horizontal ranked bars: [{ label, value, sub? }].
 export function RankBars({ rows, format = num, max: fixedMax }) {
-  if (!rows || rows.length === 0) return <div className="ap-async-empty">No data.</div>;
+  if (!rows || rows.length === 0)
+    return <div className="ap-async-empty">No data.</div>;
   const max = fixedMax || Math.max(1, ...rows.map((r) => Number(r.value) || 0));
   return (
     <ul className="ap-rankbars">
       {rows.map((r, i) => (
         <li key={i}>
-          <span className="ap-rankbars-label" title={r.label}>{r.label}</span>
+          <span className="ap-rankbars-label" title={r.label}>
+            {r.label}
+          </span>
           <span className="ap-rankbars-track">
-            <span className="ap-rankbars-fill" style={{ width: `${Math.max(2, ((Number(r.value) || 0) / max) * 100)}%` }} />
+            <span
+              className="ap-rankbars-fill"
+              style={{
+                width: `${Math.max(2, ((Number(r.value) || 0) / max) * 100)}%`,
+              }}
+            />
           </span>
           <span className="ap-rankbars-value">
             {format(r.value)}
@@ -685,7 +839,8 @@ export function RankBars({ rows, format = num, max: fixedMax }) {
 // Conversion funnel: [{ label, value }]. Shows drop vs the previous stage.
 export function Funnel({ stages }) {
   const clean = (stages || []).filter((s) => s && s.value != null);
-  if (clean.length === 0) return <div className="ap-async-empty">Not tracked yet.</div>;
+  if (clean.length === 0)
+    return <div className="ap-async-empty">Not tracked yet.</div>;
   const top = Math.max(1, Number(clean[0].value) || 0);
   return (
     <ol className="ap-funnel">
@@ -697,12 +852,16 @@ export function Funnel({ stages }) {
           <li key={i}>
             <div className="ap-funnel-row">
               <span className="ap-funnel-label">{s.label}</span>
-              <span className="ap-funnel-bar" style={{ width: `${(v / top) * 100}%` }} />
+              <span
+                className="ap-funnel-bar"
+                style={{ width: `${(v / top) * 100}%` }}
+              />
               <span className="ap-funnel-value">{num(v)}</span>
             </div>
             {i > 0 && (
               <span className="ap-funnel-drop">
-                {((v / top) * 100).toFixed(0)}% of top{drop > 0 ? ` · ▼ ${drop.toFixed(0)}% from previous` : ""}
+                {((v / top) * 100).toFixed(0)}% of top
+                {drop > 0 ? ` · ▼ ${drop.toFixed(0)}% from previous` : ""}
               </span>
             )}
           </li>
@@ -714,10 +873,13 @@ export function Funnel({ stages }) {
 
 // Locality × event-type intensity grid. `data` = [{ row, col, count }].
 export function Heatmap({ data, format = num }) {
-  if (!data || data.length === 0) return <div className="ap-async-empty">No data.</div>;
+  if (!data || data.length === 0)
+    return <div className="ap-async-empty">No data.</div>;
   const rows = [...new Set(data.map((d) => d.row))];
   const cols = [...new Set(data.map((d) => d.col))];
-  const lookup = new Map(data.map((d) => [`${d.row} ${d.col}`, Number(d.count) || 0]));
+  const lookup = new Map(
+    data.map((d) => [`${d.row} ${d.col}`, Number(d.count) || 0]),
+  );
   const max = Math.max(1, ...data.map((d) => Number(d.count) || 0));
   return (
     <div className="ap-heatmap-wrap">
@@ -740,7 +902,10 @@ export function Heatmap({ data, format = num }) {
                 return (
                   <td
                     key={c}
-                    style={{ background: `color-mix(in srgb, var(--ap-primary) ${pct}%, transparent)`, color: pct > 55 ? "#fff" : "inherit" }}
+                    style={{
+                      background: `color-mix(in srgb, var(--ap-primary) ${pct}%, transparent)`,
+                      color: pct > 55 ? "#fff" : "inherit",
+                    }}
                     title={`${r} · ${c}: ${format(v)}`}
                   >
                     {v ? format(v) : ""}

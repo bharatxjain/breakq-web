@@ -1,14 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchUserRoleCounts, fetchUsers, getMyId } from "../api";
-import { Async, Badge, Modal, fmtDate, fmtDateTime, num, useAsync } from "../ui";
+import {
+  Async,
+  Badge,
+  Modal,
+  fmtDate,
+  fmtDateTime,
+  num,
+  useAsync,
+} from "../ui";
 
 const PAGE_SIZE = 50;
 const BASE_ROLES = ["customer", "vendor", "admin"];
 
 // Keys we render first (in this order) in the details modal; anything else on
 // the row is shown afterwards. Purely presentational — read-only.
-const PRIMARY_KEYS = ["email", "role", "full_name", "name", "display_name", "phone", "created_at", "updated_at"];
-const DATE_KEYS = new Set(["created_at", "updated_at", "last_sign_in_at", "confirmed_at"]);
+const PRIMARY_KEYS = [
+  "email",
+  "role",
+  "full_name",
+  "name",
+  "display_name",
+  "phone",
+  "created_at",
+  "updated_at",
+];
+const DATE_KEYS = new Set([
+  "created_at",
+  "updated_at",
+  "last_sign_in_at",
+  "confirmed_at",
+]);
 
 function label(k) {
   return k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -28,7 +50,8 @@ export default function Users() {
   }, []);
 
   const roleCounts = useAsync(fetchUserRoleCounts, []);
-  const counts = roleCounts.data && !roleCounts.data._missing ? roleCounts.data : null;
+  const counts =
+    roleCounts.data && !roleCounts.data._missing ? roleCounts.data : null;
 
   const { state, data, error, reload } = useAsync(
     () => fetchUsers({ page, pageSize: PAGE_SIZE, search, role }),
@@ -41,9 +64,13 @@ export default function Users() {
   const from = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const to = Math.min(total, (page + 1) * PAGE_SIZE);
 
-  const grandTotal = counts ? Object.values(counts).reduce((a, b) => a + (Number(b) || 0), 0) : total;
+  const grandTotal = counts
+    ? Object.values(counts).reduce((a, b) => a + (Number(b) || 0), 0)
+    : total;
   const roleList = useMemo(() => {
-    const extra = counts ? Object.keys(counts).filter((k) => !BASE_ROLES.includes(k)) : [];
+    const extra = counts
+      ? Object.keys(counts).filter((k) => !BASE_ROLES.includes(k))
+      : [];
     return [...BASE_ROLES, ...extra.sort()];
   }, [counts]);
 
@@ -67,20 +94,55 @@ export default function Users() {
             {counts && (
               <>
                 {" "}
-                · {num(counts.customer || 0)} customers · {num(counts.vendor || 0)} vendors ·{" "}
-                {num(counts.admin || 0)} admins
+                · {num(counts.customer || 0)} customers ·{" "}
+                {num(counts.vendor || 0)} vendors · {num(counts.admin || 0)}{" "}
+                admins
               </>
             )}
           </p>
         </div>
       </div>
 
+      <section className="ap-stat-grid" aria-label="User account metrics">
+        <div className="ap-stat">
+          <span className="ap-stat-label">Total users</span>
+          <span className="ap-stat-value">
+            {num(counts ? grandTotal : "—")}
+          </span>
+        </div>
+        <div className="ap-stat">
+          <span className="ap-stat-label">Total customers</span>
+          <span className="ap-stat-value">
+            {num(counts ? counts.customer || 0 : "—")}
+          </span>
+        </div>
+        <div className="ap-stat">
+          <span className="ap-stat-label">Total vendors</span>
+          <span className="ap-stat-value">
+            {num(counts ? counts.vendor || 0 : "—")}
+          </span>
+        </div>
+        <div className="ap-stat">
+          <span className="ap-stat-label">Total admins</span>
+          <span className="ap-stat-value">
+            {num(counts ? counts.admin || 0 : "—")}
+          </span>
+        </div>
+      </section>
+
       <div className="ap-tabs">
-        <button className={role === "" ? "is-active" : ""} onClick={() => pickRole("")}>
+        <button
+          className={role === "" ? "is-active" : ""}
+          onClick={() => pickRole("")}
+        >
           All{counts ? ` (${num(grandTotal)})` : ""}
         </button>
         {roleList.map((r) => (
-          <button key={r} className={role === r ? "is-active" : ""} onClick={() => pickRole(r)}>
+          <button
+            key={r}
+            className={role === r ? "is-active" : ""}
+            onClick={() => pickRole(r)}
+          >
             {cap(r)}
             {counts ? ` (${num(counts[r] || 0)})` : ""}
           </button>
@@ -148,12 +210,17 @@ export default function Users() {
                   </td>
                   <td>{u.email || "—"}</td>
                   <td>
-                    <Badge tone={u.role === "admin" ? "ok" : "neutral"}>{u.role || "unknown"}</Badge>
+                    <Badge tone={u.role === "admin" ? "ok" : "neutral"}>
+                      {u.role || "unknown"}
+                    </Badge>
                   </td>
                   <td>{u.phone || "—"}</td>
                   <td>{fmtDate(u.created_at)}</td>
                   <td className="ap-row-actions">
-                    <button className="ap-btn ap-btn-sm ap-btn-ghost" onClick={() => setDetail(u)}>
+                    <button
+                      className="ap-btn ap-btn-sm ap-btn-ghost"
+                      onClick={() => setDetail(u)}
+                    >
                       View
                     </button>
                   </td>
@@ -189,7 +256,13 @@ export default function Users() {
         </div>
       </Async>
 
-      {detail && <UserDetail user={detail} isMe={detail.id === myId} onClose={() => setDetail(null)} />}
+      {detail && (
+        <UserDetail
+          user={detail}
+          isMe={detail.id === myId}
+          onClose={() => setDetail(null)}
+        />
+      )}
     </div>
   );
 }
@@ -197,11 +270,17 @@ export default function Users() {
 function UserDetail({ user, isMe, onClose }) {
   const keys = [
     ...PRIMARY_KEYS.filter((k) => k in user),
-    ...Object.keys(user).filter((k) => !PRIMARY_KEYS.includes(k) && !k.startsWith("_")),
+    ...Object.keys(user).filter(
+      (k) => !PRIMARY_KEYS.includes(k) && !k.startsWith("_"),
+    ),
   ];
 
   return (
-    <Modal title={user.email || user.full_name || "User"} onClose={onClose} wide>
+    <Modal
+      title={user.email || user.full_name || "User"}
+      onClose={onClose}
+      wide
+    >
       <div className="ap-detail-grid">
         {keys.map((k) => {
           const v = user[k];
@@ -212,7 +291,14 @@ function UserDetail({ user, isMe, onClose }) {
           else if (typeof v === "object") display = JSON.stringify(v);
           else display = String(v);
           return (
-            <div key={k} className={k === "id" || typeof user[k] === "object" ? "ap-detail ap-detail-span" : "ap-detail"}>
+            <div
+              key={k}
+              className={
+                k === "id" || typeof user[k] === "object"
+                  ? "ap-detail ap-detail-span"
+                  : "ap-detail"
+              }
+            >
               <span className="ap-detail-label">{label(k)}</span>
               <span className="ap-detail-value">{display}</span>
             </div>
