@@ -25,6 +25,15 @@
   --ap-radius-sm: 9px;
   --ap-header-h: 60px;
   --ap-gutter-top: 10px;
+  /* Spacing scale — every top-level dashboard card (.ap-kpi / .ap-stat /
+     .ap-panel) and card-grid (.ap-kpi-grid / .ap-stat-grid / .ap-two-col)
+     shares these two so cards line up with the same padding and the same
+     gap regardless of which grid they sit in. Section-to-section stacking
+     (.ap-view) stays one step larger so page sections read as distinct
+     groups rather than just more cards. */
+  --ap-card-pad: 20px;
+  --ap-card-gap: 18px;
+  --ap-section-gap: 24px;
   --ap-shadow:
     0 1px 2px rgba(29, 26, 37, 0.06), 0 8px 24px -12px rgba(29, 26, 37, 0.14);
 
@@ -761,7 +770,7 @@
 .ap-view {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--ap-section-gap);
   max-width: 1240px;
 }
 .ap-view-head {
@@ -970,13 +979,13 @@
 .ap-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 18px;
+  gap: var(--ap-card-gap);
 }
 .ap-kpi {
   background: var(--ap-surface);
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
-  padding: 20px;
+  padding: var(--ap-card-pad);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1258,13 +1267,13 @@
 .ap-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 16px;
+  gap: var(--ap-card-gap);
 }
 .ap-stat {
   background: var(--ap-surface);
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
-  padding: 17px 18px;
+  padding: var(--ap-card-pad);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1295,7 +1304,7 @@
   background: var(--ap-surface);
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
-  padding: 22px;
+  padding: var(--ap-card-pad);
 }
 .ap-panel-head {
   display: flex;
@@ -1313,7 +1322,9 @@
   height: 380px;
   overflow: hidden;
   border: 1px solid var(--ap-border);
-  border-radius: var(--ap-radius-sm);
+  /* Matches .ap-table-wrap — both are framed content blocks nested one level
+     inside a .ap-panel, so they should read at the same "weight" as each other. */
+  border-radius: var(--ap-radius);
 }
 .ap-map-canvas {
   width: 100%;
@@ -1369,7 +1380,7 @@
 .ap-two-col {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--ap-card-gap);
   align-items: start;
 }
 .ap-two-col > * {
@@ -2164,16 +2175,24 @@ form.ap-bar {
     max-width: none !important;
   }
 
-  /* dashboard cards */
-  .ap-panel {
+  /* dashboard cards — panel/kpi/stat all tighten to the same padding, and
+     card-grid gaps drop a notch so they stay smaller than the section gap
+     above (.ap-view already steps down to 16px here). */
+  .ap-panel,
+  .ap-kpi,
+  .ap-stat {
     padding: 14px;
+  }
+  .ap-kpi-grid,
+  .ap-stat-grid,
+  .ap-two-col {
+    gap: 12px;
   }
   .ap-panel-head {
     flex-wrap: wrap;
   }
   .ap-kpi {
     min-height: 0;
-    padding: 14px;
     gap: 6px;
   }
   .ap-kpi-value {
