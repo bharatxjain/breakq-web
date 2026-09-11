@@ -11,6 +11,7 @@
 --    2. admin_login_logs         login-attempt log (the only auth-layer gap)
 --    3. shops.is_deleted         soft delete — never hard-delete a shop
 --    4. shops.locality           proposed — area analytics (decision 1)
+--    4b. shops.locality_source   geocoded vs manual vs never resolved
 --    5. admin RLS policies       so the panel's reads/writes are allowed
 --    6. admin_dashboard()        every analytics card in one call
 --    7. admin_override_tier()    transactional manual tier change
@@ -61,8 +62,9 @@ as $$
                               begin
                                 alter table public.shops add column if not exists is_deleted boolean not null default false;
                                   alter table public.shops add column if not exists locality   text;
+                                  alter table public.shops add column if not exists locality_source text;
                                   exception when undefined_table then
-                                    raise notice 'shops table not found — skipped is_deleted / locality';
+                                    raise notice 'shops table not found — skipped is_deleted / locality / locality_source';
                                     end $$;
 
 

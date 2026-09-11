@@ -400,6 +400,10 @@ function Shell({ onSignOut }) {
     const saved = sessionStorage.getItem(VIEW_KEY);
     return ALL_VIEWS.some((n) => n.key === saved) ? saved : "dashboard";
   });
+  // Set by a chart drill-down (e.g. clicking a dashboard donut segment) so the
+  // view it switches to can seed its filters. Cleared on any *manual* nav so
+  // a stale filter never silently reapplies when someone picks a tab by hand.
+  const [navFilter, setNavFilter] = useState(null);
   const [navOpen, setNavOpen] = useState(false);
   const [theme, setTheme] = useState(resolveTheme);
   const [collapsed, setCollapsed] = useState(() => {
@@ -469,6 +473,16 @@ function Shell({ onSignOut }) {
     : [];
 
   const go = (key) => {
+    setNavFilter(null);
+    setView(key);
+    setNavOpen(false);
+    setFilter("");
+  };
+
+  // Chart drill-down: switch tabs and hand the destination view a filter to
+  // seed itself with (e.g. { status: "pending" } or { locality: "Koramangala" }).
+  const onNavigate = (key, seedFilter) => {
+    setNavFilter(seedFilter || null);
     setView(key);
     setNavOpen(false);
     setFilter("");
@@ -655,7 +669,7 @@ function Shell({ onSignOut }) {
 
         <main className="ap-main">
           <div className="ap-content">
-            <Active />
+            <Active onNavigate={onNavigate} initialFilter={navFilter} />
           </div>
         </main>
 

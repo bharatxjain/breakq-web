@@ -271,6 +271,30 @@ export function Toggle({ checked, onChange, label }) {
 // Deliberately minimal: one hue, faint baseline, emphasized last bar.
 // Good enough for an at-a-glance internal trend; not a full analytics viz.
 
+/* --------------------------------------------------------- chart hover --- */
+
+// Floating tooltip content for a chart element. The element it sits inside
+// needs `position: relative` and a `:hover`/`:focus-visible` rule that shows
+// `.ap-chart-tooltip` — see the per-chart CSS blocks in Admin.css.
+export function ChartTooltip({ children }) {
+  return (
+    <span className="ap-chart-tooltip" role="tooltip">
+      {children}
+    </span>
+  );
+}
+
+// Common keydown handler so every clickable chart element (bar, segment,
+// row…) also activates on Enter/Space, matching native button semantics.
+function activateOnKey(fn) {
+  return (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fn(e);
+    }
+  };
+}
+
 export function Bars({ data, metric, format = num, height = 150 }) {
   if (!data || data.length === 0)
     return <div className="ap-async-empty">No data in the last 30 days.</div>;
@@ -337,17 +361,18 @@ export function MiniBars({ values, labels = [], tone = "primary", unit = "" }) {
       {values.map((v, i) => (
         <span
           key={i}
+          tabIndex={0}
           className={i === values.length - 1 ? "is-last" : ""}
           aria-label={`${labels[i] || `Bar ${i + 1}`}: ${num(v)}${unit ? ` ${unit}` : ""}`}
           style={{ height: `${Math.max(4, ((Number(v) || 0) / max) * 100)}%` }}
         >
-          <span className="ap-minibar-tooltip" role="tooltip">
+          <ChartTooltip>
             <strong>{labels[i] || `Bar ${i + 1}`}</strong>
             <span>
               {num(v)}
               {unit ? ` ${unit}` : ""}
             </span>
-          </span>
+          </ChartTooltip>
         </span>
       ))}
     </div>
@@ -384,9 +409,10 @@ export function Spark({ values, tone = "primary" }) {
   );
 }
 
-export function AreaChart({ data, metric, format = num, compare }) {
+export function AreaChart({ data, metric, format = num, compare, onPointClick }) {
   if (!data || data.length === 0)
     return <div className="ap-async-empty">No data in the last 30 days.</div>;
+  const [hoverI, setHoverI] = useState(null);
   const W = 640;
   const H = 200;
   const PL = 6;
@@ -410,35 +436,92 @@ export function AreaChart({ data, metric, format = num, compare }) {
   const area = `${line} L ${x(cur.length - 1).toFixed(1)} ${H - PB} L ${PL} ${H - PB} Z`;
   const last = [x(cur.length - 1), y(cur[cur.length - 1])];
 
+  const nearestIndex = (clientX, target) => {
+    const rect = target.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * W;
+    return Math.max(0, Math.min(cur.length - 1, Math.round((relX - PL) / stepX)));
+  };
+  const handleMove = (e) => setHoverI(nearestIndex(e.clientX, e.currentTarget));
+  const handleLeave = () => setHoverI(null);
+  const handleTouch = (e) => {
+    const t = e.touches[0];
+    if (t) setHoverI(nearestIndex(t.clientX, e.currentTarget));
+  };
+  const handleClick = () => {
+    if (onPointClick && hoverI != null) onPointClick(data[hoverI], hoverI);
+  };
+
+  const hoverX = hoverI != null ? x(hoverI) : null;
+  const hoverY = hoverI != null ? y(cur[hoverI]) : null;
+
   return (
     <div className="ap-area">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="ap-area-svg"
-        role="img"
-        aria-label={`${metric} over the last 30 days`}
-      >
-        <defs>
-          <linearGradient id="apAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" className="ap-area-g0" />
-            <stop offset="100%" className="ap-area-g1" />
-          </linearGradient>
-        </defs>
-        {[0.25, 0.5, 0.75, 1].map((f) => (
-          <line
-            key={f}
-            x1={PL}
-            x2={W - PL}
-            y1={y(max * f)}
-            y2={y(max * f)}
-            className="ap-area-grid"
-          />
-        ))}
-        <path d={area} fill="url(#apAreaGrad)" />
-        {cmp && <path d={toPath(cmp)} className="ap-area-cmp" fill="none" />}
-        <path d={line} className="ap-area-line" fill="none" />
-        <circle cx={last[0]} cy={last[1]} r="3.5" className="ap-area-dot" />
-      </svg>
+      <div className="ap-area-plot">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className={`ap-area-svg ${onPointClick ? "ap-chart-hit" : ""}`}
+          role="img"
+          aria-label={`${metric} over the last 30 days`}
+          onMouseMove={handleMove}
+          onMouseLeave={handleLeave}
+          onTouchStart={handleTouch}
+          onTouchMove={handleTouch}
+          onTouchEnd={handleLeave}
+          onClick={onPointClick ? handleClick : undefined}
+        >
+          <defs>
+            <linearGradient id="apAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" className="ap-area-g0" />
+              <stop offset="100%" className="ap-area-g1" />
+            </linearGradient>
+          </defs>
+          {[0.25, 0.5, 0.75, 1].map((f) => (
+            <line
+              key={f}
+              x1={PL}
+              x2={W - PL}
+              y1={y(max * f)}
+              y2={y(max * f)}
+              className="ap-area-grid"
+            />
+          ))}
+          <path d={area} fill="url(#apAreaGrad)" />
+          {cmp && <path d={toPath(cmp)} className="ap-area-cmp" fill="none" />}
+          <path d={line} className="ap-area-line" fill="none" />
+          <circle cx={last[0]} cy={last[1]} r="3.5" className="ap-area-dot" />
+          {hoverI != null && (
+            <>
+              <line
+                x1={hoverX}
+                x2={hoverX}
+                y1={PT}
+                y2={H - PB}
+                className="ap-area-hoverline"
+              />
+              <circle
+                cx={hoverX}
+                cy={hoverY}
+                r="4.5"
+                className="ap-area-hoverdot"
+              />
+            </>
+          )}
+        </svg>
+        {hoverI != null && (
+          <div
+            className="ap-chart-tooltip ap-area-tooltip"
+            role="tooltip"
+            style={{
+              left: `${(hoverX / W) * 100}%`,
+              top: `${(hoverY / H) * 100}%`,
+            }}
+          >
+            <strong>{fmtDate(data[hoverI]?.d)}</strong>
+            <span>{format(cur[hoverI])}</span>
+            {cmp && cmp[hoverI] != null && <em>prior: {format(cmp[hoverI])}</em>}
+          </div>
+        )}
+      </div>
       <div className="ap-area-x">
         <span>{fmtDate(data[0].d)}</span>
         <span className="ap-area-peak">
@@ -451,27 +534,56 @@ export function AreaChart({ data, metric, format = num, compare }) {
   );
 }
 
-export function BarChart({ data, format = num, height = 190, unit = "" }) {
+export function BarChart({
+  data,
+  format = num,
+  height = 190,
+  unit = "",
+  onBarClick,
+}) {
+  // Tapping a bar toggles its tooltip "pinned" open — CSS :hover doesn't
+  // fire reliably on touch, so this is what makes the chart usable on phones.
+  const [pinned, setPinned] = useState(null);
   if (!data || data.length === 0)
     return <div className="ap-async-empty">No data.</div>;
   const vals = data.map((d) => Number(d.value) || 0);
   const max = Math.max(1, ...vals);
+  const total = vals.reduce((a, b) => a + b, 0);
   const peak = vals.indexOf(Math.max(...vals));
   return (
     <div className="ap-barchart">
       <div className="ap-barchart-plot" style={{ height }}>
-        {data.map((d, i) => (
-          <div
-            className="ap-barchart-col"
-            key={i}
-            title={`${d.label}${unit ? ` ${unit}` : ""}: ${format(vals[i])}`}
-          >
-            <span
-              className={`ap-barchart-bar ${i === peak ? "is-peak" : ""}`}
-              style={{ height: `${Math.max(1.5, (vals[i] / max) * 100)}%` }}
-            />
-          </div>
-        ))}
+        {data.map((d, i) => {
+          const pct = total ? Math.round((vals[i] / total) * 100) : 0;
+          const activate = () => {
+            setPinned((cur) => (cur === i ? null : i));
+            onBarClick?.(d, i);
+          };
+          return (
+            <div
+              className={`ap-barchart-col ap-chart-hit ${pinned === i ? "is-pinned" : ""}`}
+              key={i}
+              tabIndex={0}
+              role="button"
+              aria-label={`${d.label}${unit ? ` ${unit}` : ""}: ${format(vals[i])}`}
+              onClick={activate}
+              onKeyDown={activateOnKey(activate)}
+            >
+              <span
+                className={`ap-barchart-bar ${i === peak ? "is-peak" : ""}`}
+                style={{ height: `${Math.max(1.5, (vals[i] / max) * 100)}%` }}
+              />
+              <ChartTooltip>
+                <strong>{d.label}</strong>
+                <span>
+                  {format(vals[i])}
+                  {unit ? ` ${unit}` : ""}
+                </span>
+                {total > 0 && <em>{pct}% of total</em>}
+              </ChartTooltip>
+            </div>
+          );
+        })}
       </div>
       <div className="ap-barchart-x">
         {data.map((d, i) => (
@@ -484,49 +596,121 @@ export function BarChart({ data, format = num, height = 190, unit = "" }) {
   );
 }
 
-export function Donut({ segments, centerLabel, centerSub }) {
+// segments: [{ value, color, label?, format? }]. Hovering or focusing a
+// wedge (or its matching Legend row, if wired via activeIndex) shows a
+// floating value/percentage tooltip near that wedge; clicking one calls
+// onSegmentClick(segment, index) when provided.
+export function Donut({
+  segments,
+  centerLabel,
+  centerSub,
+  onSegmentClick,
+  activeIndex,
+  onHoverIndex,
+}) {
+  const [localHover, setLocalHover] = useState(null);
+  const hover = activeIndex !== undefined ? activeIndex : localHover;
+  const setHover = onHoverIndex || setLocalHover;
   const total = segments.reduce((s, x) => s + (Number(x.value) || 0), 0);
   const R = 54;
   const C = 2 * Math.PI * R;
+  const clickable = !!onSegmentClick;
   let acc = 0;
+  const arcs = segments.map((seg, i) => {
+    const value = Number(seg.value) || 0;
+    const dash = total ? (value / total) * C : 0;
+    const offset = acc;
+    acc += dash;
+    const midFraction = total ? (offset + dash / 2) / C : 0;
+    return { ...seg, i, value, dash, offset, midFraction };
+  });
+  const active = hover != null ? arcs[hover] : null;
+  // Wedge midpoint as a % position within the box — the svg is rotated
+  // -90deg via CSS so fraction 0 sits at 12 o'clock, increasing clockwise.
+  // R/66 scales the viewBox ring radius (54 of 132) down to the box's own
+  // percentage space so the point lands on the ring, not the box edge.
+  const ringPct = (R / 66) * 50;
+  const pos = active
+    ? {
+        left: `${50 + ringPct * Math.sin(active.midFraction * 2 * Math.PI)}%`,
+        top: `${50 - ringPct * Math.cos(active.midFraction * 2 * Math.PI)}%`,
+      }
+    : null;
+
   return (
     <div className="ap-donut">
       <svg viewBox="0 0 132 132" className="ap-donut-svg">
         <circle cx="66" cy="66" r={R} className="ap-donut-track" />
         {total > 0 &&
-          segments.map((seg, i) => {
-            const dash = ((Number(seg.value) || 0) / total) * C;
-            const node = (
-              <circle
-                key={i}
-                cx="66"
-                cy="66"
-                r={R}
-                className="ap-donut-seg"
-                style={{
-                  stroke: seg.color,
-                  strokeDasharray: `${dash} ${C - dash}`,
-                  strokeDashoffset: -acc,
-                }}
-              />
-            );
-            acc += dash;
-            return node;
-          })}
+          arcs.map((seg) => (
+            <circle
+              key={seg.i}
+              cx="66"
+              cy="66"
+              r={R}
+              className={`ap-donut-seg ${hover === seg.i ? "is-active" : ""} ${clickable ? "ap-chart-hit" : ""}`}
+              style={{
+                stroke: seg.color,
+                strokeDasharray: `${seg.dash} ${C - seg.dash}`,
+                strokeDashoffset: -seg.offset,
+              }}
+              tabIndex={0}
+              role={clickable ? "button" : undefined}
+              aria-label={`${seg.label || `Segment ${seg.i + 1}`}: ${
+                seg.format ? seg.format(seg.value) : num(seg.value)
+              }${total ? `, ${Math.round((seg.value / total) * 100)}%` : ""}`}
+              onMouseEnter={() => setHover(seg.i)}
+              onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(seg.i)}
+              onBlur={() => setHover(null)}
+              onClick={() => {
+                // Tap-to-toggle so touch devices (no real hover) can still
+                // see the tooltip, on top of any real drill-down navigation.
+                setHover((cur) => (cur === seg.i ? null : seg.i));
+                onSegmentClick?.(seg, seg.i);
+              }}
+              onKeyDown={
+                clickable
+                  ? activateOnKey(() => onSegmentClick(seg, seg.i))
+                  : undefined
+              }
+            />
+          ))}
       </svg>
       <div className="ap-donut-center">
         <strong>{centerLabel}</strong>
         {centerSub && <span>{centerSub}</span>}
       </div>
+      {active && pos && (
+        <div className="ap-donut-tooltip" style={pos} role="tooltip">
+          <strong>{active.label || `Segment ${active.i + 1}`}</strong>
+          <span>{active.format ? active.format(active.value) : num(active.value)}</span>
+          {total > 0 && <em>{Math.round((active.value / total) * 100)}%</em>}
+        </div>
+      )}
     </div>
   );
 }
 
-export function Legend({ rows }) {
+export function Legend({ rows, activeIndex, onHoverIndex, onRowClick }) {
+  const clickable = !!onRowClick;
   return (
     <ul className="ap-legend">
       {rows.map((r, i) => (
-        <li key={i}>
+        <li
+          key={i}
+          className={`${activeIndex === i ? "is-active" : ""} ${clickable ? "ap-chart-hit" : ""}`}
+          tabIndex={clickable ? 0 : -1}
+          role={clickable ? "button" : undefined}
+          onMouseEnter={onHoverIndex ? () => onHoverIndex(i) : undefined}
+          onMouseLeave={onHoverIndex ? () => onHoverIndex(null) : undefined}
+          onFocus={onHoverIndex ? () => onHoverIndex(i) : undefined}
+          onBlur={onHoverIndex ? () => onHoverIndex(null) : undefined}
+          onClick={clickable ? () => onRowClick(r, i) : undefined}
+          onKeyDown={
+            clickable ? activateOnKey(() => onRowClick(r, i)) : undefined
+          }
+        >
           <span className="ap-legend-dot" style={{ background: r.color }} />
           <span className="ap-legend-label">{r.label}</span>
           <span className="ap-legend-value">{r.value}</span>
@@ -636,9 +820,10 @@ export function TrendArrow({ now, prev, unit = "" }) {
 
 // Two independently-scaled lines on a shared x-axis. `left` / `right` are
 // { key, label, format, color }.
-export function DualAxisChart({ data, xKey = "d", left, right }) {
+export function DualAxisChart({ data, xKey = "d", left, right, onPointClick }) {
   if (!data || data.length < 2)
     return <div className="ap-async-empty">Not enough data yet.</div>;
+  const [hoverI, setHoverI] = useState(null);
   const W = 640;
   const H = 200;
   const PL = 6;
@@ -656,6 +841,8 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
         .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`)
         .join(" "),
       max,
+      vals,
+      y,
     };
   };
   const L = path(series(left.key));
@@ -665,33 +852,100 @@ export function DualAxisChart({ data, xKey = "d", left, right }) {
   const fmtL = left.format || num;
   const fmtR = right.format || num;
 
+  const posToIndex = (clientX, target) => {
+    const rect = target.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * W;
+    return Math.max(0, Math.min(n, Math.round((relX - PL) / sx)));
+  };
+  const handleMove = (e) => setHoverI(posToIndex(e.clientX, e.currentTarget));
+  const handleLeave = () => setHoverI(null);
+  const handleTouch = (e) => {
+    const t = e.touches[0];
+    if (t) setHoverI(posToIndex(t.clientX, e.currentTarget));
+  };
+  const handleClick = () => {
+    if (onPointClick && hoverI != null) onPointClick(data[hoverI], hoverI);
+  };
+  const hoverX = hoverI != null ? x(hoverI) : null;
+
   return (
     <div className="ap-area">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="ap-area-svg"
-        role="img"
-        aria-label={`${left.label} and ${right.label}`}
-      >
-        {[0.25, 0.5, 0.75, 1].map((f) => (
-          <line
-            key={f}
-            x1={PL}
-            x2={W - PL}
-            y1={PT + (1 - f) * (H - PT - PB)}
-            y2={PT + (1 - f) * (H - PT - PB)}
-            className="ap-area-grid"
+      <div className="ap-area-plot">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className={`ap-area-svg ${onPointClick ? "ap-chart-hit" : ""}`}
+          role="img"
+          aria-label={`${left.label} and ${right.label}`}
+          onMouseMove={handleMove}
+          onMouseLeave={handleLeave}
+          onTouchStart={handleTouch}
+          onTouchMove={handleTouch}
+          onTouchEnd={handleLeave}
+          onClick={onPointClick ? handleClick : undefined}
+        >
+          {[0.25, 0.5, 0.75, 1].map((f) => (
+            <line
+              key={f}
+              x1={PL}
+              x2={W - PL}
+              y1={PT + (1 - f) * (H - PT - PB)}
+              y2={PT + (1 - f) * (H - PT - PB)}
+              className="ap-area-grid"
+            />
+          ))}
+          <path
+            d={R.d}
+            fill="none"
+            style={{ stroke: rc }}
+            strokeWidth="2"
+            strokeDasharray="4 3"
           />
-        ))}
-        <path
-          d={R.d}
-          fill="none"
-          style={{ stroke: rc }}
-          strokeWidth="2"
-          strokeDasharray="4 3"
-        />
-        <path d={L.d} fill="none" style={{ stroke: lc }} strokeWidth="2.5" />
-      </svg>
+          <path d={L.d} fill="none" style={{ stroke: lc }} strokeWidth="2.5" />
+          {hoverI != null && (
+            <>
+              <line
+                x1={hoverX}
+                x2={hoverX}
+                y1={PT}
+                y2={H - PB}
+                className="ap-area-hoverline"
+              />
+              <circle
+                cx={hoverX}
+                cy={L.y(L.vals[hoverI])}
+                r="4"
+                style={{ fill: "var(--ap-surface)", stroke: lc }}
+                strokeWidth="2.5"
+              />
+              <circle
+                cx={hoverX}
+                cy={R.y(R.vals[hoverI])}
+                r="4"
+                style={{ fill: "var(--ap-surface)", stroke: rc }}
+                strokeWidth="2.5"
+              />
+            </>
+          )}
+        </svg>
+        {hoverI != null && (
+          <div
+            className="ap-chart-tooltip ap-area-tooltip"
+            role="tooltip"
+            style={{
+              left: `${(hoverX / W) * 100}%`,
+              top: `${(Math.min(L.y(L.vals[hoverI]), R.y(R.vals[hoverI])) / H) * 100}%`,
+            }}
+          >
+            <strong>{fmtDate(data[hoverI]?.[xKey])}</strong>
+            <span>
+              {left.label}: {fmtL(L.vals[hoverI])}
+            </span>
+            <span>
+              {right.label}: {fmtR(R.vals[hoverI])}
+            </span>
+          </div>
+        )}
+      </div>
       <div className="ap-area-x">
         <span>{fmtDate(data[0][xKey])}</span>
         <span className="ap-dualaxis-legend">
@@ -717,6 +971,7 @@ export function ComparisonBars({
   metric,
   format = num,
   now,
+  onGroupClick,
 }) {
   const DAY = 86400000;
   const SPAN = 30;
@@ -762,23 +1017,53 @@ export function ComparisonBars({
         <DeltaChip now={curTotal} prev={priTotal} />
       </div>
       <div className="ap-cmpbars-plot">
-        {cur.map((_, i) => (
-          <div
-            className="ap-cmpbars-group"
-            key={i}
-            title={`Days ${i * size + 1}–${Math.min(SPAN, (i + 1) * size)}\nLast: ${format(cur[i])}\nPrior: ${format(pri[i])}`}
-          >
-            <span
-              className="ap-cmpbars-bar is-cur"
-              style={{ height: `${(cur[i] / max) * 100}%` }}
-            />
-            <span
-              className="ap-cmpbars-bar is-pri"
-              style={{ height: `${(pri[i] / max) * 100}%` }}
-            />
-            <span className="ap-cmpbars-label">Wk {i + 1}</span>
-          </div>
-        ))}
+        {cur.map((_, i) => {
+          const delta = pri[i] ? ((cur[i] - pri[i]) / pri[i]) * 100 : null;
+          const clickable = !!onGroupClick;
+          return (
+            <div
+              className={`ap-cmpbars-group ${clickable ? "ap-chart-hit" : ""}`}
+              key={i}
+              tabIndex={0}
+              role={clickable ? "button" : undefined}
+              aria-label={`Week ${i + 1}: last ${format(cur[i])}, prior ${format(pri[i])}`}
+              onClick={
+                clickable
+                  ? () => onGroupClick({ week: i + 1, cur: cur[i], pri: pri[i] }, i)
+                  : undefined
+              }
+              onKeyDown={
+                clickable
+                  ? activateOnKey(() =>
+                      onGroupClick({ week: i + 1, cur: cur[i], pri: pri[i] }, i),
+                    )
+                  : undefined
+              }
+            >
+              <span
+                className="ap-cmpbars-bar is-cur"
+                style={{ height: `${(cur[i] / max) * 100}%` }}
+              />
+              <span
+                className="ap-cmpbars-bar is-pri"
+                style={{ height: `${(pri[i] / max) * 100}%` }}
+              />
+              <span className="ap-cmpbars-label">Wk {i + 1}</span>
+              <ChartTooltip>
+                <strong>
+                  Days {i * size + 1}–{Math.min(SPAN, (i + 1) * size)}
+                </strong>
+                <span>Last: {format(cur[i])}</span>
+                <span>Prior: {format(pri[i])}</span>
+                {delta != null && (
+                  <em>
+                    {delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(0)}%
+                  </em>
+                )}
+              </ChartTooltip>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -807,41 +1092,63 @@ export function Histogram({ bins, format = num }) {
 }
 
 // Horizontal ranked bars: [{ label, value, sub? }].
-export function RankBars({ rows, format = num, max: fixedMax }) {
+export function RankBars({ rows, format = num, max: fixedMax, onRowClick }) {
   if (!rows || rows.length === 0)
     return <div className="ap-async-empty">No data.</div>;
   const max = fixedMax || Math.max(1, ...rows.map((r) => Number(r.value) || 0));
+  const total = rows.reduce((s, r) => s + (Number(r.value) || 0), 0);
+  const clickable = !!onRowClick;
   return (
     <ul className="ap-rankbars">
-      {rows.map((r, i) => (
-        <li key={i}>
-          <span className="ap-rankbars-label" title={r.label}>
-            {r.label}
-          </span>
-          <span className="ap-rankbars-track">
-            <span
-              className="ap-rankbars-fill"
-              style={{
-                width: `${Math.max(2, ((Number(r.value) || 0) / max) * 100)}%`,
-              }}
-            />
-          </span>
-          <span className="ap-rankbars-value">
-            {format(r.value)}
-            {r.sub != null && <em>{r.sub}</em>}
-          </span>
-        </li>
-      ))}
+      {rows.map((r, i) => {
+        const value = Number(r.value) || 0;
+        const pct = total ? Math.round((value / total) * 100) : 0;
+        return (
+          <li
+            key={i}
+            className={clickable ? "ap-chart-hit" : ""}
+            tabIndex={0}
+            role={clickable ? "button" : undefined}
+            aria-label={`${r.label}: ${format(value)}`}
+            onClick={clickable ? () => onRowClick(r, i) : undefined}
+            onKeyDown={
+              clickable ? activateOnKey(() => onRowClick(r, i)) : undefined
+            }
+          >
+            <span className="ap-rankbars-label" title={r.label}>
+              {r.label}
+            </span>
+            <span className="ap-rankbars-track">
+              <span
+                className="ap-rankbars-fill"
+                style={{
+                  width: `${Math.max(2, (value / max) * 100)}%`,
+                }}
+              />
+            </span>
+            <span className="ap-rankbars-value">
+              {format(r.value)}
+              {r.sub != null && <em>{r.sub}</em>}
+            </span>
+            <ChartTooltip>
+              <strong>{r.label}</strong>
+              <span>{format(value)}</span>
+              {total > 0 && <em>{pct}% of total</em>}
+            </ChartTooltip>
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
 // Conversion funnel: [{ label, value }]. Shows drop vs the previous stage.
-export function Funnel({ stages }) {
+export function Funnel({ stages, onStageClick }) {
   const clean = (stages || []).filter((s) => s && s.value != null);
   if (clean.length === 0)
     return <div className="ap-async-empty">Not tracked yet.</div>;
   const top = Math.max(1, Number(clean[0].value) || 0);
+  const clickable = !!onStageClick;
   return (
     <ol className="ap-funnel">
       {clean.map((s, i) => {
@@ -850,13 +1157,30 @@ export function Funnel({ stages }) {
         const drop = i && prev ? (1 - v / prev) * 100 : 0;
         return (
           <li key={i}>
-            <div className="ap-funnel-row">
+            <div
+              className={`ap-funnel-row ${clickable ? "ap-chart-hit" : ""}`}
+              tabIndex={0}
+              role={clickable ? "button" : undefined}
+              aria-label={`${s.label}: ${num(v)}`}
+              onClick={clickable ? () => onStageClick(s, i) : undefined}
+              onKeyDown={
+                clickable ? activateOnKey(() => onStageClick(s, i)) : undefined
+              }
+            >
               <span className="ap-funnel-label">{s.label}</span>
               <span
                 className="ap-funnel-bar"
                 style={{ width: `${(v / top) * 100}%` }}
               />
               <span className="ap-funnel-value">{num(v)}</span>
+              <ChartTooltip>
+                <strong>{s.label}</strong>
+                <span>{num(v)}</span>
+                <em>
+                  {((v / top) * 100).toFixed(0)}% of top
+                  {drop > 0 ? ` · ▼${drop.toFixed(0)}% vs previous` : ""}
+                </em>
+              </ChartTooltip>
             </div>
             {i > 0 && (
               <span className="ap-funnel-drop">

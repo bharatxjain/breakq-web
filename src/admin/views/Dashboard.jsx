@@ -46,7 +46,7 @@ function buildGrowth(signups, before, grain) {
   });
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const { state, data, error, reload } = useAsync(fetchDashboard, []);
   const an = useAsync(fetchAnalytics, []);
   const [metric, setMetric] = useState("orders");
@@ -171,8 +171,18 @@ export default function Dashboard() {
                   <div className="ap-kpi-donut">
                     <Donut
                       segments={[
-                        { value: commission, color: "var(--ap-primary)" },
-                        { value: fee, color: "var(--ap-primary-2)" },
+                        {
+                          value: commission,
+                          color: "var(--ap-primary)",
+                          label: "Commission",
+                          format: money,
+                        },
+                        {
+                          value: fee,
+                          color: "var(--ap-primary-2)",
+                          label: "Platform fee",
+                          format: money,
+                        },
                       ]}
                       centerLabel={money(commission + fee)}
                       centerSub="total"
@@ -207,17 +217,29 @@ export default function Dashboard() {
                   <div className="ap-kpi-donut">
                     <Donut
                       segments={[
-                        { value: shopsPending || 0, color: "var(--ap-warn)" },
+                        {
+                          value: shopsPending || 0,
+                          color: "var(--ap-warn)",
+                          label: "Pending review",
+                        },
                         {
                           value: Math.max(
                             0,
                             (shopsTotal || 0) - (shopsPending || 0),
                           ),
                           color: "var(--ap-primary)",
+                          label: "Approved / other",
                         },
                       ]}
                       centerLabel={num(shopsPending || 0)}
                       centerSub="pending"
+                      onSegmentClick={
+                        onNavigate &&
+                        ((seg, i) =>
+                          onNavigate("vendors", {
+                            status: i === 0 ? "pending" : "",
+                          }))
+                      }
                     />
                     <Legend
                       rows={[
@@ -232,6 +254,13 @@ export default function Dashboard() {
                           color: "var(--ap-primary)",
                         },
                       ]}
+                      onRowClick={
+                        onNavigate &&
+                        ((row, i) =>
+                          onNavigate("vendors", {
+                            status: i === 0 ? "pending" : "",
+                          }))
+                      }
                     />
                   </div>
                 ) : (
@@ -529,6 +558,10 @@ export default function Dashboard() {
                       label: l.locality,
                       value: l.count,
                     }))}
+                    onRowClick={
+                      onNavigate &&
+                      ((row) => onNavigate("vendors", { locality: row.label }))
+                    }
                   />
                 ) : anMissing ? (
                   <NeedsSetup what="This chart" />
@@ -551,6 +584,7 @@ export default function Dashboard() {
                       { label: "Shop view", value: A.funnel.view },
                       { label: "Contact / visit", value: A.funnel.contact },
                     ]}
+                    onStageClick={onNavigate && (() => onNavigate("search"))}
                   />
                 ) : anMissing ? (
                   <NeedsSetup what="The funnel" />

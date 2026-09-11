@@ -1,13 +1,11 @@
 import { fetchGeoAnalytics, resolveShopLocalities } from "../api";
 import { useEffect, useState } from "react";
-import {
-  CircleMarker,
-  MapContainer,
-  Popup,
-  TileLayer,
-  useMap,
-} from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import {
   Async,
   Donut,
@@ -26,6 +24,38 @@ const BASIS_LABEL = {
   coords: "coordinates",
   none: "unknown",
 };
+
+// Status -> pin color, kept in sync with the badge colors Vendors.jsx uses.
+const STATUS_COLOR = {
+  approved: "var(--ap-ok)",
+  pending: "var(--ap-warn)",
+  rejected: "var(--ap-danger)",
+};
+
+// One divIcon per status, built once and reused for every marker of that
+// status instead of re-creating (and re-parsing) SVG markup on every render.
+const shopIconCache = new Map();
+function shopIcon(status) {
+  const color = STATUS_COLOR[status] || "var(--ap-primary)";
+  const key = status || "default";
+  if (shopIconCache.has(key)) return shopIconCache.get(key);
+  const icon = L.divIcon({
+    className: "ap-shop-marker",
+    html: `<span class="ap-shop-pin" style="--pin-color:${color}">
+      <svg class="ap-shop-pin-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+        <path d="M3 9.5 4.2 4h15.6l1.2 5.5" />
+        <path d="M3 9.5a2.1 2.1 0 0 0 4.2 0 2.1 2.1 0 0 0 4.2 0 2.1 2.1 0 0 0 4.2 0 2.1 2.1 0 0 0 4.2 0" />
+        <path d="M4.5 9.5V19h15V9.5" />
+        <path d="M9.5 19v-5.5h5V19" />
+      </svg>
+    </span>`,
+    iconSize: [26, 32],
+    iconAnchor: [13, 30],
+    popupAnchor: [0, -28],
+  });
+  shopIconCache.set(key, icon);
+  return icon;
+}
 
 function FitMap({ points }) {
   const map = useMap();
@@ -65,24 +95,26 @@ function ShopMap({ points }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitMap points={pts} />
-        {pts.map((p) => (
-          <CircleMarker
-            key={p.id}
-            center={[Number(p.lat), Number(p.lng)]}
-            radius={8}
-            pathOptions={{
-              color: "#7001fe",
-              fillColor: "#7001fe",
-              fillOpacity: 0.72,
-            }}
-          >
-            <Popup>
-              <strong>{p.name || "Unnamed shop"}</strong>
-              <br />
-              {p.locality || "Locality not resolved"}
-            </Popup>
-          </CircleMarker>
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          showCoverageOnHover={false}
+          maxClusterRadius={50}
+          spiderfyOnMaxZoom
+        >
+          {pts.map((p) => (
+            <Marker
+              key={p.id}
+              position={[Number(p.lat), Number(p.lng)]}
+              icon={shopIcon(p.status)}
+            >
+              <Popup>
+                <strong>{p.name || "Unnamed shop"}</strong>
+                <br />
+                {p.locality || "Locality not resolved"}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );
@@ -146,6 +178,40 @@ export default function GeoIntelligence() {
           <NeedsSetup what="Geographic analytics" />
         ) : (
           <>
+            <section className="ap-stat-grid" aria-label="Geographic coverage metrics">
+              <div className="ap-stat ap-stat-primary">
+                <span className="ap-stat-label">Total shops</span>
+                <span className="ap-stat-value">{num(res?.total)}</span>
+              </div>
+              <div className="ap-stat">
+                <span className="ap-stat-label">On the map</span>
+                <span className="ap-stat-value">{num(mapPoints.length)}</span>
+                <span className="ap-stat-sub">have exact coordinates</span>
+              </div>
+              <div className="ap-stat">
+                <span className="ap-stat-label">Areas identified</span>
+                <span className="ap-stat-value">{num(density.length)}</span>
+              </div>
+              <div className="ap-stat">
+                <span className="ap-stat-label">Location coverage</span>
+                <span className="ap-stat-value">
+                  {res?.total
+                    ? `${Math.round(
+                        (((res.text || 0) + (res.pincode || 0) + (res.coords || 0)) /
+                          res.total) *
+                          100,
+                      )}%`
+                    : "—"}
+                </span>
+                <span className="ap-stat-sub">placeable by some basis</span>
+              </div>
+              <div className="ap-stat">
+                <span className="ap-stat-label">Unresolved</span>
+                <span className="ap-stat-value">{num(res?.none)}</span>
+                <span className="ap-stat-sub">no usable location</span>
+              </div>
+            </section>
+
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Shop density by area</h2>
@@ -195,13 +261,26 @@ export default function GeoIntelligence() {
                     <div className="ap-kpi-donut">
                       <Donut
                         segments={[
-                          { value: res.text || 0, color: "var(--ap-primary)" },
+                          {
+                            value: res.text || 0,
+                            color: "var(--ap-primary)",
+                            label: "Named locality",
+                          },
                           {
                             value: res.pincode || 0,
                             color: "var(--ap-primary-2)",
+                            label: "PIN code (from address)",
                           },
-                          { value: res.coords || 0, color: "var(--ap-ok)" },
-                          { value: res.none || 0, color: "var(--ap-warn)" },
+                          {
+                            value: res.coords || 0,
+                            color: "var(--ap-ok)",
+                            label: "Coordinates only",
+                          },
+                          {
+                            value: res.none || 0,
+                            color: "var(--ap-warn)",
+                            label: "Nothing usable",
+                          },
                         ]}
                         centerLabel={num(res.total || 0)}
                         centerSub="shops"
@@ -255,9 +334,21 @@ export default function GeoIntelligence() {
                 <div className="ap-kpi-donut">
                   <Donut
                     segments={[
-                      { value: src.geocoded || 0, color: "var(--ap-primary)" },
-                      { value: src.manual || 0, color: "var(--ap-primary-2)" },
-                      { value: src.none || 0, color: "var(--ap-warn)" },
+                      {
+                        value: src.geocoded || 0,
+                        color: "var(--ap-primary)",
+                        label: "Geocoded (Nominatim)",
+                      },
+                      {
+                        value: src.manual || 0,
+                        color: "var(--ap-primary-2)",
+                        label: "Manual",
+                      },
+                      {
+                        value: src.none || 0,
+                        color: "var(--ap-warn)",
+                        label: "Never geocoded",
+                      },
                     ]}
                     centerLabel={num(src.total || 0)}
                     centerSub="shops"

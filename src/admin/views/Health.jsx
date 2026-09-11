@@ -25,7 +25,7 @@ const CHECKS = [
   [
     "shops_locality_source",
     "shops.locality_source column",
-    "Geographic Intelligence — manual vs geocoded backfill health",
+    "Geographic Intelligence — manual vs geocoded backfill health, install via supabase/admin_panel.sql",
   ],
   [
     "shop_ratings",

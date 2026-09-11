@@ -18,23 +18,43 @@ export async function getSession() {
   return data.session ?? null;
 }
 
+// A network-level failure (QUIC/HTTP3 hiccup, VPN, flaky wifi) never reaches
+// Supabase at all, so it surfaces as a bare "Failed to fetch" TypeError
+// instead of a Supabase AuthError — reword it into something actionable.
+function rethrowNetworkFriendly(e) {
+  if (e instanceof TypeError) {
+    throw new Error(
+      "Network error while reaching Supabase — check your connection (or try disabling any VPN/antivirus HTTPS scanning) and try again.",
+    );
+  }
+  throw e;
+}
+
 export async function sendOtp(email) {
   // shouldCreateUser:false — admins must already exist; never provision here.
-  const { error } = await client().auth.signInWithOtp({
-    email: email.trim(),
-    options: { shouldCreateUser: false },
-  });
-  if (error) throw error;
+  try {
+    const { error } = await client().auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false },
+    });
+    if (error) throw error;
+  } catch (e) {
+    rethrowNetworkFriendly(e);
+  }
 }
 
 export async function verifyOtp(email, token) {
-  const { data, error } = await client().auth.verifyOtp({
-    email: email.trim(),
-    token: token.trim(),
-    type: "email",
-  });
-  if (error) throw error;
-  return data.session;
+  try {
+    const { data, error } = await client().auth.verifyOtp({
+      email: email.trim(),
+      token: token.trim(),
+      type: "email",
+    });
+    if (error) throw error;
+    return data.session;
+  } catch (e) {
+    rethrowNetworkFriendly(e);
+  }
 }
 
 export async function getRole() {

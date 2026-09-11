@@ -38,9 +38,13 @@ const BLANK_FILTERS = {
   ratingMax: "",
 };
 
-export default function Vendors() {
+export default function Vendors({ initialFilter }) {
   const notify = useToast();
-  const [filters, setFilters] = useState(BLANK_FILTERS);
+  // A dashboard drill-down (e.g. clicking the "pending" donut segment) can
+  // seed the filters this tab opens with.
+  const [filters, setFilters] = useState(() =>
+    initialFilter ? { ...BLANK_FILTERS, ...initialFilter } : BLANK_FILTERS,
+  );
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(0);
   const [detail, setDetail] = useState(null);
