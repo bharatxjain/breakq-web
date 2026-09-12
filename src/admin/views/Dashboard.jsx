@@ -128,7 +128,7 @@ export default function Dashboard({ onNavigate }) {
 
             {/* KPI row */}
             <section className="ap-kpi-grid">
-              <div className="ap-kpi">
+              <div className="ap-kpi ap-kpi-orders">
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Orders · 30 days</span>
                   <DeltaChip
@@ -136,16 +136,23 @@ export default function Dashboard({ onNavigate }) {
                     prev={data.orders_prev_30d}
                   />
                 </div>
-                <span className="ap-kpi-value">{num(data.orders_30d)}</span>
-                <MiniBars
-                  values={series.map((d) => d.orders)}
-                  labels={series.map((d) => fmtDate(d.d))}
-                  unit="orders"
-                />
-                <span className="ap-chart-legend">
-                  <i aria-hidden="true" /> Daily orders · hover a bar for
-                  details
-                </span>
+                <div className="ap-kpi-orders-main">
+                  <span className="ap-kpi-value">{num(data.orders_30d)}</span>
+                  <span className="ap-kpi-orders-context">vs previous 30 days</span>
+                </div>
+                <div className="ap-orders-chart">
+                  <MiniBars
+                    values={series.map((d) => d.orders)}
+                    labels={series.map((d) => fmtDate(d.d))}
+                    unit="orders"
+                  />
+                </div>
+                <div className="ap-orders-footer">
+                  <span className="ap-chart-legend">
+                    <i aria-hidden="true" /> Daily orders
+                  </span>
+                  <span>Last 30 days</span>
+                </div>
               </div>
 
               <div className="ap-kpi">
@@ -209,71 +216,22 @@ export default function Dashboard({ onNavigate }) {
                 )}
               </div>
 
-              <div className="ap-kpi">
-                <div className="ap-kpi-top">
-                  <span className="ap-kpi-label">Vendors</span>
-                </div>
-                {Number.isFinite(shopsTotal) ? (
-                  <div className="ap-kpi-donut">
-                    <Donut
-                      segments={[
-                        {
-                          value: shopsPending || 0,
-                          color: "var(--ap-warn)",
-                          label: "Pending review",
-                        },
-                        {
-                          value: Math.max(
-                            0,
-                            (shopsTotal || 0) - (shopsPending || 0),
-                          ),
-                          color: "var(--ap-primary)",
-                          label: "Approved / other",
-                        },
-                      ]}
-                      centerLabel={num(shopsPending || 0)}
-                      centerSub="pending"
-                      onSegmentClick={
-                        onNavigate &&
-                        ((seg, i) =>
-                          onNavigate("vendors", {
-                            status: i === 0 ? "pending" : "",
-                          }))
-                      }
-                    />
-                    <Legend
-                      rows={[
-                        {
-                          label: "Pending review",
-                          value: num(shopsPending || 0),
-                          color: "var(--ap-warn)",
-                        },
-                        {
-                          label: "Total shops",
-                          value: num(shopsTotal || 0),
-                          color: "var(--ap-primary)",
-                        },
-                      ]}
-                      onRowClick={
-                        onNavigate &&
-                        ((row, i) =>
-                          onNavigate("vendors", {
-                            status: i === 0 ? "pending" : "",
-                          }))
-                      }
-                    />
-                  </div>
-                ) : (
-                  <span className="ap-kpi-foot">
-                    Vendor counts need full analytics.
-                  </span>
-                )}
-              </div>
             </section>
 
             {/* demand + supply KPI row (admin_analytics) */}
             <section className="ap-kpi-grid">
-              <div className="ap-kpi">
+              <div
+                className="ap-kpi ap-kpi-clickable"
+                role="button"
+                tabIndex={0}
+                onClick={() => onNavigate("vendors")}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onNavigate("vendors");
+                  }
+                }}
+              >
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">
                     New shop signups · 30 days
@@ -299,7 +257,18 @@ export default function Dashboard({ onNavigate }) {
                 )}
               </div>
 
-              <div className="ap-kpi">
+              <div
+                className="ap-kpi ap-kpi-clickable"
+                role="button"
+                tabIndex={0}
+                onClick={() => onNavigate("search")}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onNavigate("search");
+                  }
+                }}
+              >
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Searches + views</span>
                   <div className="ap-seg">
@@ -310,7 +279,10 @@ export default function Dashboard({ onNavigate }) {
                       <button
                         key={k}
                         className={evWin === k ? "is-active" : ""}
-                        onClick={() => setEvWin(k)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setEvWin(k);
+                        }}
                       >
                         {l}
                       </button>
@@ -343,36 +315,18 @@ export default function Dashboard({ onNavigate }) {
                 )}
               </div>
 
-              <div className="ap-kpi">
-                <div className="ap-kpi-top">
-                  <span className="ap-kpi-label">
-                    Zero-result searches · 7 days
-                  </span>
-                </div>
-                {A?.zero_result ? (
-                  <>
-                    <span className="ap-kpi-value">
-                      {A.zero_result.searches ? `${A.zero_result.pct}%` : "—"}
-                    </span>
-                    <span className="ap-kpi-foot">
-                      {A.zero_result.searches
-                        ? `${num(A.zero_result.no_view)} of ${num(A.zero_result.searches)} searches led to no shop view`
-                        : "no attributable searches yet"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="ap-kpi-value">—</span>
-                    {anMissing ? (
-                      <NeedsSetup what="Zero-result rate" />
-                    ) : (
-                      <span className="ap-kpi-foot">loading…</span>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="ap-kpi">
+              <div
+                className="ap-kpi ap-kpi-clickable"
+                role="button"
+                tabIndex={0}
+                onClick={() => onNavigate("subscriptions")}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onNavigate("subscriptions");
+                  }
+                }}
+              >
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Active paid subscribers</span>
                 </div>
@@ -398,7 +352,18 @@ export default function Dashboard({ onNavigate }) {
                 )}
               </div>
 
-              <div className="ap-kpi">
+              <div
+                className="ap-kpi ap-kpi-clickable"
+                role="button"
+                tabIndex={0}
+                onClick={() => onNavigate("vendors", { status: "pending" })}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onNavigate("vendors", { status: "pending" });
+                  }
+                }}
+              >
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Pending vendor approvals</span>
                 </div>

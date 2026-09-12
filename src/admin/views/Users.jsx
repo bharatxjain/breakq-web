@@ -135,7 +135,7 @@ export default function Users() {
           className={role === "" ? "is-active" : ""}
           onClick={() => pickRole("")}
         >
-          All{counts ? ` (${num(grandTotal)})` : ""}
+          All
         </button>
         {roleList.map((r) => (
           <button
@@ -144,7 +144,6 @@ export default function Users() {
             onClick={() => pickRole(r)}
           >
             {cap(r)}
-            {counts ? ` (${num(counts[r] || 0)})` : ""}
           </button>
         ))}
       </div>
@@ -214,7 +213,13 @@ export default function Users() {
                       {u.role || "unknown"}
                     </Badge>
                   </td>
-                  <td>{u.phone || "—"}</td>
+                  <td>
+                    {u.phone ||
+                      u.mobile ||
+                      u.phone_number ||
+                      u.user_metadata?.mobile ||
+                      "—"}
+                  </td>
                   <td>{fmtDate(u.created_at)}</td>
                   <td className="ap-row-actions">
                     <button

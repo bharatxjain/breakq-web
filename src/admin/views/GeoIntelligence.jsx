@@ -1,4 +1,8 @@
-import { fetchGeoAnalytics, resolveShopLocalities } from "../api";
+import {
+  fetchDashboard,
+  fetchGeoAnalytics,
+  resolveShopLocalities,
+} from "../api";
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -61,8 +65,11 @@ function FitMap({ points }) {
   const map = useMap();
   useEffect(() => {
     const bounds = points.map((p) => [Number(p.lat), Number(p.lng)]);
-    if (bounds.length)
+    if (bounds.length === 1) {
+      map.setView(bounds[0], 15);
+    } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+    }
   }, [map, points]);
   return null;
 }
@@ -71,10 +78,10 @@ function ShopMap({ points }) {
   const pts = points.filter(
     (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)),
   );
-  if (pts.length < 2)
+  if (!pts.length)
     return (
       <div className="ap-async-empty">
-        Not enough shops with coordinates to plot.
+        No shops with coordinates to plot.
       </div>
     );
   const center = [
@@ -122,6 +129,7 @@ function ShopMap({ points }) {
 
 export default function GeoIntelligence() {
   const { state, data, error, reload } = useAsync(fetchGeoAnalytics, []);
+  const platform = useAsync(fetchDashboard, []);
   const toast = useToast();
   const [resolving, setResolving] = useState(false);
   const missing = data?._missing;
@@ -132,6 +140,13 @@ export default function GeoIntelligence() {
   const src = A?.locality_source;
   const ungeocoded = A?.ungeocoded || [];
   const mapPoints = A?.map_points || [];
+  const platformData =
+    platform.state === "done" && platform.data && !platform.data._missing
+      ? platform.data
+      : null;
+  const backfillTotal = Number(src?.total) || 0;
+  const backfillPct = (value) =>
+    backfillTotal ? Math.round(((Number(value) || 0) / backfillTotal) * 100) : 0;
 
   async function resolveLocalities() {
     setResolving(true);
@@ -216,7 +231,7 @@ export default function GeoIntelligence() {
               <div className="ap-panel-head">
                 <h2>Shop density by area</h2>
                 <span className="ap-view-sub">
-                  bubble size = shop count · positioned by coordinates
+                  each pin = one shop · click a pin for details
                 </span>
               </div>
               {mapPoints.length ? (
@@ -328,60 +343,111 @@ export default function GeoIntelligence() {
                 <div className="ap-panel-head">
                   <h2>Backfill health</h2>
                   <span className="ap-view-sub">
-                    shops.locality_source - manual vs Nominatim vs never run
+                    location enrichment status for every shop
                   </span>
                 </div>
-                <div className="ap-kpi-donut">
-                  <Donut
-                    segments={[
-                      {
-                        value: src.geocoded || 0,
-                        color: "var(--ap-primary)",
-                        label: "Geocoded (Nominatim)",
-                      },
-                      {
-                        value: src.manual || 0,
-                        color: "var(--ap-primary-2)",
-                        label: "Manual",
-                      },
-                      {
-                        value: src.none || 0,
-                        color: "var(--ap-warn)",
-                        label: "Never geocoded",
-                      },
-                    ]}
-                    centerLabel={num(src.total || 0)}
-                    centerSub="shops"
-                  />
-                  <Legend
-                    rows={[
-                      {
-                        label: "Geocoded (Nominatim)",
-                        value: num(src.geocoded || 0),
-                        color: "var(--ap-primary)",
-                      },
-                      {
-                        label: "Manual",
-                        value: num(src.manual || 0),
-                        color: "var(--ap-primary-2)",
-                      },
-                      {
-                        label: "Never geocoded",
-                        value: num(src.none || 0),
-                        color: "var(--ap-warn)",
-                      },
-                    ]}
-                  />
+                <div className="ap-backfill-layout">
+                  <div className="ap-backfill-overview">
+                    <Donut
+                      segments={[
+                        {
+                          value: src.geocoded || 0,
+                          color: "var(--ap-primary)",
+                          label: "Geocoded (Nominatim)",
+                        },
+                        {
+                          value: src.manual || 0,
+                          color: "var(--ap-primary-2)",
+                          label: "Manual",
+                        },
+                        {
+                          value: src.none || 0,
+                          color: "var(--ap-warn)",
+                          label: "Never geocoded",
+                        },
+                      ]}
+                      centerLabel={num(src.total || 0)}
+                      centerSub="shops"
+                    />
+                    <Legend
+                      rows={[
+                        {
+                          label: "Geocoded (Nominatim)",
+                          value: num(src.geocoded || 0),
+                          color: "var(--ap-primary)",
+                        },
+                        {
+                          label: "Manual",
+                          value: num(src.manual || 0),
+                          color: "var(--ap-primary-2)",
+                        },
+                        {
+                          label: "Never geocoded",
+                          value: num(src.none || 0),
+                          color: "var(--ap-warn)",
+                        },
+                      ]}
+                    />
+                  </div>
+                  <div className="ap-backfill-stats">
+                    {[
+                      ["Geocoded", src.geocoded, "var(--ap-primary)"],
+                      ["Manual", src.manual, "var(--ap-primary-2)"],
+                      ["Needs backfill", src.none, "var(--ap-warn)"],
+                    ].map(([label, value, color]) => (
+                      <div className="ap-backfill-stat" key={label}>
+                        <div className="ap-kpi-top">
+                          <span className="ap-kpi-label">{label}</span>
+                          <strong>{backfillPct(value)}%</strong>
+                        </div>
+                        <span className="ap-kpi-value">{num(value || 0)}</span>
+                        <div className="ap-progress-track" aria-hidden="true">
+                          <span
+                            className="ap-progress-fill"
+                            style={{ width: `${backfillPct(value)}%`, background: color }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 {src.none > 0 && (
-                  <p className="ap-field-hint" style={{ marginTop: 10 }}>
-                    {num(src.none)} shop{src.none === 1 ? "" : "s"} have
-                    coordinates but no reverse-geocoded locality yet - run the
-                    backfill script.
-                  </p>
+                  <div className="ap-backfill-alert">
+                    <strong>{num(src.none)} shops need attention.</strong>
+                    <span>Run the backfill script to add reverse-geocoded localities.</span>
+                  </div>
                 )}
               </section>
             )}
+
+            <section className="ap-panel">
+              <div className="ap-panel-head">
+                <h2>Platform snapshot</h2>
+                <span className="ap-view-sub">available account and activity signals</span>
+              </div>
+              <div className="ap-kpi-grid ap-platform-grid">
+                <div className="ap-kpi">
+                  <span className="ap-kpi-label">Total users</span>
+                  <span className="ap-kpi-value">{num(platformData?.users_total)}</span>
+                  <span className="ap-kpi-foot">registered accounts</span>
+                </div>
+                <div className="ap-kpi">
+                  <span className="ap-kpi-label">Customer accounts</span>
+                  <span className="ap-kpi-value">{num(platformData?.customers_total)}</span>
+                  <span className="ap-kpi-foot">profiles with customer role</span>
+                </div>
+                <div className="ap-kpi">
+                  <span className="ap-kpi-label">Orders · 30 days</span>
+                  <span className="ap-kpi-value">{num(platformData?.orders_30d)}</span>
+                  <span className="ap-kpi-foot">completed platform activity signal</span>
+                </div>
+                <div className="ap-kpi ap-kpi-muted">
+                  <span className="ap-kpi-label">App downloads</span>
+                  <span className="ap-kpi-value">Not tracked</span>
+                  <span className="ap-kpi-foot">install events are not stored yet</span>
+                </div>
+              </div>
+            </section>
 
             {ungeocoded.length > 0 && (
               <section className="ap-panel">
