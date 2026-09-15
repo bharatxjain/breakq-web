@@ -991,6 +991,16 @@
   gap: 8px;
   min-height: 164px;
 }
+.ap-kpi-clickable {
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.ap-kpi-clickable:hover,
+.ap-kpi-clickable:focus-visible {
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ap-primary) 18%, transparent);
+  outline: none;
+}
 .ap-kpi-top {
   display: flex;
   align-items: center;
@@ -1024,6 +1034,66 @@
   align-items: center;
   gap: 14px;
   margin-top: 2px;
+}
+.ap-backfill-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
+  gap: 24px;
+  align-items: center;
+}
+.ap-backfill-overview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ap-backfill-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.ap-backfill-stat {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  background: var(--ap-surface-2);
+}
+.ap-backfill-stat .ap-kpi-value {
+  display: block;
+  margin: 8px 0 14px;
+  font-size: 22px;
+}
+.ap-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--ap-border);
+}
+.ap-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 240ms ease;
+}
+.ap-backfill-alert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 18px;
+  padding: 11px 14px;
+  border-left: 3px solid var(--ap-warn);
+  background: color-mix(in srgb, var(--ap-warn) 9%, transparent);
+  color: var(--ap-text-soft);
+  font-size: 12px;
+}
+.ap-backfill-alert strong {
+  color: var(--ap-text);
+}
+.ap-platform-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ap-kpi-muted {
+  opacity: 0.72;
 }
 
 .ap-delta {
@@ -1129,6 +1199,39 @@
   height: 8px;
   border-radius: 2px;
   background: var(--ap-primary);
+}
+.ap-kpi-orders-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ap-kpi-orders-main .ap-kpi-value {
+  font-size: 30px;
+  line-height: 1;
+}
+.ap-kpi-orders-context {
+  color: var(--ap-muted);
+  font-size: 11px;
+  text-align: right;
+}
+.ap-orders-chart {
+  margin-top: auto;
+  padding: 10px 8px 0;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  background: var(--ap-surface-2);
+}
+.ap-orders-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ap-muted);
+  font-size: 11px;
+}
+.ap-orders-footer .ap-chart-legend {
+  margin-top: 0;
 }
 .ap-spark {
   width: 100%;
@@ -2210,6 +2313,14 @@ form.ap-bar {
   .ap-kpi-donut {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .ap-backfill-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .ap-backfill-stats,
+  .ap-platform-grid {
+    grid-template-columns: 1fr;
   }
 
   /* modals become bottom sheets */
