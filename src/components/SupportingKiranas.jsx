@@ -60,9 +60,9 @@ export default function SupportingKiranas() {
       <div className="container sk-inner">
         <div className="sk-copy">
           <span className="eyebrow">Everything local. One app.</span>
-          <h1 className="sk-title">
+          <h2 className="sk-title">
             Your Entire Neighborhood Market, Now Online
-          </h1>
+          </h2>
           <p className="sk-subtitle">
             Shop from trusted local Kirana, Medical, Dairy, Bakery, and
             Electrical stores - all through a single platform built for your

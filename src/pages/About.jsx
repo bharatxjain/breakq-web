@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import JourneyTimeline from "../components/JourneyTimeline";
 import useReveal from "../hooks/useReveal";
+import { useSeo } from "../lib/seo";
 import "./About.css";
 
 function Reveal({ as: Tag = "div", className = "", delay = 0, children }) {
@@ -58,6 +59,13 @@ const principles = [
 ];
 
 export default function About() {
+  useSeo({
+    title: "About Us",
+    description:
+      "BreakQ is a multi-vendor platform connecting the local shops you already know - Kirana, dairy, medical, electrical and more - with the people who live around them.",
+    path: "/about",
+  });
+
   return (
     <>
       <PageHeader

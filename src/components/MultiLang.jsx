@@ -124,9 +124,9 @@ export default function VoiceOrder() {
       <div className="container lang-search-inner">
         <span className="eyebrow">Search in your language</span>
 
-        <h1 className="lang-search-title">
+        <h2 className="lang-search-title">
           Find What You Need, In Any Language
-        </h1>
+        </h2>
 
         <p className="lang-search-subtitle">
           Search naturally in Hindi, Telugu, Tamil, Malayalam, Kannada, or

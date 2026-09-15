@@ -12,6 +12,7 @@ import {
 import { Avatar, Spinner, ToastProvider } from "../admin/ui";
 import NavIcon from "../admin/NavIcon";
 import ProfileModal from "../admin/ProfileModal";
+import { setNoindex } from "../lib/seo";
 import Dashboard from "../admin/views/Dashboard";
 import Users from "../admin/views/Users";
 import Vendors from "../admin/views/Vendors";
@@ -93,8 +94,10 @@ export default function Admin() {
   useEffect(() => {
     const prev = document.title;
     document.title = "BreakQ Admin";
+    setNoindex(true);
     return () => {
       document.title = prev;
+      setNoindex(false);
     };
   }, []);
 

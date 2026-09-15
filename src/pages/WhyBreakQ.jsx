@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import useReveal from '../hooks/useReveal'
+import { useSeo } from '../lib/seo'
 import './WhyBreakQ.css'
 
 const marketFactors = [
@@ -100,6 +101,13 @@ function Reveal({ as: Tag = 'div', className = '', children }) {
 }
 
 export default function WhyBreakQ() {
+  useSeo({
+    title: 'Why BreakQ',
+    description:
+      "Built for the India quick commerce left behind - a hyperlocal platform, not a delivery app, for the market quick commerce was never designed for.",
+    path: '/why-breakq',
+  })
+
   return (
     <>
       <PageHeader

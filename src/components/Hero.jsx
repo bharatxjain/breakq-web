@@ -50,6 +50,9 @@ export default function Hero() {
                 <img
                   src="/badges/google-play.png"
                   alt="Get it on Google Play"
+                  width="480"
+                  height="146"
+                  fetchpriority="high"
                 />
               </a>
             </div>

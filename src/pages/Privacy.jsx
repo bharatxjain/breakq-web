@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import useReveal from '../hooks/useReveal'
+import { useSeo } from '../lib/seo'
 import './Privacy.css'
 
 const sections = [
@@ -144,6 +145,13 @@ function PrivacySection({ section, index }) {
 }
 
 export default function Privacy() {
+  useSeo({
+    title: 'Privacy Policy',
+    description:
+      "How BreakQ collects, uses and protects your personal data across the app - what we collect, why, and the controls you have over it.",
+    path: '/privacy',
+  })
+
   const [activeId, setActiveId] = useState(sections[0].id)
 
   useEffect(() => {

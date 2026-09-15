@@ -4,14 +4,18 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import FloatingQR from './components/FloatingQR'
 import ScrollToTop from './components/ScrollToTop'
-import Home from './pages/Home'
-import About from './pages/About'
-import Contact from './pages/Contact'
-import Privacy from './pages/Privacy'
-import Terms from './pages/Terms'
-import Returns from './pages/Returns'
-import WhyBreakQ from './pages/WhyBreakQ'
-import BecomePartner from './pages/BecomePartner'
+// Each public route gets its own chunk, so landing on any one page (most
+// often "/") only downloads that page's code — not all eight, plus Admin.
+// This is the single biggest lever on initial JS payload / LCP / TBT for a
+// CSR app like this one.
+const Home = lazy(() => import('./pages/Home'))
+const About = lazy(() => import('./pages/About'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const Returns = lazy(() => import('./pages/Returns'))
+const WhyBreakQ = lazy(() => import('./pages/WhyBreakQ'))
+const BecomePartner = lazy(() => import('./pages/BecomePartner'))
 
 // Admin panel — its own bundle, never downloaded by normal visitors.
 const Admin = lazy(() => import('./pages/Admin'))
@@ -23,16 +27,20 @@ function SiteLayout() {
       <ScrollToTop />
       <Header />
       <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/returns" element={<Returns />} />
-          <Route path="/why-breakq" element={<WhyBreakQ />} />
-          <Route path="/become-a-partner" element={<BecomePartner />} />
-        </Routes>
+        {/* Its own boundary so a page-chunk load only blanks the content
+            area — Header/Footer/FloatingQR stay mounted across route changes. */}
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/returns" element={<Returns />} />
+            <Route path="/why-breakq" element={<WhyBreakQ />} />
+            <Route path="/become-a-partner" element={<BecomePartner />} />
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
       <FloatingQR />

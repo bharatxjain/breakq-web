@@ -128,7 +128,11 @@ export default function Features() {
                   <img
                     key={f.title}
                     src={f.image}
-                    alt={f.title}
+                    alt={`${f.title} screen in the BreakQ app`}
+                    width="320"
+                    height="640"
+                    loading="lazy"
+                    decoding="async"
                     className={`hiw-phone-img ${i === active ? "is-visible" : ""}`}
                   />
                 ))}

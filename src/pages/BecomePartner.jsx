@@ -3,6 +3,7 @@ import PageHeader from "../components/PageHeader";
 import useReveal from "../hooks/useReveal";
 import { supabase } from "../lib/supabaseClient";
 import tickSuccessAnimation from "../assets/tick-success.json";
+import { useSeo } from "../lib/seo";
 import "./BecomePartner.css";
 
 // lottie-react pulls in the full lottie-web renderer (~380KB) — only load
@@ -154,6 +155,13 @@ function FileField({ label, required, file, onChange, error, accept, hint }) {
 }
 
 export default function BecomePartner() {
+  useSeo({
+    title: "Become a Partner",
+    description:
+      "List your Kirana, dairy, medical or electrical store on BreakQ. Set up your shop once on the web, then manage orders day-to-day from the app.",
+    path: "/become-a-partner",
+  });
+
   const [step, setStep] = useState(() => (readStoredRegistration() ? "success" : "account"));
   const [session, setSession] = useState(null);
   const [successEmail, setSuccessEmail] = useState(() => readStoredRegistration()?.email || "");
@@ -509,7 +517,7 @@ export default function BecomePartner() {
                     onClick={handleUseAccountLocation}
                     disabled={locatingAccount}
                   >
-                    <img src="/location.png" alt="" className="bp-location-icon" />
+                    <img src="/location.png" alt="" width="16" height="16" className="bp-location-icon" />
                     {locatingAccount ? "Locating…" : "Use my current location"}
                   </button>
                   {accountLocationError && <span className="bp-error">{accountLocationError}</span>}
@@ -707,7 +715,7 @@ export default function BecomePartner() {
                     Shop Location <span className="bp-required">*</span>
                   </label>
                   <button type="button" className="bp-location-btn" onClick={handleUseLocation} disabled={locating}>
-                    <img src="/location.png" alt="" className="bp-location-icon" />
+                    <img src="/location.png" alt="" width="16" height="16" className="bp-location-icon" />
                     {locating ? "Locating…" : "Use my current location"}
                   </button>
                   {location.lat && location.lng && (

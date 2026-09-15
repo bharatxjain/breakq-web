@@ -1,7 +1,9 @@
 import { useState } from "react";
 import "./FAQ.css";
 
-const faqs = [
+// Exported so Home.jsx can build matching FAQPage structured data from the
+// same source instead of duplicating the questions/answers.
+export const faqs = [
   {
     q: "What is BreakQ?",
     a: "BreakQ connects you with verified neighbourhood stores - Kirana, dairy, medical, electrical and more - so you can order from the shops you already trust and have it delivered or kept ready for pickup.",

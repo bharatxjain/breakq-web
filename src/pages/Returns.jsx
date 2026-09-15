@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import useReveal from '../hooks/useReveal'
+import { useSeo } from '../lib/seo'
 import './Returns.css'
 
 const sections = [
@@ -127,6 +128,13 @@ function ReturnsSection({ section, index }) {
 }
 
 export default function Returns() {
+  useSeo({
+    title: 'Return, Refund & Cancellation Policy',
+    description:
+      'How returns, refunds and cancellations work on BreakQ - the counter-inspection rule and what to expect from each partner store.',
+    path: '/returns',
+  })
+
   const [activeId, setActiveId] = useState(sections[0].id)
 
   useEffect(() => {

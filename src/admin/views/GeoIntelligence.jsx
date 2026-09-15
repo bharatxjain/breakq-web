@@ -61,8 +61,13 @@ function FitMap({ points }) {
   const map = useMap();
   useEffect(() => {
     const bounds = points.map((p) => [Number(p.lat), Number(p.lng)]);
-    if (bounds.length)
+    if (bounds.length === 1) {
+      // fitBounds on a single point zooms all the way in on it, ignoring
+      // maxZoom in some Leaflet versions — setView is the correct call here.
+      map.setView(bounds[0], 14);
+    } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+    }
   }, [map, points]);
   return null;
 }
@@ -71,10 +76,12 @@ function ShopMap({ points }) {
   const pts = points.filter(
     (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)),
   );
-  if (pts.length < 2)
+  // A single shop is still a real point worth plotting — this used to
+  // require 2+ and silently showed nothing for a brand-new/small deployment.
+  if (pts.length < 1)
     return (
       <div className="ap-async-empty">
-        Not enough shops with coordinates to plot.
+        No shops with coordinates to plot.
       </div>
     );
   const center = [

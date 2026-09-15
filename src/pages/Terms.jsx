@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import useReveal from '../hooks/useReveal'
+import { useSeo } from '../lib/seo'
 import './Terms.css'
 
 const sections = [
@@ -125,6 +126,13 @@ function TermsSection({ section, index }) {
 }
 
 export default function Terms() {
+  useSeo({
+    title: 'Terms & Conditions',
+    description:
+      'The terms that govern using the BreakQ app and website - acceptance, service description, your responsibilities, and our policies.',
+    path: '/terms',
+  })
+
   const [activeId, setActiveId] = useState(sections[0].id)
 
   useEffect(() => {

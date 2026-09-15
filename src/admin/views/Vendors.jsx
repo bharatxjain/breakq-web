@@ -361,6 +361,23 @@ export default function Vendors({ initialFilter }) {
                   : "—"
               }
             />
+            <Detail
+              label="Coordinates"
+              value={
+                Number.isFinite(Number(detail.lat)) &&
+                Number.isFinite(Number(detail.lng)) ? (
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${detail.lat}&mlon=${detail.lng}#map=16/${detail.lat}/${detail.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {Number(detail.lat).toFixed(5)}, {Number(detail.lng).toFixed(5)}
+                  </a>
+                ) : (
+                  "Not set (shops.lat / shops.lng are empty)"
+                )
+              }
+            />
             <Detail label="Tier" value={detail._tier?.display_name || "Free"} />
             <Detail label="Address" value={detail.address} span />
             {detail.rejection_reason && (
