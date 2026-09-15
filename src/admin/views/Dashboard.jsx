@@ -5,16 +5,17 @@ import {
   Async,
   BarChart,
   ComparisonBars,
-  DeltaChip,
   Donut,
   DualAxisChart,
   Funnel,
+  KpiIcon,
   Legend,
   MiniBars,
   NeedsSetup,
   RankBars,
   Spark,
   TrendArrow,
+  TrendLine,
   hourLabel,
   fmtDate,
   money,
@@ -59,6 +60,10 @@ export default function Dashboard({ onNavigate }) {
   const series = data?.daily_series || [];
   const commission = Number(data?.commission_30d) || 0;
   const fee = Number(data?.platform_fee_30d) || 0;
+  const platformRevenuePrev30 = (data?.daily_series_prev || []).reduce(
+    (sum, d) => sum + (Number(d.platform_revenue) || 0),
+    0,
+  );
   const shopsTotal = Number(data?.shops_total);
   const shopsPending = Number(data?.shops_pending);
   const growth = buildGrowth(
@@ -131,10 +136,7 @@ export default function Dashboard({ onNavigate }) {
               <div className="ap-kpi ap-kpi-orders">
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Orders · 30 days</span>
-                  <DeltaChip
-                    now={data.orders_30d}
-                    prev={data.orders_prev_30d}
-                  />
+                  <KpiIcon name="orders" />
                 </div>
                 <div className="ap-kpi-orders-main">
                   <span className="ap-kpi-value">{num(data.orders_30d)}</span>
@@ -147,11 +149,12 @@ export default function Dashboard({ onNavigate }) {
                     unit="orders"
                   />
                 </div>
-                <div className="ap-orders-footer">
-                  <span className="ap-chart-legend">
-                    <i aria-hidden="true" /> Daily orders
-                  </span>
-                  <span>Last 30 days</span>
+                <div className="ap-kpi-divider">
+                  <TrendLine
+                    now={data.orders_30d}
+                    prev={data.orders_prev_30d}
+                    comparison="vs previous 30 days"
+                  />
                 </div>
               </div>
 
@@ -160,19 +163,28 @@ export default function Dashboard({ onNavigate }) {
                   <span className="ap-kpi-label">
                     Platform revenue · 30 days
                   </span>
+                  <KpiIcon name="revenue" />
                 </div>
                 <span className="ap-kpi-value">
                   {money(data.platform_revenue_30d)}
                 </span>
+                <span className="ap-kpi-foot">commission + platform fee</span>
                 <div className="ap-kpi-spark">
                   <Spark values={series.map((d) => d.platform_revenue)} />
                 </div>
-                <span className="ap-kpi-foot">commission + platform fee</span>
+                <div className="ap-kpi-divider">
+                  <TrendLine
+                    now={data.platform_revenue_30d}
+                    prev={platformRevenuePrev30}
+                    comparison="vs previous 30 days"
+                  />
+                </div>
               </div>
 
               <div className="ap-kpi">
                 <div className="ap-kpi-top">
                   <span className="ap-kpi-label">Revenue mix · 30 days</span>
+                  <KpiIcon name="mix" />
                 </div>
                 {commission + fee > 0 ? (
                   <div className="ap-kpi-donut">
@@ -186,7 +198,7 @@ export default function Dashboard({ onNavigate }) {
                         },
                         {
                           value: fee,
-                          color: "var(--ap-primary-2)",
+                          color: "var(--ap-info)",
                           label: "Platform fee",
                           format: money,
                         },
@@ -204,7 +216,7 @@ export default function Dashboard({ onNavigate }) {
                         {
                           label: "Platform fee",
                           value: money(fee),
-                          color: "var(--ap-primary-2)",
+                          color: "var(--ap-info)",
                         },
                       ]}
                     />

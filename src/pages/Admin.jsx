@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
   getMyProfile,
   getRole,
+  getSession,
   getUserEmail,
   logLoginAttempt,
   probeSchema,
@@ -33,6 +41,7 @@ import "./Admin.css";
 const GATE_PASSWORD =
   import.meta.env.VITE_ADMIN_GATE_PASSWORD || "breakq-admin";
 const VIEW_KEY = "ap_view";
+const GATE_KEY = "ap_gate_ok";
 
 const NAV = [
   {
@@ -65,6 +74,9 @@ const NAV = [
   { group: "System", items: [{ key: "health", label: "System", el: Health }] },
 ];
 const ALL_VIEWS = NAV.flatMap((g) => g.items);
+// Every section gets a real /admin/<key> route except "health" — it's an
+// internal setup/diagnostics panel, not a bookmarkable destination.
+const ROUTED_VIEWS = ALL_VIEWS.filter((n) => n.key !== "health");
 
 const THEME_KEY = "ap_theme";
 
@@ -86,10 +98,18 @@ function resolveTheme() {
 }
 
 export default function Admin() {
-  // Never persisted: every visit to /admin starts at the page-password gate and
-  // requires a fresh email OTP. State only lives for the current mount.
-  const [gateOk, setGateOk] = useState(false);
-  const [phase, setPhase] = useState("gate"); // gate | wiping | email | otp | denied | ready
+  // The password gate is remembered for the tab session (sessionStorage) so
+  // that remounting Admin — e.g. after a browser back/forward, since the
+  // in-panel nav never pushes history entries — doesn't force retyping the
+  // shared pre-filter password. It's not the real identity check anyway.
+  const [gateOk, setGateOk] = useState(() => {
+    try {
+      return sessionStorage.getItem(GATE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [phase, setPhase] = useState(() => (gateOk ? "checking" : "gate")); // gate | checking | email | otp | denied | ready
 
   useEffect(() => {
     const prev = document.title;
@@ -101,13 +121,25 @@ export default function Admin() {
     };
   }, []);
 
-  // As soon as the gate is cleared, drop any lingering Supabase session so the
-  // admin must complete OTP again — we deliberately don't resume a saved login.
+  // On every mount past the gate, resume an existing admin session instead of
+  // blindly signing out — otherwise a remount (browser back/forward, a tab
+  // getting backgrounded and restored, etc.) reads as "getting logged out".
+  // Only fall back to a fresh OTP login when there's no valid admin session.
   useEffect(() => {
     if (!gateOk) return;
     let alive = true;
-    setPhase("wiping");
+    setPhase("checking");
     (async () => {
+      try {
+        const session = await getSession();
+        const role = session ? await getRole() : null;
+        if (session && role === "admin") {
+          if (alive) setPhase("ready");
+          return;
+        }
+      } catch {
+        /* fall through to a fresh sign-in */
+      }
       try {
         await signOut();
       } catch {
@@ -123,10 +155,21 @@ export default function Admin() {
   const goReady = useCallback(() => setPhase("ready"), []);
 
   if (!gateOk) {
-    return <GateScreen onPass={() => setGateOk(true)} />;
+    return (
+      <GateScreen
+        onPass={() => {
+          try {
+            sessionStorage.setItem(GATE_KEY, "1");
+          } catch {
+            /* storage unavailable — gate just won't persist across remounts */
+          }
+          setGateOk(true);
+        }}
+      />
+    );
   }
 
-  if (phase === "wiping") {
+  if (phase === "checking") {
     return (
       <div className="ap ap-center" data-theme={resolveTheme()}>
         <Spinner />
@@ -140,6 +183,11 @@ export default function Admin() {
         <Shell
           onSignOut={async () => {
             await signOut();
+            try {
+              sessionStorage.removeItem(GATE_KEY);
+            } catch {
+              /* ignore */
+            }
             setGateOk(false);
             setPhase("gate");
           }}
@@ -399,9 +447,22 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
 /* ------------------------------------------------------------ shell --- */
 
 function Shell({ onSignOut }) {
-  const [view, setView] = useState(() => {
-    const saved = sessionStorage.getItem(VIEW_KEY);
-    return ALL_VIEWS.some((n) => n.key === saved) ? saved : "dashboard";
+  const location = useLocation();
+  const navigate = useNavigate();
+  // System/Health isn't routed — it renders in place, toggled by this flag,
+  // so the URL only ever reflects the 12 bookmarkable sections.
+  const [healthOpen, setHealthOpen] = useState(false);
+  const routedKey =
+    ROUTED_VIEWS.find((n) => location.pathname === `/admin/${n.key}`)?.key ??
+    "dashboard";
+  // Where a bare "/admin" hit should land — last visited section, if any.
+  const [homeRedirect] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(VIEW_KEY);
+      return ROUTED_VIEWS.some((n) => n.key === saved) ? saved : "dashboard";
+    } catch {
+      return "dashboard";
+    }
   });
   // Set by a chart drill-down (e.g. clicking a dashboard donut segment) so the
   // view it switches to can seed its filters. Cleared on any *manual* nav so
@@ -424,9 +485,12 @@ function Shell({ onSignOut }) {
   const [setupOk, setSetupOk] = useState(null); // null unknown | true | false
   const searchRef = useRef(null);
 
+  // Remembers the last visited section only so a bare "/admin" hit knows
+  // where to redirect — actual back/forward navigation is now handled by
+  // real browser history via the routes below.
   useEffect(() => {
-    sessionStorage.setItem(VIEW_KEY, view);
-  }, [view]);
+    if (!healthOpen) sessionStorage.setItem(VIEW_KEY, routedKey);
+  }, [routedKey, healthOpen]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -468,8 +532,6 @@ function Shell({ onSignOut }) {
       .catch(() => setSetupOk(null));
   }, []);
 
-  const current = ALL_VIEWS.find((n) => n.key === view) ?? ALL_VIEWS[0];
-  const Active = current.el;
   const q = filter.trim().toLowerCase();
   const matches = q
     ? ALL_VIEWS.filter((n) => n.label.toLowerCase().includes(q))
@@ -477,18 +539,28 @@ function Shell({ onSignOut }) {
 
   const go = (key) => {
     setNavFilter(null);
-    setView(key);
     setNavOpen(false);
     setFilter("");
+    if (key === "health") {
+      setHealthOpen(true);
+    } else {
+      setHealthOpen(false);
+      navigate(`/admin/${key}`);
+    }
   };
 
   // Chart drill-down: switch tabs and hand the destination view a filter to
   // seed itself with (e.g. { status: "pending" } or { locality: "Koramangala" }).
   const onNavigate = (key, seedFilter) => {
     setNavFilter(seedFilter || null);
-    setView(key);
     setNavOpen(false);
     setFilter("");
+    if (key === "health") {
+      setHealthOpen(true);
+    } else {
+      setHealthOpen(false);
+      navigate(`/admin/${key}`);
+    }
   };
 
   return (
@@ -630,7 +702,11 @@ function Shell({ onSignOut }) {
                 {grp.items.map((n) => (
                   <button
                     key={n.key}
-                    className={view === n.key ? "is-active" : ""}
+                    className={
+                      (n.key === "health" ? healthOpen : !healthOpen && routedKey === n.key)
+                        ? "is-active"
+                        : ""
+                    }
                     onClick={() => go(n.key)}
                     title={collapsed ? n.label : undefined}
                   >
@@ -672,7 +748,26 @@ function Shell({ onSignOut }) {
 
         <main className="ap-main">
           <div className="ap-content">
-            <Active onNavigate={onNavigate} initialFilter={navFilter} />
+            {healthOpen ? (
+              <Health onNavigate={onNavigate} initialFilter={navFilter} />
+            ) : (
+              <Routes>
+                <Route
+                  index
+                  element={<Navigate to={`/admin/${homeRedirect}`} replace />}
+                />
+                {ROUTED_VIEWS.map((n) => (
+                  <Route
+                    key={n.key}
+                    path={n.key}
+                    element={
+                      <n.el onNavigate={onNavigate} initialFilter={navFilter} />
+                    }
+                  />
+                ))}
+                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+              </Routes>
+            )}
           </div>
         </main>
 

@@ -275,7 +275,7 @@ export default function GeoIntelligence() {
                           },
                           {
                             value: res.pincode || 0,
-                            color: "var(--ap-primary-2)",
+                            color: "var(--ap-info)",
                             label: "PIN code (from address)",
                           },
                           {
@@ -302,7 +302,7 @@ export default function GeoIntelligence() {
                           {
                             label: "PIN code (from address)",
                             value: num(res.pincode || 0),
-                            color: "var(--ap-primary-2)",
+                            color: "var(--ap-info)",
                           },
                           {
                             label: "Coordinates only",
@@ -348,7 +348,7 @@ export default function GeoIntelligence() {
                       },
                       {
                         value: src.manual || 0,
-                        color: "var(--ap-primary-2)",
+                        color: "var(--ap-info)",
                         label: "Manual",
                       },
                       {
@@ -370,7 +370,7 @@ export default function GeoIntelligence() {
                       {
                         label: "Manual",
                         value: num(src.manual || 0),
-                        color: "var(--ap-primary-2)",
+                        color: "var(--ap-info)",
                       },
                       {
                         label: "Never geocoded",

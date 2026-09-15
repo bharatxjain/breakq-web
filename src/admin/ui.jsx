@@ -351,6 +351,78 @@ export function DeltaChip({ now, prev }) {
   );
 }
 
+/* -------------------------------------------------------- kpi trend line --- */
+
+// Plain-text trend line for a card footer (arrow + colored % + muted
+// comparison label) — visually distinct from the pill-styled DeltaChip.
+// Renders nothing only when `now` itself isn't a real number — a missing or
+// zero baseline still renders (as "New"), matching TrendArrow's convention,
+// so the card's divider never sits above an empty gap.
+export function TrendLine({ now, prev, comparison }) {
+  const a = Number(now);
+  if (!Number.isFinite(a)) return null;
+  const b = Number(prev);
+  const hasBaseline = Number.isFinite(b) && b !== 0;
+  const pct = hasBaseline ? ((a - b) / b) * 100 : 0;
+  const up = !hasBaseline || pct >= 0;
+  return (
+    <span className="ap-kpi-trend">
+      <svg
+        className={`ap-kpi-trend-arrow ${up ? "is-up" : "is-down"}`}
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d={up ? "M4 14 14 4M14 4H7M14 4v7" : "M4 6l10 10M14 16H7M14 16V9"} />
+      </svg>
+      <span className={`ap-kpi-trend-pct ${up ? "is-up" : "is-down"}`}>
+        {hasBaseline ? `${up ? "+" : "-"}${Math.abs(pct).toFixed(0)}%` : "New"}
+      </span>
+      {comparison && <span className="ap-kpi-trend-label">{comparison}</span>}
+    </span>
+  );
+}
+
+const KPI_ICON_PATHS = {
+  orders: (
+    <>
+      <path d="M4 8l8-4 8 4-8 4-8-4Z" />
+      <path d="M4 8v8l8 4 8-4V8" />
+      <path d="M12 12v8" />
+    </>
+  ),
+  revenue: (
+    <>
+      <path d="M4 15l5-5 4 4 7-7" />
+      <path d="M15 6h5v5" />
+    </>
+  ),
+  mix: <path d="M12 3a9 9 0 1 0 9 9h-9V3Z" />,
+};
+
+// Rounded, softly-tinted icon badge for a KPI card header.
+export function KpiIcon({ name }) {
+  return (
+    <span className={`ap-kpi-icon ap-kpi-icon-${name}`}>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {KPI_ICON_PATHS[name] || KPI_ICON_PATHS.orders}
+      </svg>
+    </span>
+  );
+}
+
 /* ---------------------------------------------------------- mini charts --- */
 
 export function MiniBars({ values, labels = [], tone = "primary", unit = "" }) {

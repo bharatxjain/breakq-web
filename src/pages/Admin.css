@@ -21,6 +21,12 @@
   --ap-warn-soft: #faefd9;
   --ap-danger: #c22a2a;
   --ap-danger-soft: #fbe6e6;
+  /* A second categorical hue for charts with 2+ segments — --ap-primary-2 is
+     too close to --ap-primary in hue and (in dark mode) too low-contrast
+     against the card surface to work as a distinct chart color; this one is
+     validated (see the dataviz skill's validate_palette.js) against contrast
+     and CVD separation. */
+  --ap-info: #0b7fb0;
   --ap-radius: 14px;
   --ap-radius-sm: 9px;
   --ap-header-h: 60px;
@@ -76,6 +82,7 @@
   --ap-warn-soft: #2f2716;
   --ap-danger: #f0857a;
   --ap-danger-soft: #351f1c;
+  --ap-info: #4fb3e8;
   --ap-shadow:
     0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -14px rgba(0, 0, 0, 0.6);
 }
@@ -96,6 +103,7 @@
     --ap-primary-2: #6a4aa8;
     --ap-primary-ink: #bd98ff;
     --ap-primary-soft: #2a2040;
+    --ap-info: #4fb3e8;
     --ap-ok: #52c288;
     --ap-ok-soft: #16281f;
     --ap-warn: #e0a94a;
@@ -707,6 +715,12 @@
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Reserve the vertical scrollbar's width whether or not a given page's
+     content is tall enough to actually scroll — otherwise the right-hand
+     content gutter shrinks by the scrollbar width only on taller pages
+     (e.g. Dashboard), reading as inconsistent left/right padding between
+     admin pages. */
+  scrollbar-gutter: stable;
 }
 .ap-content {
   padding: 26px clamp(20px, 3vw, 42px) 80px;
@@ -1035,6 +1049,70 @@
   gap: 14px;
   margin-top: 2px;
 }
+.ap-kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+.ap-kpi-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.ap-kpi-icon-orders {
+  background: var(--ap-primary-soft);
+  color: var(--ap-primary-ink);
+}
+.ap-kpi-icon-revenue {
+  background: var(--ap-ok-soft);
+  color: var(--ap-ok);
+}
+.ap-kpi-icon-mix {
+  background: color-mix(in srgb, var(--ap-primary-2) 20%, transparent);
+  color: var(--ap-primary-2);
+}
+.ap-kpi-divider {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--ap-border);
+}
+.ap-kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+.ap-kpi-trend-arrow {
+  width: 14px;
+  height: 14px;
+}
+.ap-kpi-trend-arrow.is-up,
+.ap-kpi-trend-pct.is-up {
+  color: var(--ap-ok);
+}
+.ap-kpi-trend-arrow.is-down,
+.ap-kpi-trend-pct.is-down {
+  color: var(--ap-danger);
+}
+.ap-kpi-trend-pct {
+  font-weight: 700;
+}
+.ap-kpi-trend-label {
+  color: var(--ap-muted);
+}
+/* When a spark chart sits between the subtitle and the trend divider (e.g.
+   Platform revenue), only the divider should claim the flex column's
+   leftover space — otherwise both auto margins would split it unevenly. */
+.ap-kpi-foot + .ap-kpi-spark {
+  margin-top: 10px;
+}
+.ap-kpi-spark + .ap-kpi-divider,
+.ap-orders-chart + .ap-kpi-divider {
+  margin-top: 10px;
+}
 .ap-backfill-layout {
   display: grid;
   grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr);
@@ -1221,17 +1299,6 @@
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
   background: var(--ap-surface-2);
-}
-.ap-orders-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--ap-muted);
-  font-size: 11px;
-}
-.ap-orders-footer .ap-chart-legend {
-  margin-top: 0;
 }
 .ap-spark {
   width: 100%;
