@@ -1,0 +1,1 @@
+import{j as e}from"./index-DsvlRXRT.js";function c({eyebrow:a,title:s,subtitle:r}){return e.jsx("section",{className:"page-header",children:e.jsxs("div",{className:"container page-header-inner",children:[a&&e.jsx("span",{className:"page-header-eyebrow",children:a}),e.jsx("h1",{children:s}),r&&e.jsx("p",{children:r})]})})}export{c as P};
