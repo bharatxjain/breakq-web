@@ -189,18 +189,17 @@
 
 .sk-bike {
   position: absolute;
-  top: 70%;
   font-size: 24px;
-  z-index: 2;
-  animation: nb-ride 7s ease-in-out infinite;
+  z-index: 4;
+  pointer-events: none;
+  transition: left var(--bike-duration, 1.3s) ease-in-out,
+    top var(--bike-duration, 1.3s) ease-in-out,
+    transform var(--bike-duration, 1.3s) ease-in-out,
+    opacity var(--bike-fade, 180ms) ease;
 }
 
-@keyframes nb-ride {
-  0% { left: 18%; transform: scaleX(1); }
-  48% { left: 82%; transform: scaleX(1); }
-  50% { left: 82%; transform: scaleX(-1); }
-  98% { left: 18%; transform: scaleX(-1); }
-  100% { left: 18%; transform: scaleX(1); }
+.sk-bike-fleet {
+  font-size: 20px;
 }
 
 /* ----- customers ----- */
@@ -346,8 +345,10 @@
   .sk-store,
   .sk-hub,
   .sk-stat,
-  .sk-bike,
   .sk-line {
     animation: none;
+  }
+  .sk-bike {
+    transition: none;
   }
 }
