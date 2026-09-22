@@ -55,6 +55,13 @@ export default function Hero() {
                   fetchpriority="high"
                 />
               </a>
+
+              <Link to="/become-a-partner" className="partner-pill">
+                <span className="partner-pill-icon" aria-hidden="true">
+                  🤝
+                </span>
+                Become a partner
+              </Link>
             </div>
 
             <div className="hero-rating">

@@ -76,6 +76,7 @@
 
 .store-badges {
   display: flex;
+  align-items: center;
   gap: 16px;
 }
 
@@ -93,6 +94,35 @@
   height: 48px;
   width: auto;
   display: block;
+}
+
+.partner-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--white);
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.partner-pill:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.partner-pill-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .hero-rating {
