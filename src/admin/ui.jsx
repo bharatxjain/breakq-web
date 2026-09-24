@@ -230,8 +230,11 @@ export function statusTone(status) {
   const s = String(status || "").toLowerCase();
   if (["approved", "active", "paid", "captured", "success"].includes(s))
     return "ok";
-  if (["pending", "created", "processing"].includes(s)) return "warn";
-  if (["rejected", "failed", "expired", "cancelled", "canceled"].includes(s))
+  if (["pending", "created", "processing", "refunded"].includes(s))
+    return "warn";
+  if (
+    ["rejected", "failed", "expired", "cancelled", "canceled", "suspended"].includes(s)
+  )
     return "danger";
   return "neutral";
 }

@@ -891,6 +891,7 @@ export async function fetchUsers({
   pageSize = 50,
   search = "",
   role = "",
+  status = "", // "" | active | blocked  (needs admin_operations.sql)
 } = {}) {
   const from = page * pageSize;
   const to = from + pageSize - 1;
@@ -899,13 +900,315 @@ export async function fetchUsers({
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, to);
-  if (search.trim()) q = q.ilike("email", `%${search.trim()}%`);
+  if (search.trim()) {
+    const t = search.trim().replace(/[%,()]/g, "");
+    q = q.or(`email.ilike.%${t}%,full_name.ilike.%${t}%`);
+  }
   if (role === "unknown") q = q.is("role", null);
   else if (role) q = q.eq("role", role);
+  if (status === "blocked") q = q.eq("is_blocked", true);
+  else if (status === "active") q = q.eq("is_blocked", false);
   const { data, error, count } = await q;
   if (error) throw error;
   return { rows: data ?? [], total: count ?? 0 };
 }
+
+/* ------------------------------------------------ operations & moderation --- */
+// Backed by supabase/admin_operations.sql. Every write is a security-definer
+// RPC that checks is_admin() and records a row in admin_moderation_log.
+
+async function rpc(name, args) {
+  const { data, error } = await client().rpc(name, args);
+  if (error) {
+    if (looksMissing(error) && !/not authorized/i.test(error.message || "")) {
+      throw new Error(
+        "Run supabase/admin_operations.sql in the Supabase SQL editor to enable this action.",
+      );
+    }
+    throw error;
+  }
+  return data;
+}
+
+export const setUserBlocked = (userId, blocked, reason) =>
+  rpc("admin_set_user_blocked", {
+    p_user_id: userId,
+    p_blocked: blocked,
+    p_reason: reason ?? null,
+  });
+
+export const fetchUserSummary = (userId) =>
+  rpcOrMissing("admin_user_summary", { p_user_id: userId });
+
+export async function setShopSuspended(shopId, suspended, reason) {
+  const shop = await rpc("admin_set_shop_suspended", {
+    p_shop_id: shopId,
+    p_suspended: suspended,
+    p_reason: reason ?? null,
+  });
+  // the edge function already has "suspended" + "restored" email templates
+  notifyVendorStatus(shop, suspended ? "suspended" : "restored", reason);
+}
+
+// Admin actions recorded against one entity (or all of a type), newest first,
+// with the acting admin's email attached.
+export async function fetchModerationLog({
+  entityType,
+  entityId,
+  limit = 100,
+} = {}) {
+  let q = client()
+    .from("admin_moderation_log")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (entityType) q = q.eq("entity_type", entityType);
+  if (entityId) q = q.eq("entity_id", String(entityId));
+  const { data, error } = await q;
+  if (error) {
+    if (/relation|does not exist|schema cache/i.test(error.message || ""))
+      return { _missing: true, rows: [] };
+    throw error;
+  }
+  const rows = data ?? [];
+  const admins = await profilesById(rows.map((r) => r.admin_id));
+  for (const r of rows) r._admin = admins.get(r.admin_id) || null;
+  return { rows };
+}
+
+// id → { id, email, full_name, role } for a batch of profile ids.
+async function profilesById(ids) {
+  const uniq = [...new Set(ids.filter(Boolean))];
+  if (!uniq.length) return new Map();
+  const { data } = await client()
+    .from("profiles")
+    .select("id, email, full_name, role")
+    .in("id", uniq);
+  return new Map((data ?? []).map((p) => [p.id, p]));
+}
+
+async function shopsById(ids) {
+  const uniq = [...new Set(ids.filter(Boolean))];
+  if (!uniq.length) return new Map();
+  const { data } = await client()
+    .from("shops")
+    .select("id, name, owner_name, locality, status")
+    .in("id", uniq);
+  return new Map((data ?? []).map((s) => [s.id, s]));
+}
+
+/* ----------------------------------------------------------------- orders --- */
+
+export const fetchOrderFacets = () => rpcOrMissing("admin_order_facets");
+
+export async function fetchOrders({
+  page = 0,
+  pageSize = 25,
+  search = "",
+  status = "",
+  paymentStatus = "",
+  paymentMethod = "",
+  shopId = "",
+  customerId = "",
+  from: fromDate = "",
+  to: toDate = "",
+} = {}) {
+  const start = page * pageSize;
+  let q = client()
+    .from("orders")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(start, start + pageSize - 1);
+
+  // Both the text search and the customer filter are OR-groups; PostgREST
+  // takes one `or` param, so two groups are nested under a single and().
+  const orGroups = [];
+  const t = search.trim().replace(/[%,()#]/g, "");
+  if (t) {
+    const parts = [`id.ilike.%${t}%`, `customer_name.ilike.%${t}%`];
+    if (/^\d+$/.test(t)) parts.push(`order_number.eq.${t}`);
+    orGroups.push(parts.join(","));
+  }
+  if (customerId)
+    orGroups.push(`customer_id.eq.${customerId},user_id.eq.${customerId}`);
+  if (orGroups.length === 1) q = q.or(orGroups[0]);
+  else if (orGroups.length === 2)
+    q = q.or(`and(or(${orGroups[0]}),or(${orGroups[1]}))`);
+
+  if (status) q = q.eq("status", status);
+  if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+  if (paymentMethod) q = q.eq("payment_method", paymentMethod);
+  if (shopId) q = q.eq("shop_id", shopId);
+  if (fromDate) q = q.gte("created_at", new Date(fromDate).toISOString());
+  if (toDate) {
+    const end = new Date(toDate);
+    end.setDate(end.getDate() + 1); // inclusive of the whole "to" day
+    q = q.lt("created_at", end.toISOString());
+  }
+
+  const { data, error, count } = await q;
+  if (error) throw error;
+  const rows = data ?? [];
+  const [shops, people] = await Promise.all([
+    shopsById(rows.map((o) => o.shop_id)),
+    profilesById(rows.map((o) => o.customer_id || o.user_id)),
+  ]);
+  for (const o of rows) {
+    o._shop = shops.get(o.shop_id) || null;
+    o._customer = people.get(o.customer_id || o.user_id) || null;
+  }
+  return { rows, total: count ?? 0 };
+}
+
+export async function fetchOrderItems(orderId) {
+  const { data, error } = await client()
+    .from("order_items")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export const cancelOrder = (orderId, reason) =>
+  rpc("admin_cancel_order", { p_order_id: String(orderId), p_reason: reason });
+
+export const refundOrder = (orderId, amount, reason) =>
+  rpc("admin_refund_order", {
+    p_order_id: String(orderId),
+    p_amount: Number(amount),
+    p_reason: reason,
+  });
+
+/* --------------------------------------------------------------- products --- */
+
+export async function fetchProducts({
+  page = 0,
+  pageSize = 25,
+  search = "",
+  shopId = "",
+  categoryId = "",
+  brand = "",
+  state = "", // "" | active | inactive | restricted
+} = {}) {
+  const start = page * pageSize;
+  let q = client()
+    .from("products")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(start, start + pageSize - 1);
+
+  const t = search.trim().replace(/[%,()]/g, "");
+  if (t)
+    q = q.or(`name.ilike.%${t}%,brand.ilike.%${t}%,barcode.ilike.%${t}%,id.ilike.%${t}%`);
+  if (shopId) q = q.eq("shop_id", shopId);
+  if (categoryId) q = q.eq("category_id", categoryId);
+  if (brand) q = q.ilike("brand", brand.trim());
+  if (state === "active") q = q.eq("is_active", true).eq("is_restricted", false);
+  if (state === "inactive") q = q.eq("is_active", false);
+  if (state === "restricted") q = q.eq("is_restricted", true);
+
+  const { data, error, count } = await q;
+  if (error) throw error;
+  const rows = data ?? [];
+  const shops = await shopsById(rows.map((p) => p.shop_id));
+  for (const p of rows) p._shop = shops.get(p.shop_id) || null;
+  return { rows, total: count ?? 0 };
+}
+
+export const setProductFlag = (productId, action, reason) =>
+  rpc("admin_set_product_flag", {
+    p_product_id: String(productId),
+    p_action: action,
+    p_reason: reason ?? null,
+  });
+
+export const fetchBrands = () => rpcOrMissing("admin_brands");
+export const renameBrand = (from, to) =>
+  rpc("admin_rename_brand", { p_from: from, p_to: to });
+export const fetchDuplicateProducts = () =>
+  rpcOrMissing("admin_duplicate_products");
+export const fetchRestrictedMatches = () =>
+  rpcOrMissing("admin_restricted_matches");
+
+export async function fetchRestrictedKeywords() {
+  const { data, error } = await client()
+    .from("restricted_product_keywords")
+    .select("*")
+    .order("keyword");
+  if (error) {
+    if (/relation|does not exist|schema cache/i.test(error.message || ""))
+      return { _missing: true, rows: [] };
+    throw error;
+  }
+  return { rows: data ?? [] };
+}
+
+export async function addRestrictedKeyword(keyword, reason) {
+  const { error } = await client()
+    .from("restricted_product_keywords")
+    .insert({ keyword: keyword.trim().toLowerCase(), reason: reason?.trim() || null });
+  if (error) throw error;
+}
+
+export async function deleteRestrictedKeyword(keyword) {
+  const { error } = await client()
+    .from("restricted_product_keywords")
+    .delete()
+    .eq("keyword", keyword);
+  if (error) throw error;
+}
+
+/* ---------------------------------------------------------------- reviews --- */
+
+export async function fetchReviews({
+  page = 0,
+  pageSize = 25,
+  search = "",
+  stars = "",
+  visibility = "", // "" | visible | hidden | reported
+  shopId = "",
+} = {}) {
+  const start = page * pageSize;
+  let q = client()
+    .from("shop_ratings")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(start, start + pageSize - 1);
+
+  const t = search.trim().replace(/[%,()]/g, "");
+  if (t) q = q.ilike("review", `%${t}%`);
+  if (stars) q = q.eq("rating", Number(stars));
+  if (shopId) q = q.eq("shop_id", shopId);
+  if (visibility === "visible") q = q.eq("is_hidden", false);
+  if (visibility === "hidden") q = q.eq("is_hidden", true);
+  if (visibility === "reported") q = q.eq("is_reported", true);
+
+  const { data, error, count } = await q;
+  if (error) throw error;
+  const rows = data ?? [];
+  const [shops, people] = await Promise.all([
+    shopsById(rows.map((r) => r.shop_id)),
+    profilesById(rows.map((r) => r.customer_id)),
+  ]);
+  for (const r of rows) {
+    r._shop = shops.get(r.shop_id) || null;
+    r._reviewer = people.get(r.customer_id) || null;
+  }
+  return { rows, total: count ?? 0 };
+}
+
+export const moderateReview = (reviewId, action, reason) =>
+  rpc("admin_moderate_review", {
+    p_review_id: reviewId,
+    p_action: action,
+    p_reason: reason ?? null,
+  });
+
+/* ------------------------------------------------------ platform analytics --- */
+
+export const fetchPlatformAnalytics = (days = 30) =>
+  rpcOrMissing("admin_platform_analytics", { p_days: days });
 
 /* ------------------------------------------------- notification campaigns --- */
 // Backed by supabase/notifications_campaigns.sql + the `push-campaign` edge
@@ -1088,6 +1391,24 @@ export async function probeSchema() {
   );
   await probe("admin_coupon_stats_rpc", () =>
     client().rpc("admin_coupon_stats"),
+  );
+  await probe("admin_moderation_log", () =>
+    client().from("admin_moderation_log").select("id").limit(1),
+  );
+  await probe("profiles_is_blocked", () =>
+    client().from("profiles").select("is_blocked").limit(1),
+  );
+  await probe("products_is_restricted", () =>
+    client().from("products").select("is_restricted").limit(1),
+  );
+  await probe("shop_ratings_is_hidden", () =>
+    client().from("shop_ratings").select("is_hidden").limit(1),
+  );
+  await probe("admin_order_facets_rpc", () =>
+    client().rpc("admin_order_facets"),
+  );
+  await probe("admin_platform_analytics_rpc", () =>
+    client().rpc("admin_platform_analytics", { p_days: 1 }),
   );
   return out;
 }

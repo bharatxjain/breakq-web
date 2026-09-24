@@ -2822,3 +2822,123 @@ form.ap-bar {
   gap: 16px;
   margin-top: 8px;
 }
+
+/* ------------------------------------------- orders / products / reviews */
+
+.ap-tabs-sub {
+  margin-bottom: 12px;
+}
+.ap-tabs-sub button {
+  font-size: 13px;
+  padding: 7px 12px;
+}
+
+.ap-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--ap-border);
+  display: grid;
+  gap: 10px;
+}
+.ap-timeline li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+.ap-timeline li::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ap-primary);
+  border: 2px solid var(--ap-surface);
+}
+.ap-timeline span {
+  color: var(--ap-muted);
+}
+
+.ap-prod-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.ap-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ap-radius-sm);
+  object-fit: cover;
+  background: var(--ap-surface-2);
+  flex: none;
+}
+
+.ap-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ap-gallery > a > img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--ap-radius-sm);
+  border: 1px solid var(--ap-border);
+  display: block;
+}
+.ap-file {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 160px;
+  color: var(--ap-text);
+  text-decoration: none;
+}
+.ap-file img,
+.ap-file-doc {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--ap-radius-sm);
+  border: 1px solid var(--ap-border);
+  background: var(--ap-surface-2);
+}
+.ap-file-doc {
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: var(--ap-muted);
+}
+.ap-file-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ap-primary-ink);
+}
+
+.ap-quote {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--ap-border-strong);
+  background: var(--ap-surface-2);
+  border-radius: var(--ap-radius-sm);
+  color: var(--ap-text-soft);
+}
+
+.ap-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+th.ap-num .ap-sort {
+  width: 100%;
+  text-align: right;
+}

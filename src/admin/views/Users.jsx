@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchUserRoleCounts, fetchUsers, getMyId } from "../api";
+import {
+  fetchUserRoleCounts,
+  fetchUserSummary,
+  fetchUsers,
+  getMyId,
+  setUserBlocked,
+} from "../api";
 import {
   Async,
   Badge,
+  ConfirmDialog,
   Modal,
   fmtDate,
   fmtDateTime,
+  money,
   num,
+  statusTone,
   useAsync,
+  useToast,
 } from "../ui";
+import { ModerationHistory, ReasonDialog } from "../moderation";
 
 const PAGE_SIZE = 50;
 const BASE_ROLES = ["customer", "vendor", "admin"];
@@ -30,20 +41,28 @@ const DATE_KEYS = new Set([
   "updated_at",
   "last_sign_in_at",
   "confirmed_at",
+  "blocked_at",
 ]);
+// Shown in the "Account status" block instead of the raw field list.
+const STATUS_KEYS = new Set(["is_blocked", "blocked_reason", "blocked_at"]);
 
 function label(k) {
   return k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
-export default function Users() {
+export default function Users({ onNavigate }) {
+  const notify = useToast();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
   const [role, setRole] = useState(""); // "" = all
+  const [status, setStatus] = useState(""); // "" | active | blocked
   const [myId, setMyId] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [blocking, setBlocking] = useState(null); // user to block
+  const [unblocking, setUnblocking] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     getMyId().then(setMyId);
@@ -54,9 +73,32 @@ export default function Users() {
     roleCounts.data && !roleCounts.data._missing ? roleCounts.data : null;
 
   const { state, data, error, reload } = useAsync(
-    () => fetchUsers({ page, pageSize: PAGE_SIZE, search, role }),
-    [page, search, role],
+    () => fetchUsers({ page, pageSize: PAGE_SIZE, search, role, status }),
+    [page, search, role, status],
   );
+
+  async function changeBlock(user, blocked, reason) {
+    setBusy(true);
+    try {
+      const res = await setUserBlocked(user.id, blocked, reason);
+      notify(
+        blocked
+          ? res?.auth_enforced === false
+            ? "User flagged as blocked, but the sign-in ban couldn't be applied"
+            : "User blocked and signed out"
+          : "User unblocked",
+        "ok",
+      );
+      setBlocking(null);
+      setUnblocking(null);
+      setDetail(null);
+      reload();
+    } catch (e) {
+      notify(e.message || "Action failed", "danger");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const rows = data?.rows || [];
   const total = data?.total || 0;
@@ -90,7 +132,7 @@ export default function Users() {
         <div>
           <h1>Users</h1>
           <p className="ap-view-sub">
-            Read-only directory of every account · {num(grandTotal)} total
+            Every account · {num(grandTotal)} total
             {counts && (
               <>
                 {" "}
@@ -152,12 +194,24 @@ export default function Users() {
         <input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search by email…"
+          placeholder="Search by email or name…"
           style={{ maxWidth: 280 }}
         />
         <button className="ap-btn ap-btn-ghost" type="submit">
           Search
         </button>
+        <select
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Filter by account status"
+        >
+          <option value="">Any status</option>
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+        </select>
         {search && (
           <button
             type="button"
@@ -180,7 +234,7 @@ export default function Users() {
         isEmpty={rows.length === 0}
         empty={
           search
-            ? "No users match that email."
+            ? "No users match that search."
             : role
               ? `No ${cap(role)} accounts.`
               : "No users yet."
@@ -194,6 +248,7 @@ export default function Users() {
                 <th>Email</th>
                 <th>Role</th>
                 <th>Phone</th>
+                <th>Status</th>
                 <th>Joined</th>
                 <th />
               </tr>
@@ -220,8 +275,30 @@ export default function Users() {
                       u.user_metadata?.mobile ||
                       "—"}
                   </td>
+                  <td>
+                    <AccountBadge user={u} />
+                  </td>
                   <td>{fmtDate(u.created_at)}</td>
                   <td className="ap-row-actions">
+                    {u.id !== myId &&
+                      u.role !== "admin" &&
+                      (u.is_blocked ? (
+                        <button
+                          className="ap-btn ap-btn-sm ap-btn-ok"
+                          disabled={busy}
+                          onClick={() => setUnblocking(u)}
+                        >
+                          Unblock
+                        </button>
+                      ) : (
+                        <button
+                          className="ap-btn ap-btn-sm ap-btn-danger"
+                          disabled={busy}
+                          onClick={() => setBlocking(u)}
+                        >
+                          Block
+                        </button>
+                      ))}
                     <button
                       className="ap-btn ap-btn-sm ap-btn-ghost"
                       onClick={() => setDetail(u)}
@@ -265,20 +342,75 @@ export default function Users() {
         <UserDetail
           user={detail}
           isMe={detail.id === myId}
+          busy={busy}
           onClose={() => setDetail(null)}
+          onBlock={() => setBlocking(detail)}
+          onUnblock={() => setUnblocking(detail)}
+          onNavigate={onNavigate}
+        />
+      )}
+
+      {blocking && (
+        <ReasonDialog
+          title={`Block ${blocking.email || blocking.full_name || "user"}?`}
+          confirmLabel="Block user"
+          busy={busy}
+          placeholder="e.g. Repeated fake orders"
+          message={
+            <>
+              They&rsquo;re signed out, can&rsquo;t sign in again, and show as{" "}
+              <strong>blocked</strong> here until unblocked.
+              {blocking.role === "vendor" &&
+                " Their shop stays as it is — suspend it from Vendors if needed."}
+            </>
+          }
+          onClose={() => setBlocking(null)}
+          onSubmit={(reason) => changeBlock(blocking, true, reason)}
+        />
+      )}
+
+      {unblocking && (
+        <ConfirmDialog
+          title={`Unblock ${unblocking.email || unblocking.full_name || "user"}?`}
+          tone="ok"
+          confirmLabel="Unblock"
+          busy={busy}
+          onClose={() => setUnblocking(null)}
+          onConfirm={() => changeBlock(unblocking, false)}
+          message="They'll be able to sign in and use BreakQ again."
         />
       )}
     </div>
   );
 }
 
-function UserDetail({ user, isMe, onClose }) {
+function AccountBadge({ user }) {
+  return user.is_blocked ? (
+    <Badge tone="danger">blocked</Badge>
+  ) : (
+    <Badge tone="ok">active</Badge>
+  );
+}
+
+function UserDetail({
+  user,
+  isMe,
+  busy,
+  onClose,
+  onBlock,
+  onUnblock,
+  onNavigate,
+}) {
   const keys = [
     ...PRIMARY_KEYS.filter((k) => k in user),
     ...Object.keys(user).filter(
-      (k) => !PRIMARY_KEYS.includes(k) && !k.startsWith("_"),
+      (k) =>
+        !PRIMARY_KEYS.includes(k) && !k.startsWith("_") && !STATUS_KEYS.has(k),
     ),
   ];
+  const summary = useAsync(() => fetchUserSummary(user.id), [user.id]);
+  const S = summary.data && !summary.data._missing ? summary.data : null;
+  const canBlock = !isMe && user.role !== "admin";
 
   return (
     <Modal
@@ -286,6 +418,113 @@ function UserDetail({ user, isMe, onClose }) {
       onClose={onClose}
       wide
     >
+      <div className="ap-panel-head">
+        <h2>Account status</h2>
+      </div>
+      <div className="ap-detail-grid">
+        <div className="ap-detail">
+          <span className="ap-detail-label">Status</span>
+          <span className="ap-detail-value">
+            <AccountBadge user={user} />
+          </span>
+        </div>
+        <div className="ap-detail">
+          <span className="ap-detail-label">Last sign-in</span>
+          <span className="ap-detail-value">
+            {S?.last_sign_in_at ? fmtDateTime(S.last_sign_in_at) : "—"}
+          </span>
+        </div>
+        {user.is_blocked && (
+          <>
+            <div className="ap-detail">
+              <span className="ap-detail-label">Blocked since</span>
+              <span className="ap-detail-value">
+                {fmtDateTime(user.blocked_at)}
+              </span>
+            </div>
+            <div className="ap-detail ap-detail-span">
+              <span className="ap-detail-label">Block reason</span>
+              <span className="ap-detail-value">
+                {user.blocked_reason || "—"}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {S && (
+        <>
+          <div className="ap-panel-head" style={{ marginTop: 16 }}>
+            <h2>Activity</h2>
+          </div>
+          <div className="ap-metric-grid">
+            <div className="ap-metric">
+              <span className="ap-metric-label">Orders</span>
+              <span className="ap-metric-value">{num(S.orders?.total)}</span>
+              {S.orders?.cancelled ? (
+                <span className="ap-metric-label">
+                  {num(S.orders.cancelled)} cancelled
+                </span>
+              ) : null}
+            </div>
+            <div className="ap-metric">
+              <span className="ap-metric-label">Spend</span>
+              <span className="ap-metric-value">{money(S.orders?.spend)}</span>
+            </div>
+            <div className="ap-metric">
+              <span className="ap-metric-label">Last order</span>
+              <span className="ap-metric-value">
+                {S.orders?.last_at ? fmtDate(S.orders.last_at) : "—"}
+              </span>
+            </div>
+            <div className="ap-metric">
+              <span className="ap-metric-label">Reviews</span>
+              <span className="ap-metric-value">{num(S.reviews?.count)}</span>
+              {S.reviews?.avg ? (
+                <span className="ap-metric-label">avg {S.reviews.avg} ★</span>
+              ) : null}
+            </div>
+          </div>
+          {(S.shops || []).length > 0 && (
+            <p className="ap-field-hint">
+              Owns:{" "}
+              {S.shops.map((s, i) => (
+                <span key={s.id}>
+                  {i > 0 && ", "}
+                  {s.name} <Badge tone={statusTone(s.status)}>{s.status}</Badge>
+                </span>
+              ))}
+            </p>
+          )}
+          <div className="ap-detail-actions" style={{ margin: "8px 0 16px" }}>
+            {S.orders?.total > 0 && onNavigate && (
+              <button
+                className="ap-btn ap-btn-sm ap-btn-ghost"
+                onClick={() =>
+                  onNavigate("orders", {
+                    customerId: user.id,
+                    customerName: user.email || user.full_name || "",
+                  })
+                }
+              >
+                View orders →
+              </button>
+            )}
+            {(S.shops || []).length > 0 && onNavigate && (
+              <button
+                className="ap-btn ap-btn-sm ap-btn-ghost"
+                onClick={() => onNavigate("vendors", { search: S.shops[0].name })}
+              >
+                View shop →
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="ap-panel-head">
+        <h2>Profile</h2>
+      </div>
       <div className="ap-detail-grid">
         {keys.map((k) => {
           const v = user[k];
@@ -311,6 +550,25 @@ function UserDetail({ user, isMe, onClose }) {
         })}
       </div>
       {isMe && <p className="ap-note">This is your own account.</p>}
+
+      <div className="ap-panel-head" style={{ marginTop: 16 }}>
+        <h2>Admin actions</h2>
+      </div>
+      <ModerationHistory entityType="user" entityId={user.id} limit={20} />
+
+      {canBlock && (
+        <div className="ap-detail-actions" style={{ marginTop: 16 }}>
+          {user.is_blocked ? (
+            <button className="ap-btn ap-btn-ok" disabled={busy} onClick={onUnblock}>
+              Unblock user
+            </button>
+          ) : (
+            <button className="ap-btn ap-btn-danger" disabled={busy} onClick={onBlock}>
+              Block user…
+            </button>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

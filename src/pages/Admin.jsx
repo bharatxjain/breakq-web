@@ -34,6 +34,10 @@ import SearchDiscovery from "../admin/views/SearchDiscovery";
 import RatingsModeration from "../admin/views/RatingsModeration";
 import GeoIntelligence from "../admin/views/GeoIntelligence";
 import Health from "../admin/views/Health";
+import Orders from "../admin/views/Orders";
+import Products from "../admin/views/Products";
+import Reviews from "../admin/views/Reviews";
+import Analytics from "../admin/views/Analytics";
 import "./Admin.css";
 
 // The page password is a shared pre-filter, NOT the identity check — it lives
@@ -55,6 +59,9 @@ const NAV = [
     group: "Manage",
     items: [
       { key: "vendors", label: "Vendors", el: Vendors },
+      { key: "orders", label: "Orders", el: Orders },
+      { key: "products", label: "Products", el: Products },
+      { key: "reviews", label: "Reviews", el: Reviews },
       { key: "subscriptions", label: "Subscriptions", el: Subscriptions },
       { key: "payments", label: "Payments", el: Payments },
       { key: "promotions", label: "Promotions", el: Promotions },
@@ -66,6 +73,7 @@ const NAV = [
   {
     group: "Analytics",
     items: [
+      { key: "analytics", label: "Platform analytics", el: Analytics },
       { key: "search", label: "Search & Discovery", el: SearchDiscovery },
       { key: "ratings", label: "Ratings", el: RatingsModeration },
       { key: "geo", label: "Geography", el: GeoIntelligence },
@@ -450,7 +458,7 @@ function Shell({ onSignOut }) {
   const location = useLocation();
   const navigate = useNavigate();
   // System/Health isn't routed — it renders in place, toggled by this flag,
-  // so the URL only ever reflects the 12 bookmarkable sections.
+  // so the URL only ever reflects the bookmarkable sections.
   const [healthOpen, setHealthOpen] = useState(false);
   const routedKey =
     ROUTED_VIEWS.find((n) => location.pathname === `/admin/${n.key}`)?.key ??

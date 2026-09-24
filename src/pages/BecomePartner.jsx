@@ -389,12 +389,9 @@ export default function BecomePartner() {
       });
       if (error) throw error;
 
-      // Best-effort confirmation email — never block the success screen on this.
-      supabase.functions
-        .invoke("notify-vendor-registration", {
-          body: { email: session.user.email, ownerName: shop.ownerName.trim(), shopName: shop.name.trim() },
-        })
-        .catch(() => {});
+      // The confirmation email (vendor + admin) is sent server-side by the
+      // vendor-registered edge function, fired by a database webhook on this
+      // insert — never from the browser, so it can't be abused as a mailer.
 
       writeStoredRegistration(session.user.email);
       setSuccessEmail(session.user.email);

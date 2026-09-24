@@ -7,8 +7,10 @@ import {
   fetchTiers,
   rejectShop,
   restoreShop,
+  setShopSuspended,
   softDeleteShop,
 } from "../api";
+import { ModerationHistory, ReasonDialog } from "../moderation";
 import {
   AreaChart,
   Async,
@@ -38,18 +40,19 @@ const BLANK_FILTERS = {
   ratingMax: "",
 };
 
-export default function Vendors({ initialFilter }) {
+export default function Vendors({ initialFilter, onNavigate }) {
   const notify = useToast();
   // A dashboard drill-down (e.g. clicking the "pending" donut segment) can
   // seed the filters this tab opens with.
   const [filters, setFilters] = useState(() =>
     initialFilter ? { ...BLANK_FILTERS, ...initialFilter } : BLANK_FILTERS,
   );
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState(initialFilter?.search || "");
   const [page, setPage] = useState(0);
   const [detail, setDetail] = useState(null);
   const [rejecting, setRejecting] = useState(null);
-  const [confirm, setConfirm] = useState(null); // { kind: 'approve' | 'delete', shop }
+  const [confirm, setConfirm] = useState(null); // { kind: 'approve' | 'delete' | 'unsuspend', shop }
+  const [suspending, setSuspending] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const tiers = useAsync(fetchTiers, []);
@@ -99,6 +102,7 @@ export default function Vendors({ initialFilter }) {
       setDetail(null);
       setRejecting(null);
       setConfirm(null);
+      setSuspending(null);
       reload();
     } catch (e) {
       notify(e.message || "Action failed", "danger");
@@ -156,6 +160,7 @@ export default function Vendors({ initialFilter }) {
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
+          <option value="suspended">Suspended</option>
         </select>
         <select
           value={filters.state}
@@ -387,32 +392,56 @@ export default function Vendors({ initialFilter }) {
                 span
               />
             )}
+            {detail.status === "suspended" && (
+              <Detail
+                label="Suspended"
+                value={`${detail.suspension_reason || "—"}${detail.suspended_at ? ` (since ${fmtDateTime(detail.suspended_at)})` : ""}`}
+                span
+              />
+            )}
           </div>
+
+          {onNavigate && (
+            <div className="ap-detail-actions" style={{ margin: "12px 0" }}>
+              {[
+                ["orders", "Orders"],
+                ["products", "Products"],
+                ["reviews", "Reviews"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  className="ap-btn ap-btn-sm ap-btn-ghost"
+                  onClick={() =>
+                    onNavigate(key, { shopId: detail.id, shopName: detail.name })
+                  }
+                >
+                  {label} for this shop →
+                </button>
+              ))}
+            </div>
+          )}
 
           <ShopMetrics shop={detail} />
 
-          <div className="ap-detail-files">
-            {detail.image_url && (
-              <a
-                href={detail.image_url}
-                target="_blank"
-                rel="noreferrer"
-                className="ap-btn ap-btn-ghost"
-              >
-                Shop photo ↗
-              </a>
-            )}
-            {detail.business_proof_url && (
-              <a
-                href={detail.business_proof_url}
-                target="_blank"
-                rel="noreferrer"
-                className="ap-btn ap-btn-ghost"
-              >
-                Business proof ↗
-              </a>
-            )}
+          <div className="ap-panel-head" style={{ marginTop: 16 }}>
+            <h2>Images &amp; documents</h2>
           </div>
+          {detail.image_url || detail.business_proof_url ? (
+            <div className="ap-gallery">
+              <FilePreview url={detail.image_url} label="Shop photo" />
+              <FilePreview
+                url={detail.business_proof_url}
+                label="Business proof"
+              />
+            </div>
+          ) : (
+            <p className="ap-async-empty">No photo or documents uploaded.</p>
+          )}
+
+          <div className="ap-panel-head" style={{ marginTop: 16 }}>
+            <h2>Admin actions</h2>
+          </div>
+          <ModerationHistory entityType="shop" entityId={detail.id} limit={20} />
 
           <div className="ap-detail-actions">
             {detail.status === "pending" && !detail.is_deleted && (
@@ -432,6 +461,24 @@ export default function Vendors({ initialFilter }) {
                   Reject…
                 </button>
               </>
+            )}
+            {detail.status === "approved" && !detail.is_deleted && (
+              <button
+                className="ap-btn ap-btn-danger"
+                disabled={busy}
+                onClick={() => setSuspending(detail)}
+              >
+                Suspend…
+              </button>
+            )}
+            {detail.status === "suspended" && (
+              <button
+                className="ap-btn ap-btn-ok"
+                disabled={busy}
+                onClick={() => setConfirm({ kind: "unsuspend", shop: detail })}
+              >
+                Lift suspension
+              </button>
             )}
             {!detail.commission_enabled_at && (
               <button
@@ -498,6 +545,51 @@ export default function Vendors({ initialFilter }) {
                 ? ` (${confirm.shop.owner_name})`
                 : ""}{" "}
               will be emailed that their shop is approved. Continue?
+            </>
+          }
+        />
+      )}
+
+      {suspending && (
+        <ReasonDialog
+          title={`Suspend ${suspending.name}?`}
+          confirmLabel="Suspend shop"
+          busy={busy}
+          placeholder="e.g. Multiple customer complaints about expired stock"
+          hint="Kept in the moderation history. The owner is emailed that the shop is suspended."
+          message={
+            <>
+              <strong>{suspending.name}</strong> disappears for customers and
+              stops taking orders until you lift the suspension. The vendor
+              can&rsquo;t undo it from the app.
+            </>
+          }
+          onClose={() => setSuspending(null)}
+          onSubmit={(reason) =>
+            run("Shop suspended", () =>
+              setShopSuspended(suspending.id, true, reason),
+            )
+          }
+        />
+      )}
+
+      {confirm?.kind === "unsuspend" && (
+        <ConfirmDialog
+          title={`Lift suspension on ${confirm.shop.name}?`}
+          tone="ok"
+          confirmLabel="Lift suspension"
+          busy={busy}
+          onClose={() => setConfirm(null)}
+          onConfirm={() =>
+            run("Suspension lifted", () =>
+              setShopSuspended(confirm.shop.id, false),
+            )
+          }
+          message={
+            <>
+              <strong>{confirm.shop.name}</strong> goes back to approved, is
+              visible to customers and accepts orders again. The owner is
+              emailed that the shop is restored.
             </>
           }
         />
@@ -639,6 +731,23 @@ function ShopMetrics({ shop }) {
         </div>
       </div>
     </Async>
+  );
+}
+
+// Inline preview for an uploaded file: images render as a thumbnail, anything
+// else (PDF proofs) as a link card.
+function FilePreview({ url, label }) {
+  if (!url) return null;
+  const isImage = /\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(url);
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="ap-file">
+      {isImage ? (
+        <img src={url} alt={label} loading="lazy" />
+      ) : (
+        <span className="ap-file-doc">Document</span>
+      )}
+      <span className="ap-file-label">{label} ↗</span>
+    </a>
   );
 }
 

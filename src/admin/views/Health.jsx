@@ -62,6 +62,36 @@ const CHECKS = [
     "admin_coupon_stats() RPC",
     "Coupons tab — per-code redemptions, trend, expiry + Dashboard abuse flag",
   ],
+  [
+    "admin_moderation_log",
+    "admin_moderation_log table",
+    "Audit trail for every block / suspend / cancel / refund / restrict / review action — supabase/admin_operations.sql",
+  ],
+  [
+    "profiles_is_blocked",
+    "profiles.is_blocked column",
+    "Users tab — block / unblock + account status",
+  ],
+  [
+    "products_is_restricted",
+    "products.is_restricted column",
+    "Products tab — restricted products (hidden from customers)",
+  ],
+  [
+    "shop_ratings_is_hidden",
+    "shop_ratings.is_hidden column",
+    "Reviews tab — hide / report / remove",
+  ],
+  [
+    "admin_order_facets_rpc",
+    "admin_order_facets() RPC",
+    "Orders tab — status / payment filters",
+  ],
+  [
+    "admin_platform_analytics_rpc",
+    "admin_platform_analytics() RPC",
+    "Platform analytics tab — GMV, AOV, DAU/MAU, retention, vendor performance",
+  ],
 ];
 
 const NOTES = [
@@ -122,9 +152,10 @@ export default function Health() {
         </Async>
         {data && CHECKS.some(([k]) => !data[k]) && (
           <p className="ap-note">
-            Run <code>supabase/admin_panel.sql</code> then{" "}
-            <code>supabase/admin_analytics.sql</code> in the Supabase SQL editor
-            to install everything above. Both are safe to re-run.
+            Run <code>supabase/admin_panel.sql</code>, then{" "}
+            <code>supabase/admin_analytics.sql</code>, then{" "}
+            <code>supabase/admin_operations.sql</code> in the Supabase SQL
+            editor to install everything above. All are safe to re-run.
           </p>
         )}
       </section>

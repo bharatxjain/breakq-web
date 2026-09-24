@@ -107,6 +107,7 @@ export default function Notifications() {
         isEmpty={rows.length === 0}
         empty="No notifications sent yet."
       >
+        <CampaignAnalytics rows={rows} />
         <div className="ap-table-wrap">
           <table className="ap-table">
             <thead>
@@ -156,6 +157,59 @@ export default function Notifications() {
         />
       )}
     </div>
+  );
+}
+
+// Roll-up of every campaign's delivery counters: volume, delivery success per
+// channel, and reach by audience. Computed from the rows already loaded.
+function CampaignAnalytics({ rows }) {
+  const sent = rows.filter((c) => c.status === "sent" || c.status === "sending");
+  const sum = (k) => sent.reduce((s, c) => s + (Number(c[k]) || 0), 0);
+  const pushOk = sum("push_sent");
+  const pushBad = sum("push_failed");
+  const mailOk = sum("email_sent");
+  const mailBad = sum("email_failed");
+  const rate = (ok, bad) => (ok + bad ? `${((ok / (ok + bad)) * 100).toFixed(1)}%` : "—");
+  const byAudience = {};
+  for (const c of sent) {
+    const k = AUDIENCES.find((a) => a.key === c.audience)?.label || c.audience;
+    byAudience[k] = (byAudience[k] || 0) + (Number(c.recipients_total) || (c.audience === "user" ? 1 : 0));
+  }
+  const counts = rows.reduce((m, c) => ({ ...m, [c.status]: (m[c.status] || 0) + 1 }), {});
+
+  return (
+    <section className="ap-stat-grid" aria-label="Campaign analytics">
+      <div className="ap-stat">
+        <span className="ap-stat-label">Campaigns sent</span>
+        <span className="ap-stat-value">{num(sent.length)}</span>
+        <span className="ap-stat-sub">
+          {num(counts.scheduled || 0)} scheduled · {num(counts.draft || 0)} drafts · {num(counts.failed || 0)} failed
+        </span>
+      </div>
+      <div className="ap-stat">
+        <span className="ap-stat-label">People reached</span>
+        <span className="ap-stat-value">{num(sum("recipients_total"))}</span>
+        <span className="ap-stat-sub">
+          {Object.entries(byAudience)
+            .map(([k, v]) => `${k} ${num(v)}`)
+            .join(" · ") || "—"}
+        </span>
+      </div>
+      <div className="ap-stat">
+        <span className="ap-stat-label">Push delivered</span>
+        <span className="ap-stat-value">{num(pushOk)}</span>
+        <span className="ap-stat-sub">
+          {rate(pushOk, pushBad)} success · {num(pushBad)} failed
+        </span>
+      </div>
+      <div className="ap-stat">
+        <span className="ap-stat-label">Email delivered</span>
+        <span className="ap-stat-value">{num(mailOk)}</span>
+        <span className="ap-stat-sub">
+          {rate(mailOk, mailBad)} success · {num(mailBad)} failed
+        </span>
+      </div>
+    </section>
   );
 }
 
