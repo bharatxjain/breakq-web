@@ -237,7 +237,7 @@
 .stat-br { right: -2%; bottom: 6%; }
 
 /* ----- responsive ----- */
-/* Keep the animated constellation at every size — just tighten the sizes and
+/* Keep the animated constellation at every size - just tighten the sizes and
    spacing so nothing overlaps on small screens. */
 
 @media (max-width: 1024px) {

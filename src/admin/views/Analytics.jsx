@@ -19,8 +19,8 @@ const ratio = (a, b) => {
   const y = Number(b);
   return Number.isFinite(x) && Number.isFinite(y) && y > 0 ? x / y : null;
 };
-const pct = (v, digits = 1) => (v == null ? "—" : `${(v * 100).toFixed(digits)}%`);
-const fixed = (v, digits = 1) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toFixed(digits));
+const pct = (v, digits = 1) => (v == null ? "-" : `${(v * 100).toFixed(digits)}%`);
+const fixed = (v, digits = 1) => (v == null || !Number.isFinite(Number(v)) ? "-" : Number(v).toFixed(digits));
 
 // % change vs the previous window. `invert` = a rise is bad (cancellations…).
 function Delta({ now, prev, invert = false }) {
@@ -282,12 +282,12 @@ function Customer({ A, days }) {
   );
 }
 
-// "—" for months that haven't happened yet; 0% when they have and nobody returned.
+// "-" for months that haven't happened yet; 0% when they have and nobody returned.
 function cohortCell(c, k) {
   const start = new Date(c.cohort);
   const target = new Date(start.getFullYear(), start.getMonth() + k, 1);
   const now = new Date();
-  if (target > new Date(now.getFullYear(), now.getMonth(), 1)) return "—";
+  if (target > new Date(now.getFullYear(), now.getMonth(), 1)) return "-";
   return pct(ratio(c[`m${k}`] || 0, c.size), 0);
 }
 
@@ -347,8 +347,8 @@ function Vendor({ A }) {
         <Kpi label="Orders / shop" value={fixed(ratio(sm.orders, sm.shops), 1)} />
         <Kpi label="Acceptance rate" value={pct(ratio(sm.accepted, sm.decided))} />
         <Kpi label="Cancellation rate" value={pct(ratio(sm.cancelled, sm.orders))} />
-        <Kpi label="Avg prep time" value={sm.prep_min != null ? `${fixed(sm.prep_min)} min` : "—"} />
-        <Kpi label="Avg shop rating" value={sm.avg_rating != null ? `${fixed(sm.avg_rating, 2)} ★` : "—"} />
+        <Kpi label="Avg prep time" value={sm.prep_min != null ? `${fixed(sm.prep_min)} min` : "-"} />
+        <Kpi label="Avg shop rating" value={sm.avg_rating != null ? `${fixed(sm.avg_rating, 2)} ★` : "-"} />
       </div>
 
       <div className="ap-filters" style={{ marginTop: 16 }}>
@@ -383,9 +383,9 @@ function Vendor({ A }) {
                   <td className="ap-num">{num(s.orders)}</td>
                   <td className="ap-num">{pct(s.acceptance, 0)}</td>
                   <td className="ap-num">{pct(s.cancellation, 0)}</td>
-                  <td className="ap-num">{s.prep_min != null ? `${fixed(s.prep_min)} min` : "—"}</td>
+                  <td className="ap-num">{s.prep_min != null ? `${fixed(s.prep_min)} min` : "-"}</td>
                   <td className="ap-num">
-                    {s.rating != null ? `${fixed(s.rating)} ★` : "—"}
+                    {s.rating != null ? `${fixed(s.rating)} ★` : "-"}
                     {s.rating_count ? <div className="ap-muted-line">{num(s.rating_count)}</div> : null}
                   </td>
                 </tr>

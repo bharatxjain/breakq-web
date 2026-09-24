@@ -6,13 +6,13 @@ import tickSuccessAnimation from "../assets/tick-success.json";
 import { useSeo } from "../lib/seo";
 import "./BecomePartner.css";
 
-// lottie-react pulls in the full lottie-web renderer (~380KB) — only load
+// lottie-react pulls in the full lottie-web renderer (~380KB) - only load
 // it once someone actually reaches the success screen, not on every page.
 const Lottie = lazy(() => import("lottie-react"));
 
 const MAX_FILE_MB = 5;
 
-// 'pending' is the safe default for real vendors going live — flip to
+// 'pending' is the safe default for real vendors going live - flip to
 // 'approved' locally only while testing the flow end-to-end.
 const SHOP_STATUS = "pending";
 
@@ -75,13 +75,25 @@ function validateShop(s, photo, location) {
   return errors;
 }
 
-async function uploadShopFile(file, baseName) {
+// Storefront photo: public bucket, shown to customers.
+async function uploadShopPhoto(file, baseName) {
   const ext = file.name.split(".").pop();
   const path = `${baseName}.${ext}`;
-  const { error } = await supabase.storage.from("shop-documents").upload(path, file, { upsert: true });
+  const { error } = await supabase.storage.from("shop-images").upload(path, file);
   if (error) throw error;
-  const { data } = supabase.storage.from("shop-documents").getPublicUrl(path);
+  const { data } = supabase.storage.from("shop-images").getPublicUrl(path);
   return data.publicUrl;
+}
+
+// Business proof: private bucket, under the owner's own folder (storage policy
+// enforces it). The stored URL is the authenticated endpoint, so it never works
+// without a session; the admin panel opens it through a signed URL.
+async function uploadBusinessProof(file, baseName, userId) {
+  const ext = file.name.split(".").pop();
+  const path = `${userId}/${baseName}.${ext}`;
+  const { error } = await supabase.storage.from("shop-proofs").upload(path, file);
+  if (error) throw error;
+  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/authenticated/shop-proofs/${path}`;
 }
 
 function getCurrentPosition() {
@@ -117,7 +129,7 @@ function writeStoredRegistration(email) {
   try {
     localStorage.setItem(REGISTRATION_KEY, JSON.stringify({ email }));
   } catch {
-    // localStorage unavailable (private mode, etc.) — success screen just
+    // localStorage unavailable (private mode, etc.) - success screen just
     // won't survive a refresh, which is a fine fallback.
   }
 }
@@ -192,7 +204,7 @@ export default function BecomePartner() {
   const [submitError, setSubmitError] = useState("");
 
   // Pick up an existing/newly-verified session (covers both the "click the
-  // email link" and "enter the OTP" paths — the link redirects back here
+  // email link" and "enter the OTP" paths - the link redirects back here
   // with a session already established).
   useEffect(() => {
     if (!supabase) return;
@@ -345,7 +357,7 @@ export default function BecomePartner() {
         const address = await reverseGeocode(lat, lng);
         updateShop("address", address);
       } catch {
-        // Coordinates are captured either way — address text is a bonus, not required.
+        // Coordinates are captured either way - address text is a bonus, not required.
       }
     } catch (err) {
       setLocationError(err.message || "Could not get your location. You can enter it manually below.");
@@ -365,8 +377,10 @@ export default function BecomePartner() {
 
     try {
       const shopId = "s_" + Date.now();
-      const photoUrl = await uploadShopFile(photo, `${shopId}_shop`);
-      const proofUrl = businessProof ? await uploadShopFile(businessProof, `${shopId}_proof`) : null;
+      const photoUrl = await uploadShopPhoto(photo, `${shopId}_shop`);
+      const proofUrl = businessProof
+        ? await uploadBusinessProof(businessProof, `${shopId}_proof`, session.user.id)
+        : null;
 
       const { error } = await supabase.from("shops").insert({
         id: shopId,
@@ -391,7 +405,7 @@ export default function BecomePartner() {
 
       // The confirmation email (vendor + admin) is sent server-side by the
       // vendor-registered edge function, fired by a database webhook on this
-      // insert — never from the browser, so it can't be abused as a mailer.
+      // insert - never from the browser, so it can't be abused as a mailer.
 
       writeStoredRegistration(session.user.email);
       setSuccessEmail(session.user.email);
@@ -684,7 +698,7 @@ export default function BecomePartner() {
 
                   <div className="bp-field bp-field-hours">
                     <label className="bp-label">
-                      Open — Close <span className="bp-required">*</span>
+                      Open to Close <span className="bp-required">*</span>
                     </label>
                     <div className="bp-hours-row">
                       <input
@@ -693,7 +707,7 @@ export default function BecomePartner() {
                         onChange={(e) => updateShop("openTime", e.target.value)}
                         className={shopErrors.openTime ? "has-error" : ""}
                       />
-                      <span>–</span>
+                      <span>-</span>
                       <input
                         type="time"
                         value={shop.closeTime}
@@ -757,7 +771,7 @@ export default function BecomePartner() {
                     onChange={(e) => setBusinessProof(e.target.files[0] || null)}
                     error={shopErrors.businessProof}
                     accept="image/*,.pdf"
-                    hint="Optional — image or PDF, up to 5MB"
+                    hint="Optional, image or PDF, up to 5MB"
                   />
                 </div>
 
@@ -784,7 +798,7 @@ export default function BecomePartner() {
                   <strong>{successEmail}</strong> as soon as it's verified.
                 </p>
                 <p>
-                  Meanwhile, download the BreakQ app and log in with the same email — your Vendor Dashboard unlocks
+                  Meanwhile, download the BreakQ app and log in with the same email. Your Vendor Dashboard unlocks
                   automatically once your shop is approved.
                 </p>
 

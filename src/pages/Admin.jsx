@@ -40,7 +40,7 @@ import Reviews from "../admin/views/Reviews";
 import Analytics from "../admin/views/Analytics";
 import "./Admin.css";
 
-// The page password is a shared pre-filter, NOT the identity check — it lives
+// The page password is a shared pre-filter, NOT the identity check - it lives
 // in the client bundle. Real authorization is profiles.role === 'admin' below.
 const GATE_PASSWORD =
   import.meta.env.VITE_ADMIN_GATE_PASSWORD || "breakq-admin";
@@ -82,7 +82,7 @@ const NAV = [
   { group: "System", items: [{ key: "health", label: "System", el: Health }] },
 ];
 const ALL_VIEWS = NAV.flatMap((g) => g.items);
-// Every section gets a real /admin/<key> route except "health" — it's an
+// Every section gets a real /admin/<key> route except "health" - it's an
 // internal setup/diagnostics panel, not a bookmarkable destination.
 const ROUTED_VIEWS = ALL_VIEWS.filter((n) => n.key !== "health");
 
@@ -107,8 +107,8 @@ function resolveTheme() {
 
 export default function Admin() {
   // The password gate is remembered for the tab session (sessionStorage) so
-  // that remounting Admin — e.g. after a browser back/forward, since the
-  // in-panel nav never pushes history entries — doesn't force retyping the
+  // that remounting Admin - e.g. after a browser back/forward, since the
+  // in-panel nav never pushes history entries - doesn't force retyping the
   // shared pre-filter password. It's not the real identity check anyway.
   const [gateOk, setGateOk] = useState(() => {
     try {
@@ -130,7 +130,7 @@ export default function Admin() {
   }, []);
 
   // On every mount past the gate, resume an existing admin session instead of
-  // blindly signing out — otherwise a remount (browser back/forward, a tab
+  // blindly signing out - otherwise a remount (browser back/forward, a tab
   // getting backgrounded and restored, etc.) reads as "getting logged out".
   // Only fall back to a fresh OTP login when there's no valid admin session.
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function Admin() {
           try {
             sessionStorage.setItem(GATE_KEY, "1");
           } catch {
-            /* storage unavailable — gate just won't persist across remounts */
+            /* storage unavailable - gate just won't persist across remounts */
           }
           setGateOk(true);
         }}
@@ -457,13 +457,13 @@ function LoginScreen({ phase, setPhase, onAuthed }) {
 function Shell({ onSignOut }) {
   const location = useLocation();
   const navigate = useNavigate();
-  // System/Health isn't routed — it renders in place, toggled by this flag,
+  // System/Health isn't routed - it renders in place, toggled by this flag,
   // so the URL only ever reflects the bookmarkable sections.
   const [healthOpen, setHealthOpen] = useState(false);
   const routedKey =
     ROUTED_VIEWS.find((n) => location.pathname === `/admin/${n.key}`)?.key ??
     "dashboard";
-  // Where a bare "/admin" hit should land — last visited section, if any.
+  // Where a bare "/admin" hit should land - last visited section, if any.
   const [homeRedirect] = useState(() => {
     try {
       const saved = sessionStorage.getItem(VIEW_KEY);
@@ -494,7 +494,7 @@ function Shell({ onSignOut }) {
   const searchRef = useRef(null);
 
   // Remembers the last visited section only so a bare "/admin" hit knows
-  // where to redirect — actual back/forward navigation is now handled by
+  // where to redirect - actual back/forward navigation is now handled by
   // real browser history via the routes below.
   useEffect(() => {
     if (!healthOpen) sessionStorage.setItem(VIEW_KEY, routedKey);
@@ -518,7 +518,7 @@ function Shell({ onSignOut }) {
     try {
       localStorage.setItem("ap_nav_collapsed", collapsed ? "1" : "0");
     } catch {
-      /* storage unavailable — collapse just won't persist */
+      /* storage unavailable - collapse just won't persist */
     }
   }, [collapsed]);
 
@@ -526,7 +526,7 @@ function Shell({ onSignOut }) {
     try {
       localStorage.setItem(THEME_KEY, theme);
     } catch {
-      /* storage unavailable — theme choice just won't persist */
+      /* storage unavailable - theme choice just won't persist */
     }
   }, [theme]);
 

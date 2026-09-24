@@ -1,6 +1,6 @@
-/* JourneyTimeline — dock-style tick rail + preview card.
+/* JourneyTimeline - dock-style tick rail + preview card.
    Light section register: white ground, faint recessed card, 1px hairline
-   borders, 12–16px radii, one accent (BreakQ purple), Inter, a single 1px lift,
+   borders, 12-16px radii, one accent (BreakQ purple), Inter, a single 1px lift,
    no decorative gradients. Everything eases on cubic-bezier(.16,1,.3,1). */
 
 .jt {
@@ -152,7 +152,7 @@
     font-weight 0.18s var(--jt-ease);
 }
 
-/* full step title — only surfaced in the reduced-motion list layout */
+/* full step title - only surfaced in the reduced-motion list layout */
 .jt-tick-title {
   display: none;
 }

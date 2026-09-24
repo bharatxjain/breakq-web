@@ -66,7 +66,7 @@ export default function Categories() {
           error={cats.error}
           onRetry={cats.reload}
           isEmpty={rows.length === 0}
-          empty="No categories yet — use “Seed default categories”."
+          empty="No categories yet. Use “Seed default categories”."
         >
           <div className="ap-table-wrap">
             <table className="ap-table">
@@ -87,7 +87,7 @@ export default function Categories() {
                       <td>
                         <strong>{c.name}</strong>
                       </td>
-                      <td className="ap-mono">{c.icon_name || "—"}</td>
+                      <td className="ap-mono">{c.icon_name || "-"}</td>
                       <td className="ap-num">{num(c.item_count)}</td>
                       <td className="ap-num">{u ? num(u.shops) : "0"}</td>
                       <td className="ap-row-actions">
@@ -103,7 +103,7 @@ export default function Categories() {
                               notify("Category deleted", "ok");
                               cats.reload();
                             } catch (e) {
-                              notify(e.message || "Failed — products may still reference it", "danger");
+                              notify(e.message || "Failed: products may still reference it", "danger");
                             }
                           }}
                         >

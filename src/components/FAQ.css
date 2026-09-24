@@ -129,7 +129,7 @@
   color: var(--primary);
 }
 
-/* auto-height reveal — grid-rows 0fr → 1fr */
+/* auto-height reveal - grid-rows 0fr → 1fr */
 .faq-a {
   display: grid;
   grid-template-rows: 0fr;

@@ -40,7 +40,7 @@ export const faqs = [
 
 const PREVIEW_COUNT = 5;
 
-/* On-brand FAQ illustration — decorative, hidden on mobile. */
+/* On-brand FAQ illustration - decorative, hidden on mobile. */
 function FaqArt() {
   return (
     <svg

@@ -1,4 +1,4 @@
-/* ===== How it works — sticky scroll-progress stepper ===== */
+/* ===== How it works - sticky scroll-progress stepper ===== */
 
 .sj-section {
   position: relative;
@@ -93,7 +93,7 @@
   background: var(--primary-light);
 }
 
-/* Filled portion of the track — grows behind the rider as you scroll. */
+/* Filled portion of the track - grows behind the rider as you scroll. */
 .sj-line-fill {
   position: absolute;
   left: var(--sj-line-left, 17px);
@@ -155,7 +155,7 @@
   pointer-events: none;
 }
 
-/* "Bike start" — a quick rev on the icon itself the moment it peels off.
+/* "Bike start" - a quick rev on the icon itself the moment it peels off.
    Kept on the child so it never fights the parent's straight-down travel. */
 .sj-rider.is-finish .sj-rider-ico {
   animation: sj-rev 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -251,13 +251,13 @@
   box-shadow: 0 0 0 5px rgba(112, 1, 254, 0.14);
 }
 
-/* Completed step — fill the dot and pop a tick. */
+/* Completed step - fill the dot and pop a tick. */
 .sj-step.is-done .sj-dot {
   background: var(--primary);
   border-color: var(--primary);
 }
 
-/* number badge — only shown in the mobile numbered list */
+/* number badge - only shown in the mobile numbered list */
 .sj-dot-num {
   display: none;
 }
@@ -278,7 +278,7 @@
   transform: scale(1);
 }
 
-/* Rider has reached the end — pulse the final dot. */
+/* Rider has reached the end - pulse the final dot. */
 .sj-step:last-child.is-done .sj-dot {
   animation: sj-dot-celebrate 1.15s ease-out 2;
 }
@@ -730,7 +730,7 @@
   right: -44px;
 }
 
-/* ---------- responsive: below 780px — plain numbered list ----------
+/* ---------- responsive: below 780px - plain numbered list ----------
    No pinning, no scroll animation, no preview column: the section
    collapses to a simple numbered 1-2-3 list of the steps. */
 
@@ -768,7 +768,7 @@
     grid-template-columns: 1fr;
   }
   /* .sj-grid also carries .container (padding: 0 24px), which wins the
-     cascade — so put the top/bottom spacing on .sj-steps instead. */
+     cascade, so put the top/bottom spacing on .sj-steps instead. */
   .sj-steps {
     gap: 30px;
     margin-top: 44px; /* space above step 1 */
@@ -806,7 +806,7 @@
     color: var(--white);
   }
 
-  /* every step reads the same — nothing to switch between */
+  /* every step reads the same - nothing to switch between */
   .sj-step-title,
   .sj-step.is-active .sj-step-title {
     color: var(--ink);
@@ -873,7 +873,7 @@
   .sj-step:last-child.is-done .sj-dot {
     animation: none;
   }
-  /* No ride-off — the scooter just parks at the finish line. */
+  /* No ride-off - the scooter just parks at the finish line. */
   .sj-rider,
   .sj-rider.is-finish {
     transform: translate(-50%, -50%);

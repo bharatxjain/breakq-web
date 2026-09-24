@@ -94,7 +94,7 @@ export default function ContactSection() {
               disabled={sending}
             />
 
-            {/* honeypot — hidden from real users, catches bots */}
+            {/* honeypot - hidden from real users, catches bots */}
             <input
               type="text"
               className="contact-hp"

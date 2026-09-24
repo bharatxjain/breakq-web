@@ -131,7 +131,7 @@ ul {
 
 /* ----- shared custom scrollbar for horizontally/vertically scrollable UI ----- */
 /* Covers: legal-page TOC pill rows, the Why BreakQ comparison table, the hero
-   phone mockup's chip row, and the mobile nav drawer — anywhere a native
+   phone mockup's chip row, and the mobile nav drawer, anywhere a native
    browser scrollbar would otherwise show its clunky default look. */
 
 .privacy-toc nav,

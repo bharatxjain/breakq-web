@@ -7,7 +7,7 @@ const features = [
   {
     icon: "🏬",
     title: "Multi-Vendor, Multi-Category Discovery",
-    desc: "Explore a wide network of verified local stores Kirana, Dairy, Medical, Electrical, and more — all in your area.",
+    desc: "Explore a wide network of verified local stores: Kirana, Dairy, Medical, Electrical, and more, all in your area.",
     image: "https://placehold.co/320x640/7001FE/ffffff?text=Discovery",
   },
   {

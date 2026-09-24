@@ -121,7 +121,7 @@ function Tiers() {
                         </span>
                       ))}
                       {FLAGS.filter(([k]) => t[k]).length === 0 && (
-                        <span className="ap-muted-line">—</span>
+                        <span className="ap-muted-line">-</span>
                       )}
                     </span>
                   </td>
@@ -266,7 +266,7 @@ function TierModal({ tier, onClose, onSaved, onError }) {
             onChange={(e) => set("offer_ends_at", e.target.value)}
           />
         </Field>
-        <Field label="Tagline" hint='e.g. "Diwali offer — 40% off"'>
+        <Field label="Tagline" hint='e.g. "Diwali offer, 40% off"'>
           <input
             value={form.tagline || ""}
             onChange={(e) => set("tagline", e.target.value)}
@@ -323,7 +323,7 @@ function Subscribers() {
               {rows.map((r) => (
                 <tr key={r.id}>
                   <td>{r.shops?.name || r.shop_id}</td>
-                  <td>{r.subscription_tiers?.display_name || "—"}</td>
+                  <td>{r.subscription_tiers?.display_name || "-"}</td>
                   <td>
                     <Badge tone={statusTone(r.status)}>{r.status}</Badge>
                   </td>
@@ -397,7 +397,7 @@ function ChangeTierModal({ row, tiers, onClose, onDone, onError }) {
 
   return (
     <Modal
-      title={`Change tier — ${row.shops?.name || row.shop_id}`}
+      title={`Change tier: ${row.shops?.name || row.shop_id}`}
       onClose={onClose}
       footer={
         <>
@@ -423,7 +423,7 @@ function ChangeTierModal({ row, tiers, onClose, onDone, onError }) {
           <option value="">Select…</option>
           {tiers.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.display_name} — {money(t.price_rupees)} /{" "}
+              {t.display_name}: {money(t.price_rupees)} /{" "}
               {t.commission_percent}%
             </option>
           ))}

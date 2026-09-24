@@ -37,8 +37,10 @@ create policy "Vendors can update their own shop"
   with check (owner_id = auth.uid());
 
 -- ── shop-documents storage bucket ────────────────────────────────────────
--- Public read so customers can see shop photos without logging in;
--- upload restricted to signed-in users only.
+-- Legacy bucket: older shop photos live here. New registrations upload
+-- photos to shop-images and business proofs to the private shop-proofs
+-- bucket (see supabase/shop_proofs_private.sql). Do not store documents here:
+-- the bucket is public, so anything in it is readable by URL.
 
 insert into storage.buckets (id, name, public)
 values ('shop-documents', 'shop-documents', true)

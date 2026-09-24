@@ -25,7 +25,7 @@ const PAGE_SIZE = 50;
 const BASE_ROLES = ["customer", "vendor", "admin"];
 
 // Keys we render first (in this order) in the details modal; anything else on
-// the row is shown afterwards. Purely presentational — read-only.
+// the row is shown afterwards. Purely presentational - read-only.
 const PRIMARY_KEYS = [
   "email",
   "role",
@@ -149,25 +149,25 @@ export default function Users({ onNavigate }) {
         <div className="ap-stat">
           <span className="ap-stat-label">Total users</span>
           <span className="ap-stat-value">
-            {num(counts ? grandTotal : "—")}
+            {num(counts ? grandTotal : "-")}
           </span>
         </div>
         <div className="ap-stat">
           <span className="ap-stat-label">Total customers</span>
           <span className="ap-stat-value">
-            {num(counts ? counts.customer || 0 : "—")}
+            {num(counts ? counts.customer || 0 : "-")}
           </span>
         </div>
         <div className="ap-stat">
           <span className="ap-stat-label">Total vendors</span>
           <span className="ap-stat-value">
-            {num(counts ? counts.vendor || 0 : "—")}
+            {num(counts ? counts.vendor || 0 : "-")}
           </span>
         </div>
         <div className="ap-stat">
           <span className="ap-stat-label">Total admins</span>
           <span className="ap-stat-value">
-            {num(counts ? counts.admin || 0 : "—")}
+            {num(counts ? counts.admin || 0 : "-")}
           </span>
         </div>
       </section>
@@ -258,11 +258,11 @@ export default function Users({ onNavigate }) {
                 <tr key={u.id}>
                   <td>
                     <button className="ap-link" onClick={() => setDetail(u)}>
-                      {u.full_name || u.name || u.display_name || "—"}
+                      {u.full_name || u.name || u.display_name || "-"}
                     </button>
                     {u.id === myId && <Badge tone="neutral">you</Badge>}
                   </td>
-                  <td>{u.email || "—"}</td>
+                  <td>{u.email || "-"}</td>
                   <td>
                     <Badge tone={u.role === "admin" ? "ok" : "neutral"}>
                       {u.role || "unknown"}
@@ -273,7 +273,7 @@ export default function Users({ onNavigate }) {
                       u.mobile ||
                       u.phone_number ||
                       u.user_metadata?.mobile ||
-                      "—"}
+                      "-"}
                   </td>
                   <td>
                     <AccountBadge user={u} />
@@ -314,7 +314,7 @@ export default function Users({ onNavigate }) {
 
         <div className="ap-pager">
           <span>
-            {from}–{to} of {num(total)}
+            {from}-{to} of {num(total)}
           </span>
           <div className="ap-pager-btns">
             <button
@@ -361,7 +361,7 @@ export default function Users({ onNavigate }) {
               They&rsquo;re signed out, can&rsquo;t sign in again, and show as{" "}
               <strong>blocked</strong> here until unblocked.
               {blocking.role === "vendor" &&
-                " Their shop stays as it is — suspend it from Vendors if needed."}
+                " Their shop stays as it is. Suspend it from Vendors if needed."}
             </>
           }
           onClose={() => setBlocking(null)}
@@ -431,7 +431,7 @@ function UserDetail({
         <div className="ap-detail">
           <span className="ap-detail-label">Last sign-in</span>
           <span className="ap-detail-value">
-            {S?.last_sign_in_at ? fmtDateTime(S.last_sign_in_at) : "—"}
+            {S?.last_sign_in_at ? fmtDateTime(S.last_sign_in_at) : "-"}
           </span>
         </div>
         {user.is_blocked && (
@@ -445,7 +445,7 @@ function UserDetail({
             <div className="ap-detail ap-detail-span">
               <span className="ap-detail-label">Block reason</span>
               <span className="ap-detail-value">
-                {user.blocked_reason || "—"}
+                {user.blocked_reason || "-"}
               </span>
             </div>
           </>
@@ -474,7 +474,7 @@ function UserDetail({
             <div className="ap-metric">
               <span className="ap-metric-label">Last order</span>
               <span className="ap-metric-value">
-                {S.orders?.last_at ? fmtDate(S.orders.last_at) : "—"}
+                {S.orders?.last_at ? fmtDate(S.orders.last_at) : "-"}
               </span>
             </div>
             <div className="ap-metric">
@@ -529,7 +529,7 @@ function UserDetail({
         {keys.map((k) => {
           const v = user[k];
           let display;
-          if (v === null || v === undefined || v === "") display = "—";
+          if (v === null || v === undefined || v === "") display = "-";
           else if (DATE_KEYS.has(k)) display = fmtDateTime(v);
           else if (typeof v === "boolean") display = v ? "yes" : "no";
           else if (typeof v === "object") display = JSON.stringify(v);

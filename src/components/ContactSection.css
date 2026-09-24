@@ -44,7 +44,7 @@
   transform: none;
 }
 
-/* honeypot — off-screen, not display:none so bots still fill it */
+/* honeypot - off-screen, not display:none so bots still fill it */
 .contact-hp {
   position: absolute;
   left: -9999px;

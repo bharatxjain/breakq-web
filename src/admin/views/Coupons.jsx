@@ -37,7 +37,7 @@ const BLANK = {
 function expiry(validUntil) {
   if (!validUntil) return { text: "No expiry", tone: "neutral" };
   const ms = new Date(validUntil).getTime() - Date.now();
-  if (Number.isNaN(ms)) return { text: "—", tone: "neutral" };
+  if (Number.isNaN(ms)) return { text: "-", tone: "neutral" };
   const days = Math.ceil(ms / 86400000);
   if (days < 0) return { text: `Expired ${-days}d ago`, tone: "danger" };
   if (days === 0) return { text: "Expires today", tone: "warn" };
@@ -114,10 +114,10 @@ export default function Coupons() {
                       {c.discount_percent ? `${c.discount_percent}%` : ""}
                       {c.discount_percent && c.discount_flat_rupees ? " · " : ""}
                       {c.discount_flat_rupees ? money(c.discount_flat_rupees) : ""}
-                      {!c.discount_percent && !c.discount_flat_rupees ? "—" : ""}
+                      {!c.discount_percent && !c.discount_flat_rupees ? "-" : ""}
                     </td>
-                    <td className="ap-num">{c.min_order_amount ? money(c.min_order_amount) : "—"}</td>
-                    <td className="ap-num">{c.max_discount_rupees ? money(c.max_discount_rupees) : "—"}</td>
+                    <td className="ap-num">{c.min_order_amount ? money(c.min_order_amount) : "-"}</td>
+                    <td className="ap-num">{c.max_discount_rupees ? money(c.max_discount_rupees) : "-"}</td>
                     <td>
                       {used === undefined ? (
                         <button className="ap-link" onClick={() => checkUsage(c.code)}>
@@ -146,7 +146,7 @@ export default function Coupons() {
                       {daily.filter((v) => v > 0).length >= 2 ? (
                         <Spark values={daily} />
                       ) : (
-                        <span className="ap-td-empty">—</span>
+                        <span className="ap-td-empty">-</span>
                       )}
                     </td>
                     <td>
@@ -189,7 +189,7 @@ export default function Coupons() {
       <p className="ap-note">
         Redemptions are counted live against <code>orders</code> (<code>promo_code = code</code>,{" "}
         <code>status != 'Cancelled'</code>). {statsMissing && "Run supabase/admin_analytics.sql for the trend and per-code stats. "}
-        There is no per-vendor targeting on promo codes — a code applies platform-wide.
+        There is no per-vendor targeting on promo codes. A code applies platform-wide.
       </p>
 
       {viewing && <CouponDetail c={viewing.c} st={viewing.st} onClose={() => setViewing(null)} />}
@@ -215,7 +215,7 @@ function CouponDetail({ c, st, onClose }) {
   const exp = expiry(c.valid_until);
   const pct = c.usage_limit ? Math.round((st.redemptions / c.usage_limit) * 100) : null;
   return (
-    <Modal title={`${c.code} — usage`} onClose={onClose} wide>
+    <Modal title={`${c.code} usage`} onClose={onClose} wide>
       <div className="ap-stat-grid">
         <div className="ap-stat">
           <span className="ap-stat-label">Redemptions</span>
@@ -228,7 +228,7 @@ function CouponDetail({ c, st, onClose }) {
         </div>
         <div className="ap-stat">
           <span className="ap-stat-label">Last used</span>
-          <span className="ap-stat-value">{st.last_used ? fmtDate(st.last_used) : "—"}</span>
+          <span className="ap-stat-value">{st.last_used ? fmtDate(st.last_used) : "-"}</span>
         </div>
         <div className="ap-stat">
           <span className="ap-stat-label">Window</span>

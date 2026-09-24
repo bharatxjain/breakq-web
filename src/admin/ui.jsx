@@ -13,20 +13,20 @@ import {
 
 export function money(n) {
   const v = Number(n);
-  if (!Number.isFinite(v)) return "—";
+  if (!Number.isFinite(v)) return "-";
   return "₹" + v.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
 
 export function num(n) {
   const v = Number(n);
-  if (!Number.isFinite(v)) return "—";
+  if (!Number.isFinite(v)) return "-";
   return v.toLocaleString("en-IN");
 }
 
 export function fmtDate(s) {
-  if (!s) return "—";
+  if (!s) return "-";
   const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -35,9 +35,9 @@ export function fmtDate(s) {
 }
 
 export function fmtDateTime(s) {
-  if (!s) return "—";
+  if (!s) return "-";
   const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -49,7 +49,7 @@ export function fmtDateTime(s) {
 
 export function hourLabel(h) {
   const n = Number(h);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "-";
   const am = n < 12;
   const twelve = n % 12 === 0 ? 12 : n % 12;
   return `${twelve} ${am ? "AM" : "PM"}`;
@@ -278,7 +278,7 @@ export function Toggle({ checked, onChange, label }) {
 
 // Floating tooltip content for a chart element. The element it sits inside
 // needs `position: relative` and a `:hover`/`:focus-visible` rule that shows
-// `.ap-chart-tooltip` — see the per-chart CSS blocks in Admin.css.
+// `.ap-chart-tooltip` - see the per-chart CSS blocks in Admin.css.
 export function ChartTooltip({ children }) {
   return (
     <span className="ap-chart-tooltip" role="tooltip">
@@ -357,8 +357,8 @@ export function DeltaChip({ now, prev }) {
 /* -------------------------------------------------------- kpi trend line --- */
 
 // Plain-text trend line for a card footer (arrow + colored % + muted
-// comparison label) — visually distinct from the pill-styled DeltaChip.
-// Renders nothing only when `now` itself isn't a real number — a missing or
+// comparison label) - visually distinct from the pill-styled DeltaChip.
+// Renders nothing only when `now` itself isn't a real number - a missing or
 // zero baseline still renders (as "New"), matching TrendArrow's convention,
 // so the card's divider never sits above an empty gap.
 export function TrendLine({ now, prev, comparison }) {
@@ -616,7 +616,7 @@ export function BarChart({
   unit = "",
   onBarClick,
 }) {
-  // Tapping a bar toggles its tooltip "pinned" open — CSS :hover doesn't
+  // Tapping a bar toggles its tooltip "pinned" open - CSS :hover doesn't
   // fire reliably on touch, so this is what makes the chart usable on phones.
   const [pinned, setPinned] = useState(null);
   if (!data || data.length === 0)
@@ -700,7 +700,7 @@ export function Donut({
     return { ...seg, i, value, dash, offset, midFraction };
   });
   const active = hover != null ? arcs[hover] : null;
-  // Wedge midpoint as a % position within the box — the svg is rotated
+  // Wedge midpoint as a % position within the box - the svg is rotated
   // -90deg via CSS so fraction 0 sits at 12 o'clock, increasing clockwise.
   // R/66 scales the viewBox ring radius (54 of 132) down to the box's own
   // percentage space so the point lands on the ring, not the box edge.
@@ -872,7 +872,7 @@ export function NeedsSetup({
 }) {
   return (
     <p className="ap-async-empty">
-      {what} needs setup — run <code>{file}</code> in the Supabase SQL editor.
+      {what} needs setup. Run <code>{file}</code> in the Supabase SQL editor.
     </p>
   );
 }
@@ -1126,7 +1126,7 @@ export function ComparisonBars({
               <span className="ap-cmpbars-label">Wk {i + 1}</span>
               <ChartTooltip>
                 <strong>
-                  Days {i * size + 1}–{Math.min(SPAN, (i + 1) * size)}
+                  Days {i * size + 1}-{Math.min(SPAN, (i + 1) * size)}
                 </strong>
                 <span>Last: {format(cur[i])}</span>
                 <span>Prior: {format(pri[i])}</span>
@@ -1144,7 +1144,7 @@ export function ComparisonBars({
   );
 }
 
-// Vertical bar histogram — every label + count is shown (unlike BarChart).
+// Vertical bar histogram - every label + count is shown (unlike BarChart).
 export function Histogram({ bins, format = num }) {
   if (!bins || bins.length === 0)
     return <div className="ap-async-empty">No data.</div>;

@@ -212,17 +212,17 @@ export default function Orders({ initialFilter, onNavigate }) {
                     </button>
                   </td>
                   <td>
-                    {o.customer_name || o._customer?.full_name || "—"}
+                    {o.customer_name || o._customer?.full_name || "-"}
                     {o._customer?.email && <div className="ap-muted-line">{o._customer.email}</div>}
                   </td>
-                  <td>{o._shop?.name || o.shop_id || "—"}</td>
+                  <td>{o._shop?.name || o.shop_id || "-"}</td>
                   <td className="ap-num">{money(o.total_amount)}</td>
                   <td>
-                    <Badge tone={statusTone(o.payment_status)}>{o.payment_status || "—"}</Badge>
+                    <Badge tone={statusTone(o.payment_status)}>{o.payment_status || "-"}</Badge>
                     {o.payment_method && <div className="ap-muted-line">{o.payment_method}</div>}
                   </td>
                   <td>
-                    <Badge tone={orderTone(o.status)}>{o.status || "—"}</Badge>
+                    <Badge tone={orderTone(o.status)}>{o.status || "-"}</Badge>
                   </td>
                   <td>{fmtDateTime(o.created_at)}</td>
                   <td className="ap-row-actions">
@@ -323,12 +323,12 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
     <>
       <Modal title={`Order ${orderLabel(o)}`} onClose={onClose} wide>
         <div className="ap-detail-grid">
-          <Detail label="Status" value={<Badge tone={orderTone(o.status)}>{o.status || "—"}</Badge>} />
+          <Detail label="Status" value={<Badge tone={orderTone(o.status)}>{o.status || "-"}</Badge>} />
           <Detail
             label="Payment"
             value={
               <>
-                <Badge tone={statusTone(o.payment_status)}>{o.payment_status || "—"}</Badge>{" "}
+                <Badge tone={statusTone(o.payment_status)}>{o.payment_status || "-"}</Badge>{" "}
                 {o.payment_method || ""}
               </>
             }
@@ -342,7 +342,7 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
             label="Customer"
             value={
               <>
-                {o.customer_name || o._customer?.full_name || "—"}
+                {o.customer_name || o._customer?.full_name || "-"}
                 {o._customer?.email && <div className="ap-muted-line">{o._customer.email}</div>}
                 {customerId && onNavigate && (
                   <button
@@ -374,12 +374,12 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
           {o.cancel_reason && (
             <Detail
               label="Cancellation"
-              value={`${o.cancel_reason}${o.cancelled_by ? ` — by ${o.cancelled_by}` : ""}`}
+              value={`${o.cancel_reason}${o.cancelled_by ? ` (by ${o.cancelled_by})` : ""}`}
               span
             />
           )}
           {o.refund_amount != null && (
-            <Detail label="Refund" value={`${money(o.refund_amount)} — ${o.refund_reason || ""}`} span />
+            <Detail label="Refund" value={`${money(o.refund_amount)}${o.refund_reason ? ` (${o.refund_reason})` : ""}`} span />
           )}
         </div>
 
@@ -402,9 +402,9 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
                   <tr key={i}>
                     <td>{r.name}</td>
                     <td className="ap-num">{num(r.qty)}</td>
-                    <td className="ap-num">{r.price != null ? money(r.price) : "—"}</td>
+                    <td className="ap-num">{r.price != null ? money(r.price) : "-"}</td>
                     <td className="ap-num">
-                      {r.price != null ? money((Number(r.qty) || 0) * Number(r.price)) : "—"}
+                      {r.price != null ? money((Number(r.qty) || 0) * Number(r.price)) : "-"}
                     </td>
                   </tr>
                 ))}
@@ -453,7 +453,7 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
           )}
           {!canCancel && !canRefund && (
             <span className="ap-field-hint">
-              No actions available — the order is {o.status?.toLowerCase() || "closed"} and payment is{" "}
+              No actions available: the order is {o.status?.toLowerCase() || "closed"} and payment is{" "}
               {o.payment_status || "unknown"}.
             </span>
           )}
@@ -470,7 +470,7 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
           message={
             <>
               The order is marked <strong>Cancelled</strong> (cancelled by admin).
-              {o.payment_status === "paid" && " It was paid online — record a refund afterwards once the money is returned."}
+              {o.payment_status === "paid" && " It was paid online. Record a refund afterwards once the money is returned."}
             </>
           }
           onSubmit={(reason) => run(() => cancelOrder(o.id, reason), "Order cancelled")}
@@ -487,7 +487,7 @@ function OrderDetail({ order: o, onClose, onChanged, onError, onNavigate }) {
           placeholder="e.g. Items out of stock after payment"
           message={
             <>
-              Marks the payment as <strong>refunded</strong> and records the amount. This is bookkeeping —
+              Marks the payment as <strong>refunded</strong> and records the amount. This is bookkeeping only;
               return the money through the payment gateway dashboard (or in cash) as well.
             </>
           }
@@ -502,7 +502,7 @@ function Detail({ label, value, span }) {
   return (
     <div className={`ap-detail ${span ? "ap-detail-span" : ""}`}>
       <span className="ap-detail-label">{label}</span>
-      <span className="ap-detail-value">{value ?? "—"}</span>
+      <span className="ap-detail-value">{value ?? "-"}</span>
     </div>
   );
 }

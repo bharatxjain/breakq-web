@@ -14,7 +14,7 @@ export function ReasonDialog({
   required = true,
   placeholder = "",
   hint = "Stored in the moderation history.",
-  amount, // { label, max, initial } — shows a number field when set
+  amount, // { label, max, initial } - shows a number field when set
   busy,
   onSubmit,
   onClose,
@@ -110,7 +110,7 @@ export function ModerationHistory({ entityType, entityId, refreshKey = 0, limit 
   if (data?._missing)
     return (
       <p className="ap-async-empty">
-        Moderation history needs setup — run <code>supabase/admin_operations.sql</code>.
+        Moderation history needs setup. Run <code>supabase/admin_operations.sql</code>.
       </p>
     );
   const rows = data?.rows || [];
@@ -141,8 +141,8 @@ export function ModerationHistory({ entityType, entityId, refreshKey = 0, limit 
                 <td>
                   <Badge tone={ACTION_TONE[r.action] || "neutral"}>{actionLabel(r.action)}</Badge>
                 </td>
-                <td>{r.reason || <span className="ap-td-empty">—</span>}</td>
-                <td>{r._admin?.email || r._admin?.full_name || "—"}</td>
+                <td>{r.reason || <span className="ap-td-empty">-</span>}</td>
+                <td>{r._admin?.email || r._admin?.full_name || "-"}</td>
               </tr>
             ))}
           </tbody>
@@ -176,7 +176,7 @@ export function Pager({ page, pageSize, total, onPage }) {
   return (
     <div className="ap-pager">
       <span>
-        {from}–{to} of {num(total)}
+        {from}-{to} of {num(total)}
       </span>
       <div className="ap-pager-btns">
         <button

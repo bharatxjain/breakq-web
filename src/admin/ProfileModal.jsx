@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getMyProfile, updateMyProfile } from "./api";
 import { Async, Field, Modal, useAsync, useToast } from "./ui";
 
-// Only these columns are offered for editing — and only the ones that actually
+// Only these columns are offered for editing - and only the ones that actually
 // exist on the profiles row. `role` and `id` are never touched here.
 const EDITABLE = ["full_name", "name", "display_name", "phone", "avatar_url"];
 const LABELS = {
@@ -59,12 +59,12 @@ function ProfileForm({ profile, onClose }) {
     <>
       <div className="ap-detail ap-detail-span">
         <span className="ap-detail-label">Email</span>
-        <span className="ap-detail-value">{profile.email || "—"}</span>
+        <span className="ap-detail-value">{profile.email || "-"}</span>
         <span className="ap-field-hint">Changing your login email isn&rsquo;t supported here.</span>
       </div>
       <div className="ap-detail ap-detail-span">
         <span className="ap-detail-label">Role</span>
-        <span className="ap-detail-value">{profile.role || "—"}</span>
+        <span className="ap-detail-value">{profile.role || "-"}</span>
       </div>
 
       {fields.length === 0 ? (

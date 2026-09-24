@@ -156,7 +156,7 @@ function ReviewList({ initialFilter }) {
 
       {needsSetup ? (
         <p className="ap-async-empty">
-          Review moderation needs setup — run <code>supabase/admin_operations.sql</code>.
+          Review moderation needs setup. Run <code>supabase/admin_operations.sql</code>.
         </p>
       ) : (
         <Async state={state} error={error} onRetry={reload} isEmpty={rows.length === 0} empty="No reviews match.">
@@ -177,7 +177,7 @@ function ReviewList({ initialFilter }) {
                 {rows.map((r) => (
                   <tr key={r.id} className={r.is_hidden ? "is-deleted" : ""}>
                     <td style={{ maxWidth: 360 }}>
-                      {r.review || <span className="ap-td-empty">— no text —</span>}
+                      {r.review || <span className="ap-td-empty">No text</span>}
                       {r.is_reported && r.report_reason && (
                         <div className="ap-muted-line">Reported: {r.report_reason}</div>
                       )}
@@ -261,7 +261,7 @@ function ReviewList({ initialFilter }) {
               <p>{DIALOGS[dialog.action].message}</p>
               <blockquote className="ap-quote">
                 {dialog.review.rating}
-                {STAR} — {dialog.review.review || "(no text)"}
+                {STAR} {dialog.review.review || "(no text)"}
               </blockquote>
             </>
           }

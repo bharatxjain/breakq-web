@@ -21,7 +21,7 @@ const drivers = [
 
 const investors = [
   "TURBOSTART",
-  "UV — Unpopular Ventures",
+  "UV (Unpopular Ventures)",
   "snow leopard technology ventures",
 ];
 

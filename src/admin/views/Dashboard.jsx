@@ -116,7 +116,7 @@ export default function Dashboard({ onNavigate }) {
                 {A.coupon_watch.length === 1
                   ? "A promo code is"
                   : `${A.coupon_watch.length} promo codes are`}{" "}
-                at high global usage — promo codes have no per-vendor targeting,
+                at high global usage. Promo codes have no per-vendor targeting,
                 so one code applies platform-wide:{" "}
                 {A.coupon_watch.map((c, i) => (
                   <span key={c.code}>
@@ -256,7 +256,7 @@ export default function Dashboard({ onNavigate }) {
                   )}
                 </div>
                 <span className="ap-kpi-value">
-                  {A?.shop_signups ? num(A.shop_signups.d30) : "—"}
+                  {A?.shop_signups ? num(A.shop_signups.d30) : "-"}
                 </span>
                 {A?.shop_signups ? (
                   <span className="ap-kpi-foot">
@@ -317,7 +317,7 @@ export default function Dashboard({ onNavigate }) {
                   </>
                 ) : (
                   <>
-                    <span className="ap-kpi-value">—</span>
+                    <span className="ap-kpi-value">-</span>
                     {anMissing ? (
                       <NeedsSetup what="Event volume" />
                     ) : (
@@ -354,7 +354,7 @@ export default function Dashboard({ onNavigate }) {
                   </>
                 ) : (
                   <>
-                    <span className="ap-kpi-value">—</span>
+                    <span className="ap-kpi-value">-</span>
                     {anMissing ? (
                       <NeedsSetup what="Subscriber count" />
                     ) : (
@@ -384,7 +384,7 @@ export default function Dashboard({ onNavigate }) {
                     ? num(A.pending_approvals)
                     : Number.isFinite(shopsPending)
                       ? num(shopsPending)
-                      : "—"}
+                      : "-"}
                 </span>
                 <span className="ap-kpi-foot">
                   awaiting review in the Vendors queue
@@ -400,7 +400,7 @@ export default function Dashboard({ onNavigate }) {
               />
               <MiniStat
                 label="Busiest hour"
-                value={data.busy_hour ? hourLabel(data.busy_hour.hour) : "—"}
+                value={data.busy_hour ? hourLabel(data.busy_hour.hour) : "-"}
                 sub={
                   data.busy_hour
                     ? `${num(data.busy_hour.orders)} orders`
@@ -415,7 +415,7 @@ export default function Dashboard({ onNavigate }) {
               <MiniStat label="Platform fee · 30 days" value={money(fee)} />
             </section>
 
-            {/* main trend — bar comparison, last 30 days vs prior 30 days */}
+            {/* main trend - bar comparison, last 30 days vs prior 30 days */}
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Last 30 days vs prior 30 days</h2>
@@ -444,7 +444,7 @@ export default function Dashboard({ onNavigate }) {
               />
             </section>
 
-            {/* orders by hour — bar chart */}
+            {/* orders by hour - bar chart */}
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Orders by hour of day</h2>
@@ -466,7 +466,7 @@ export default function Dashboard({ onNavigate }) {
               )}
             </section>
 
-            {/* user-count growth — line chart */}
+            {/* user-count growth - line chart */}
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>User growth</h2>
@@ -497,7 +497,7 @@ export default function Dashboard({ onNavigate }) {
               )}
             </section>
 
-            {/* active shops vs searches — dual axis */}
+            {/* active shops vs searches - dual axis */}
             <section className="ap-panel">
               <div className="ap-panel-head">
                 <h2>Daily active shops &amp; searches</h2>
@@ -646,7 +646,7 @@ export default function Dashboard({ onNavigate }) {
                   />
                   <Highlight
                     label="Top category"
-                    value={data.top_category ? data.top_category.name : "—"}
+                    value={data.top_category ? data.top_category.name : "-"}
                     foot={
                       data.top_category
                         ? `${money(data.top_category.revenue)} in sales`
@@ -655,7 +655,7 @@ export default function Dashboard({ onNavigate }) {
                   />
                   <Highlight
                     label="Top product"
-                    value={data.top_product ? data.top_product.name : "—"}
+                    value={data.top_product ? data.top_product.name : "-"}
                     foot={
                       data.top_product
                         ? `${num(data.top_product.units)} units`
@@ -667,7 +667,7 @@ export default function Dashboard({ onNavigate }) {
                     value={
                       data.most_searched_product
                         ? data.most_searched_product.term
-                        : "—"
+                        : "-"
                     }
                     foot={
                       data.most_searched_product
@@ -680,7 +680,7 @@ export default function Dashboard({ onNavigate }) {
                     value={
                       data.most_searched_category
                         ? data.most_searched_category.name
-                        : "—"
+                        : "-"
                     }
                     foot={
                       data.most_searched_category

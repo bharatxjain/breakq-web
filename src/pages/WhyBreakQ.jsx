@@ -125,7 +125,7 @@ export default function WhyBreakQ() {
               Blinkit, Zepto, and Instamart have proven that instant hyperlocal delivery works, but only in a
               narrow slice of India. Their model depends on dense population, high average order values, and
               dark-store economics that require thousands of daily orders per square kilometer to break even.
-              That math falls apart outside the top 20–30 metro pockets.
+              That math falls apart outside the top 20-30 metro pockets.
             </p>
             <p>
               Meanwhile, 65%+ of India lives in tier 3, tier 4 towns and villages, and this is exactly where

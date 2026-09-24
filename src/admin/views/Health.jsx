@@ -5,7 +5,7 @@ const CHECKS = [
   [
     "admin_dashboard_rpc",
     "admin_dashboard() RPC",
-    "Analytics dashboard — install via supabase/admin_panel.sql",
+    "Analytics dashboard: install via supabase/admin_panel.sql",
   ],
   [
     "admin_login_logs",
@@ -15,7 +15,7 @@ const CHECKS = [
   [
     "shops_is_deleted",
     "shops.is_deleted column",
-    "Soft delete for vendors — hard delete is never used",
+    "Soft delete for vendors: hard delete is never used",
   ],
   [
     "shops_locality",
@@ -25,7 +25,7 @@ const CHECKS = [
   [
     "shops_locality_source",
     "shops.locality_source column",
-    "Geographic Intelligence — manual vs geocoded backfill health, install via supabase/admin_panel.sql",
+    "Geographic Intelligence: manual vs geocoded backfill health, install via supabase/admin_panel.sql",
   ],
   [
     "shop_ratings",
@@ -35,62 +35,62 @@ const CHECKS = [
   [
     "admin_analytics_rpc",
     "admin_analytics() RPC",
-    "Dashboard demand/supply cards + graphs — install via supabase/admin_analytics.sql",
+    "Dashboard demand/supply cards + graphs: install via supabase/admin_analytics.sql",
   ],
   [
     "admin_search_analytics_rpc",
     "admin_search_analytics() RPC",
-    "Search & Discovery tab — supabase/admin_analytics.sql",
+    "Search & Discovery tab: supabase/admin_analytics.sql",
   ],
   [
     "admin_ratings_analytics_rpc",
     "admin_ratings_analytics() RPC",
-    "Ratings & Reviews tab — supabase/admin_analytics.sql",
+    "Ratings & Reviews tab: supabase/admin_analytics.sql",
   ],
   [
     "admin_geo_analytics_rpc",
     "admin_geo_analytics() RPC",
-    "Geographic Intelligence tab — supabase/admin_analytics.sql",
+    "Geographic Intelligence tab: supabase/admin_analytics.sql",
   ],
   [
     "admin_user_role_counts_rpc",
     "admin_user_role_counts() RPC",
-    "Users tab — customer / vendor / admin counts",
+    "Users tab: customer / vendor / admin counts",
   ],
   [
     "admin_coupon_stats_rpc",
     "admin_coupon_stats() RPC",
-    "Coupons tab — per-code redemptions, trend, expiry + Dashboard abuse flag",
+    "Coupons tab: per-code redemptions, trend, expiry + Dashboard abuse flag",
   ],
   [
     "admin_moderation_log",
     "admin_moderation_log table",
-    "Audit trail for every block / suspend / cancel / refund / restrict / review action — supabase/admin_operations.sql",
+    "Audit trail for every block / suspend / cancel / refund / restrict / review action: supabase/admin_operations.sql",
   ],
   [
     "profiles_is_blocked",
     "profiles.is_blocked column",
-    "Users tab — block / unblock + account status",
+    "Users tab: block / unblock + account status",
   ],
   [
     "products_is_restricted",
     "products.is_restricted column",
-    "Products tab — restricted products (hidden from customers)",
+    "Products tab: restricted products (hidden from customers)",
   ],
   [
     "shop_ratings_is_hidden",
     "shop_ratings.is_hidden column",
-    "Reviews tab — hide / report / remove",
+    "Reviews tab: hide / report / remove",
   ],
   [
     "admin_order_facets_rpc",
     "admin_order_facets() RPC",
-    "Orders tab — status / payment filters",
+    "Orders tab: status / payment filters",
   ],
   [
     "admin_platform_analytics_rpc",
     "admin_platform_analytics() RPC",
-    "Platform analytics tab — GMV, AOV, DAU/MAU, retention, vendor performance",
+    "Platform analytics tab: GMV, AOV, DAU/MAU, retention, vendor performance",
   ],
 ];
 

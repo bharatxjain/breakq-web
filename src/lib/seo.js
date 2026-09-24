@@ -3,8 +3,8 @@
 // This is a client-rendered SPA (Vite, no SSR/prerendering), so these tags
 // land in <head> only after React mounts and this effect runs. Googlebot
 // executes JavaScript and indexes the result correctly, but crawlers that
-// don't run JS (most social-preview unfurlers — WhatsApp, Slack, older
-// bots — and link-preview tools) only ever see index.html's static <head>.
+// don't run JS (most social-preview unfurlers - WhatsApp, Slack, older
+// bots - and link-preview tools) only ever see index.html's static <head>.
 // That's why index.html itself also carries a solid set of default tags:
 // this hook overrides them per route for engines that render JS, index.html
 // is the fallback for everything else.
@@ -13,7 +13,7 @@ import { useEffect } from "react";
 export const SITE_URL = "https://breakq.app";
 export const SITE_NAME = "BreakQ";
 // TODO: swap for a real 1200x630 branded social-preview image once one
-// exists — this is the best on-brand asset currently in /public.
+// exists - this is the best on-brand asset currently in /public.
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/Breakq_QR.png`;
 
 function upsertMeta(attr, value, content) {
@@ -60,7 +60,7 @@ function upsertJsonLd(data) {
  * is called from. Call once near the top of each public page component.
  *
  * `jsonLd`, if passed, should be a stable reference (module-level constant)
- * — an inline object literal would re-run the effect on every render.
+ * - an inline object literal would re-run the effect on every render.
  */
 export function useSeo({
   title,

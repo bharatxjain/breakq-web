@@ -7,7 +7,7 @@ import SustainablePartners from "../components/SustainablePartners";
 import StepJourney from "../components/StepJourney";
 import { useSeo, SITE_URL } from "../lib/seo";
 
-// Module-level constant so useSeo's effect doesn't re-run on every render —
+// Module-level constant so useSeo's effect doesn't re-run on every render -
 // see the "stable reference" note on useSeo. Built from the same `faqs`
 // FAQ.jsx renders, so the two can't drift apart.
 const HOME_JSON_LD = {

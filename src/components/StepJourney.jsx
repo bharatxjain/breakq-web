@@ -86,13 +86,13 @@ function IconScooter(props) {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        {/* wheels — big front, tucked rear */}
+        {/* wheels - big front, tucked rear */}
         <circle cx="150" cy="424" r="44" fill="#4b3f56" />
         <circle cx="150" cy="424" r="15" fill="#f3d9cf" />
         <circle cx="388" cy="410" r="56" fill="#4b3f56" />
         <circle cx="388" cy="410" r="22" fill="#f3d9cf" />
 
-        {/* scooter — rear body, floorboard, front leg-shield */}
+        {/* scooter - rear body, floorboard, front leg-shield */}
         <path
           fill="#9168d6"
           d="M104 360C92 320 96 268 150 250c46-14 94 8 100 56 3 26-2 44-10 54Z"
@@ -112,7 +112,7 @@ function IconScooter(props) {
         <rect x="80" y="136" width="80" height="74" rx="8" fill="#f3ac62" />
         <path d="M120 136v74" fill="none" stroke="#f9d5aa" strokeWidth="10" />
 
-        {/* rider — leg, torso, arm, helmet */}
+        {/* rider - leg, torso, arm, helmet */}
         <path
           fill="#e15b64"
           d="M240 292c22 8 46 24 60 48 8 13-4 25-16 18-21-13-41-35-53-57Z"
@@ -215,7 +215,7 @@ function ScreenBasket() {
             <span>{it.price}</span>
           </span>
           <span className="sj-ui-stepper" aria-hidden="true">
-            <i>–</i>
+            <i>-</i>
             <b>1</b>
             <i>+</i>
           </span>
@@ -310,7 +310,7 @@ export default function StepJourney() {
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
   activeRef.current = active;
-  // true once the track is scrolled to the very end — triggers the ride-off.
+  // true once the track is scrolled to the very end - triggers the ride-off.
   const [finished, setFinished] = useState(false);
   const finishedRef = useRef(false);
   finishedRef.current = finished;
@@ -320,7 +320,7 @@ export default function StepJourney() {
     const tall = tallRef.current;
     if (!tall) return undefined;
     const ol = stepsRef.current;
-    // Below 780px the section isn't pinned — it's a plain stacked list, so
+    // Below 780px the section isn't pinned - it's a plain stacked list, so
     // scroll shouldn't drive anything (see the matching CSS media query).
     const mobile = window.matchMedia("(max-width: 779px)");
     let raf = 0;
@@ -413,7 +413,7 @@ export default function StepJourney() {
       dist <= 0 ||
       window.matchMedia("(max-width: 779px)").matches
     ) {
-      setActive(i); // mobile / not pinned — nothing to scroll to
+      setActive(i); // mobile / not pinned - nothing to scroll to
       return;
     }
     const docTop = window.scrollY + tall.getBoundingClientRect().top;
@@ -447,7 +447,7 @@ export default function StepJourney() {
       >
         <div className="sj-sticky">
           <div className="sj-grid container">
-            {/* LEFT — step list */}
+            {/* LEFT - step list */}
             <ol className="sj-steps" ref={stepsRef}>
               <span className="sj-line" aria-hidden="true" />
               <span className="sj-line-fill" aria-hidden="true" />
@@ -491,7 +491,7 @@ export default function StepJourney() {
               })}
             </ol>
 
-            {/* RIGHT — visual panel */}
+            {/* RIGHT - visual panel */}
             <div className="sj-panel">
               {steps.map((s, i) => (
                 <div

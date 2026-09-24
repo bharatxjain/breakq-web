@@ -9,7 +9,7 @@ import {
   useAsync,
 } from "../ui";
 
-// Search & Discovery — the pre-payments demand signal. Everything here is
+// Search & Discovery - the pre-payments demand signal. Everything here is
 // derived from customer search / view events; each block degrades to a "needs
 // setup" hint until supabase/admin_analytics.sql has been run.
 export default function SearchDiscovery() {

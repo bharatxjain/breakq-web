@@ -207,17 +207,17 @@ function ProductList({ seed }) {
                       {productImage(p) && <img className="ap-thumb" src={productImage(p)} alt="" loading="lazy" />}
                       <span>
                         <button className="ap-link" onClick={() => setDetail(p)}>
-                          {p.name || "—"}
+                          {p.name || "-"}
                         </button>
                         {p.unit && <div className="ap-muted-line">{p.unit}</div>}
                       </span>
                     </span>
                   </td>
-                  <td>{p.brand || "—"}</td>
-                  <td>{catName.get(String(p.category_id)) || "—"}</td>
+                  <td>{p.brand || "-"}</td>
+                  <td>{catName.get(String(p.category_id)) || "-"}</td>
                   <td>{p._shop?.name || p.shop_id}</td>
                   <td className="ap-num">
-                    {p.stock_qty != null ? num(p.stock_qty) : p.in_stock === false ? "out" : "—"}
+                    {p.stock_qty != null ? num(p.stock_qty) : p.in_stock === false ? "out" : "-"}
                   </td>
                   <td>
                     <StateBadge p={p} />
@@ -266,11 +266,11 @@ function ProductList({ seed }) {
             <Detail label="Category" value={catName.get(String(detail.category_id))} />
             <Detail label="Shop" value={detail._shop?.name || detail.shop_id} />
             <Detail label="Unit" value={detail.unit} />
-            <Detail label="Stock" value={detail.stock_qty != null ? num(detail.stock_qty) : String(detail.in_stock ?? "—")} />
+            <Detail label="Stock" value={detail.stock_qty != null ? num(detail.stock_qty) : String(detail.in_stock ?? "-")} />
             <Detail label="Barcode" value={detail.barcode} />
             <Detail label="Added" value={fmtDateTime(detail.created_at)} />
             {detail.is_restricted && (
-              <Detail label="Restricted" value={`${detail.restricted_reason || "—"} (${fmtDateTime(detail.restricted_at)})`} span />
+              <Detail label="Restricted" value={`${detail.restricted_reason || "-"} (${fmtDateTime(detail.restricted_at)})`} span />
             )}
             <Detail label="Description" value={detail.description} span />
             <Detail label="Product id" value={<span className="ap-mono">{detail.id}</span>} span />
@@ -303,7 +303,7 @@ function ProductList({ seed }) {
           </div>
           <p className="ap-field-hint">
             <strong>Restrict</strong> is an admin lock: the product disappears for customers and the vendor can&rsquo;t
-            undo it. <strong>Deactivate</strong> just switches it off — the vendor can switch it back on.
+            undo it. <strong>Deactivate</strong> just switches it off. The vendor can switch it back on.
           </p>
         </Modal>
       )}
@@ -399,7 +399,7 @@ function Brands({ onShowBrand }) {
                         ))}
                       </span>
                     ) : (
-                      <span className="ap-td-empty">—</span>
+                      <span className="ap-td-empty">-</span>
                     )}
                   </td>
                   <td className="ap-num">{num(b.products)}</td>
@@ -473,7 +473,7 @@ function RenameBrand({ brand, brands, onClose, onDone, onError }) {
       </p>
       <Field
         label="New brand name"
-        hint={merging ? `“${merging.brand}” already exists — the two will be merged.` : "Case and spacing are normalised when matching."}
+        hint={merging ? `“${merging.brand}” already exists. The two will be merged.` : "Case and spacing are normalised when matching."}
       >
         <input value={to} onChange={(e) => setTo(e.target.value)} list="ap-brand-list" autoFocus />
         <datalist id="ap-brand-list">
@@ -545,8 +545,8 @@ function Duplicates() {
                         {p.name} {i === 0 && <Badge tone="ok">oldest</Badge>}
                         {p.unit && <div className="ap-muted-line">{p.unit}</div>}
                       </td>
-                      <td>{p.brand || "—"}</td>
-                      <td>{p.barcode || "—"}</td>
+                      <td>{p.brand || "-"}</td>
+                      <td>{p.barcode || "-"}</td>
                       <td>
                         <StateBadge p={p} />
                       </td>
@@ -728,7 +728,7 @@ function Restricted() {
                   <tr key={p.id}>
                     <td>{p.name}</td>
                     <td>{p._shop?.name || p.shop_id}</td>
-                    <td>{p.restricted_reason || "—"}</td>
+                    <td>{p.restricted_reason || "-"}</td>
                     <td>{fmtDate(p.restricted_at)}</td>
                     <td className="ap-row-actions">
                       <ConfirmButton
@@ -773,7 +773,7 @@ function Detail({ label, value, span }) {
   return (
     <div className={`ap-detail ${span ? "ap-detail-span" : ""}`}>
       <span className="ap-detail-label">{label}</span>
-      <span className="ap-detail-value">{value ?? "—"}</span>
+      <span className="ap-detail-value">{value ?? "-"}</span>
     </div>
   );
 }

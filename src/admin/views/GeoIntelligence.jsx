@@ -63,7 +63,7 @@ function FitMap({ points }) {
     const bounds = points.map((p) => [Number(p.lat), Number(p.lng)]);
     if (bounds.length === 1) {
       // fitBounds on a single point zooms all the way in on it, ignoring
-      // maxZoom in some Leaflet versions — setView is the correct call here.
+      // maxZoom in some Leaflet versions - setView is the correct call here.
       map.setView(bounds[0], 14);
     } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
@@ -76,7 +76,7 @@ function ShopMap({ points }) {
   const pts = points.filter(
     (p) => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)),
   );
-  // A single shop is still a real point worth plotting — this used to
+  // A single shop is still a real point worth plotting - this used to
   // require 2+ and silently showed nothing for a brand-new/small deployment.
   if (pts.length < 1)
     return (
@@ -208,7 +208,7 @@ export default function GeoIntelligence() {
                           res.total) *
                           100,
                       )}%`
-                    : "—"}
+                    : "-"}
                 </span>
                 <span className="ap-stat-sub">placeable by some basis</span>
               </div>
@@ -414,7 +414,7 @@ export default function GeoIntelligence() {
                           <td>{s.name}</td>
                           <td>
                             {s.address || (
-                              <span className="ap-td-empty">—</span>
+                              <span className="ap-td-empty">-</span>
                             )}
                           </td>
                           <td>{fmtDate(s.created_at)}</td>

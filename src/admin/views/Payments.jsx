@@ -11,7 +11,7 @@ import {
   useToast,
 } from "../ui";
 
-// Only status is ever editable here — signature / payment-id fields are a
+// Only status is ever editable here - signature / payment-id fields are a
 // payment-integrity risk and stay read-only.
 const STATUSES = [
   "created",
@@ -63,8 +63,8 @@ export default function Payments() {
               {rows.map((p) => (
                 <tr key={p.id}>
                   <td>{fmtDateTime(p.created_at)}</td>
-                  <td className="ap-mono">{p.razorpay_order_id || "—"}</td>
-                  <td className="ap-mono">{p.razorpay_payment_id || "—"}</td>
+                  <td className="ap-mono">{p.razorpay_order_id || "-"}</td>
+                  <td className="ap-mono">{p.razorpay_payment_id || "-"}</td>
                   <td className="ap-num">
                     {money(p.amount_rupees ?? p.amount)}
                   </td>
@@ -146,7 +146,7 @@ function AdjustModal({ row, onClose, onDone, onError }) {
         <div className="ap-detail ap-detail-span">
           <span className="ap-detail-label">Razorpay signature</span>
           <span className="ap-detail-value ap-mono">
-            {row.razorpay_signature || "—"}
+            {row.razorpay_signature || "-"}
           </span>
         </div>
       </div>

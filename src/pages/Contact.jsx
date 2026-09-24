@@ -6,7 +6,7 @@ export default function Contact() {
   useSeo({
     title: 'Contact Us',
     description:
-      'Questions about becoming a BreakQ partner store, using the app, or anything else — get in touch and our team will help.',
+      'Questions about becoming a BreakQ partner store, using the app, or anything else? Get in touch and our team will help.',
     path: '/contact',
   })
 
@@ -15,7 +15,7 @@ export default function Contact() {
       <PageHeader
         eyebrow="Get in touch"
         title="Contact us"
-        subtitle="Questions about becoming a partner store, using the app, or anything else — our team is here to help."
+        subtitle="Questions about becoming a partner store, using the app, or anything else? Our team is here to help."
       />
       <ContactSection />
     </>

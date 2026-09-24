@@ -1,5 +1,5 @@
 /* ===========================================================================
-   BreakQ Admin Panel — self-contained styles, all scoped under .ap
+   BreakQ Admin Panel, self-contained styles, all scoped under .ap
    =========================================================================== */
 
 .ap {
@@ -21,7 +21,7 @@
   --ap-warn-soft: #faefd9;
   --ap-danger: #c22a2a;
   --ap-danger-soft: #fbe6e6;
-  /* A second categorical hue for charts with 2+ segments — --ap-primary-2 is
+  /* A second categorical hue for charts with 2+ segments - --ap-primary-2 is
      too close to --ap-primary in hue and (in dark mode) too low-contrast
      against the card surface to work as a distinct chart color; this one is
      validated (see the dataviz skill's validate_palette.js) against contrast
@@ -31,7 +31,7 @@
   --ap-radius-sm: 9px;
   --ap-header-h: 60px;
   --ap-gutter-top: 10px;
-  /* Spacing scale — every top-level dashboard card (.ap-kpi / .ap-stat /
+  /* Spacing scale - every top-level dashboard card (.ap-kpi / .ap-stat /
      .ap-panel) and card-grid (.ap-kpi-grid / .ap-stat-grid / .ap-two-col)
      shares these two so cards line up with the same padding and the same
      gap regardless of which grid they sit in. Section-to-section stacking
@@ -61,7 +61,7 @@
 
 /* Dark palette. The Shell resolves light/dark (stored choice, else the OS
    setting) and stamps data-theme on the root, so no prefers-color-scheme
-   query is needed here — the explicit attribute is the single source. */
+   query is needed here, the explicit attribute is the single source. */
 .ap[data-theme="dark"] {
   color-scheme: dark;
   --ap-bg: #131118;
@@ -265,7 +265,7 @@
 
 /* ------------------------------------------------------------------- shell */
 
-/* App-shell layout: the shell itself never scrolls — the header is fixed height
+/* App-shell layout: the shell itself never scrolls - the header is fixed height
    and the sidebar + main are independent scroll panes. This keeps the sidebar
    genuinely still while content scrolls (sticky-in-a-scroll-container was fragile
    across browsers / zoom / scrollbar-gutter). */
@@ -716,7 +716,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   /* Reserve the vertical scrollbar's width whether or not a given page's
-     content is tall enough to actually scroll — otherwise the right-hand
+     content is tall enough to actually scroll, otherwise the right-hand
      content gutter shrinks by the scrollbar width only on taller pages
      (e.g. Dashboard), reading as inconsistent left/right padding between
      admin pages. */
@@ -789,7 +789,7 @@
   /* .ap-content's own padding is already symmetric (clamp(20px, 3vw, 42px)
      on both sides), but without this, once the viewport is wider than
      max-width + that padding, the view sits flush against the left edge and
-     every extra pixel of width piles up on the right only — reading as
+     every extra pixel of width piles up on the right only, reading as
      uneven left/right space on large screens. Centering keeps both sides
      equal past that point. */
   margin-inline: auto;
@@ -1114,7 +1114,7 @@
 }
 /* When a spark chart sits between the subtitle and the trend divider (e.g.
    Platform revenue), only the divider should claim the flex column's
-   leftover space — otherwise both auto margins would split it unevenly. */
+   leftover space, otherwise both auto margins would split it unevenly. */
 .ap-kpi-foot + .ap-kpi-spark {
   margin-top: 10px;
 }
@@ -1501,7 +1501,7 @@
   height: 380px;
   overflow: hidden;
   border: 1px solid var(--ap-border);
-  /* Matches .ap-table-wrap — both are framed content blocks nested one level
+  /* Matches .ap-table-wrap - both are framed content blocks nested one level
      inside a .ap-panel, so they should read at the same "weight" as each other. */
   border-radius: var(--ap-radius);
 }
@@ -1511,7 +1511,7 @@
   z-index: 0;
 }
 
-/* custom shop pin (divIcon) — teardrop with a storefront glyph, colored by
+/* custom shop pin (divIcon) - teardrop with a storefront glyph, colored by
    approval status via the --pin-color custom property set inline. */
 .ap-shop-marker {
   background: none;
@@ -1541,7 +1541,7 @@
   stroke-linejoin: round;
 }
 
-/* marker cluster bubbles — recolor the default leaflet.markercluster yellow
+/* marker cluster bubbles - recolor the default leaflet.markercluster yellow
    to match the panel's brand palette instead of theming a new library. */
 .ap-map .marker-cluster-small,
 .ap-map .marker-cluster-medium,
@@ -2307,7 +2307,7 @@ form.ap-bar {
 /* ============================================================ small phones */
 
 @media (max-width: 560px) {
-  /* one compact header row — the burger menu covers navigation, so the
+  /* one compact header row - the burger menu covers navigation, so the
      "jump to a section" search is dropped rather than eating a second row */
   .ap-header {
     flex-wrap: wrap;
@@ -2354,7 +2354,7 @@ form.ap-bar {
     max-width: none !important;
   }
 
-  /* dashboard cards — panel/kpi/stat all tighten to the same padding, and
+  /* dashboard cards - panel/kpi/stat all tighten to the same padding, and
      card-grid gaps drop a notch so they stay smaller than the section gap
      above (.ap-view already steps down to 16px here). */
   .ap-panel,
@@ -2377,7 +2377,7 @@ form.ap-bar {
   .ap-kpi-value {
     font-size: 22px;
   }
-  /* the spark's aspect-ratio reserves ~110px at full-bleed width — cap it so
+  /* the spark's aspect-ratio reserves ~110px at full-bleed width - cap it so
      the "Platform revenue" card isn't a tall empty box on phones */
   .ap-kpi-spark {
     aspect-ratio: auto;
@@ -2489,7 +2489,7 @@ form.ap-bar {
   text-align: center;
 }
 
-/* coupons — redemptions cell */
+/* coupons - redemptions cell */
 .ap-coupon-use {
   display: flex;
   flex-direction: column;
@@ -2761,7 +2761,7 @@ form.ap-bar {
   border: 1px solid var(--ap-border);
 }
 
-/* Vendors — filter bar */
+/* Vendors - filter bar */
 .ap-filters {
   display: flex;
   flex-wrap: wrap;
@@ -2941,4 +2941,85 @@ form.ap-bar {
 th.ap-num .ap-sort {
   width: 100%;
   text-align: right;
+}
+
+/* ======================================================= layout refinements */
+
+/* Wider, responsive sidebar: grows with the viewport between 248px and 288px
+   on desktop, narrower on small laptops, and a drawer on tablets/phones. */
+.ap-body {
+  grid-template-columns: clamp(248px, 18vw, 288px) minmax(0, 1fr);
+}
+.ap-side {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+.ap-side-nav button {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+@media (min-width: 901px) and (max-width: 1100px) {
+  .ap-body {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .ap-body {
+    grid-template-columns: 1fr;
+  }
+  .ap-side {
+    width: min(300px, 86vw);
+  }
+}
+
+/* Selects: custom chevron, themed options, and never stretched full-width
+   when they sit inside a toolbar row. */
+.ap select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8a99' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.ap select:hover {
+  border-color: var(--ap-primary);
+}
+.ap select:focus,
+.ap select:focus-visible {
+  outline: none;
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 3px var(--ap-primary-soft);
+}
+.ap select option {
+  background: var(--ap-surface);
+  color: var(--ap-text);
+}
+.ap-bar select {
+  width: auto;
+  flex: 0 0 auto;
+  min-width: 160px;
+  max-width: 240px;
+}
+.ap-filters select {
+  padding-right: 30px;
+  background-position: right 10px center;
+}
+
+/* Table action cells: keep them real table cells (display:flex on a <td>
+   pulls it out of the table layout, which broke row borders and heights). */
+.ap-table td.ap-row-actions {
+  display: table-cell;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ap-table td.ap-row-actions > * + * {
+  margin-left: 6px;
+}
+.ap-table td {
+  vertical-align: middle;
 }

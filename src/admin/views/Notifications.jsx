@@ -169,7 +169,7 @@ function CampaignAnalytics({ rows }) {
   const pushBad = sum("push_failed");
   const mailOk = sum("email_sent");
   const mailBad = sum("email_failed");
-  const rate = (ok, bad) => (ok + bad ? `${((ok / (ok + bad)) * 100).toFixed(1)}%` : "—");
+  const rate = (ok, bad) => (ok + bad ? `${((ok / (ok + bad)) * 100).toFixed(1)}%` : "-");
   const byAudience = {};
   for (const c of sent) {
     const k = AUDIENCES.find((a) => a.key === c.audience)?.label || c.audience;
@@ -192,7 +192,7 @@ function CampaignAnalytics({ rows }) {
         <span className="ap-stat-sub">
           {Object.entries(byAudience)
             .map(([k, v]) => `${k} ${num(v)}`)
-            .join(" · ") || "—"}
+            .join(" · ") || "-"}
         </span>
       </div>
       <div className="ap-stat">
@@ -225,7 +225,7 @@ function Row({ c, onEdit, onChanged, notify }) {
       ? fmtDateTime(c.started_at || c.scheduled_at)
       : c.scheduled_at
         ? fmtDateTime(c.scheduled_at)
-        : "—";
+        : "-";
 
   const editable = c.status === "draft" || c.status === "scheduled";
   const cancelable = c.status === "draft" || c.status === "scheduled";
@@ -263,7 +263,7 @@ function Row({ c, onEdit, onChanged, notify }) {
         </Badge>
       </td>
       <td>{when}</td>
-      <td className="ap-muted-line">{results.join("  ·  ") || "—"}</td>
+      <td className="ap-muted-line">{results.join("  ·  ") || "-"}</td>
       <td className="ap-row-actions">
         {c.status === "draft" && (
           <ConfirmButton

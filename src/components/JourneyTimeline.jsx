@@ -5,11 +5,11 @@ import "./JourneyTimeline.css";
    A vertical tick rail that magnifies toward the pointer, driving a preview
    card (progress bar + timecode). Every tick is one step. Magnification is a
    gaussian falloff over ~3 ticks either side; each tick eases toward its target
-   every frame instead of snapping — that is what makes it feel physical, not
+   every frame instead of snapping, that is what makes it feel physical, not
    like a menu. The rAF loop halts once nothing is moving and the pointer has
    left. Rotates to a horizontal rail under 680px. Under prefers-reduced-motion
    the magnify mechanic is removed and the rail becomes a plain readable list.
-   Avatars are drawn from initials on a coloured disc — no image dependency. */
+   Avatars are drawn from initials on a coloured disc, no image dependency. */
 
 const STEPS = [
   {
@@ -28,7 +28,7 @@ const STEPS = [
     initials: "PD",
     color: "#38bdf8",
     title: "One storefront per shop",
-    body: "Every shop gets a live digital storefront real catalogue, real prices, real stock — not a generic grocery list bolted onto a delivery app.",
+    body: "Every shop gets a live digital storefront: real catalogue, real prices, real stock. Not a generic grocery list bolted onto a delivery app.",
   },
   {
     code: "01:30",

@@ -1,4 +1,4 @@
-/* About page — who we are / what we do / purpose + journey.
+/* About page - who we are / what we do / purpose + journey.
    Animation model: IntersectionObserver adds .is-visible → base fade-up, plus
    directional variants for the split hero row. Decorative motion (icon float,
    CTA gradient drift, glow pulse) only runs once a block is in view and is
@@ -189,7 +189,7 @@
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* gentle idle float once the card is on screen — staggered per card */
+/* gentle idle float once the card is on screen - staggered per card */
 .about-do-card.is-visible .about-do-icon {
   animation: about-float 4s ease-in-out infinite;
 }

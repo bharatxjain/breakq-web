@@ -6,6 +6,7 @@ import {
   fetchShopsPaged,
   fetchTiers,
   rejectShop,
+  resolveStorageUrl,
   restoreShop,
   setShopSuspended,
   softDeleteShop,
@@ -246,14 +247,14 @@ export default function Vendors({ initialFilter, onNavigate }) {
                     )}
                   </td>
                   <td>
-                    {s.locality || "—"}
+                    {s.locality || "-"}
                     {s.locality_source && (
                       <div className="ap-muted-line">{s.locality_source}</div>
                     )}
                   </td>
                   <td>{s._tier?.display_name || "Free"}</td>
                   <td className="ap-num">
-                    {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "—"}
+                    {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "-"}
                     {s.rating_count ? (
                       <div className="ap-muted-line">
                         {num(s.rating_count)} rated
@@ -264,7 +265,7 @@ export default function Vendors({ initialFilter, onNavigate }) {
                     <Badge tone={statusTone(s.status)}>{s.status}</Badge>
                   </td>
                   <td>{fmtDate(s.created_at)}</td>
-                  <td>{s._last_active ? fmtDate(s._last_active) : "—"}</td>
+                  <td>{s._last_active ? fmtDate(s._last_active) : "-"}</td>
                   <td className="ap-row-actions">
                     {s.status === "pending" && !s.is_deleted && (
                       <>
@@ -301,7 +302,7 @@ export default function Vendors({ initialFilter, onNavigate }) {
 
         <div className="ap-pager">
           <span>
-            {from}–{to} of {num(total)}
+            {from}-{to} of {num(total)}
           </span>
           <div className="ap-pager-btns">
             <button
@@ -348,7 +349,7 @@ export default function Vendors({ initialFilter, onNavigate }) {
             />
             <Detail
               label="Hours"
-              value={`${detail.open_time || "?"} – ${detail.close_time || "?"}`}
+              value={`${detail.open_time || "?"} - ${detail.close_time || "?"}`}
             />
             <Detail
               label="Commission enabled"
@@ -363,7 +364,7 @@ export default function Vendors({ initialFilter, onNavigate }) {
               value={
                 detail.locality
                   ? `${detail.locality}${detail.locality_source ? ` (${detail.locality_source})` : ""}`
-                  : "—"
+                  : "-"
               }
             />
             <Detail
@@ -395,7 +396,7 @@ export default function Vendors({ initialFilter, onNavigate }) {
             {detail.status === "suspended" && (
               <Detail
                 label="Suspended"
-                value={`${detail.suspension_reason || "—"}${detail.suspended_at ? ` (since ${fmtDateTime(detail.suspended_at)})` : ""}`}
+                value={`${detail.suspension_reason || "-"}${detail.suspended_at ? ` (since ${fmtDateTime(detail.suspended_at)})` : ""}`}
                 span
               />
             )}
@@ -657,18 +658,18 @@ function ShopMetrics({ shop }) {
         <div className="ap-metric">
           <span className="ap-metric-label">Catalog size</span>
           <span className="ap-metric-value">
-            {M?.catalog_size != null ? num(M.catalog_size) : "—"}
+            {M?.catalog_size != null ? num(M.catalog_size) : "-"}
           </span>
         </div>
         <div className="ap-metric">
           <span className="ap-metric-label">Newest catalog item</span>
           <span className="ap-metric-value">
-            {stale == null ? "—" : `${stale}d ago`}
+            {stale == null ? "-" : `${stale}d ago`}
           </span>
           {stale != null && (
             <Badge tone={staleTone}>
               {stale > 90
-                ? "stale — check if dead"
+                ? "stale: check if dead"
                 : stale > 30
                   ? "ageing"
                   : "fresh"}
@@ -678,13 +679,13 @@ function ShopMetrics({ shop }) {
         <div className="ap-metric">
           <span className="ap-metric-label">Last active</span>
           <span className="ap-metric-value">
-            {M?.last_active ? fmtDate(M.last_active) : "—"}
+            {M?.last_active ? fmtDate(M.last_active) : "-"}
           </span>
         </div>
         <div className="ap-metric">
           <span className="ap-metric-label">Rating (rollup)</span>
           <span className="ap-metric-value">
-            {M?.rating_now?.avg ? Number(M.rating_now.avg).toFixed(1) : "—"}
+            {M?.rating_now?.avg ? Number(M.rating_now.avg).toFixed(1) : "-"}
           </span>
           {M?.rating_now?.count ? (
             <span className="ap-metric-label">
@@ -721,7 +722,7 @@ function ShopMetrics({ shop }) {
                 format={(v) => Number(v).toFixed(2)}
               />
               <p className="ap-field-hint">
-                From review rows directly — safe even while the rollup count is
+                From review rows directly, safe even while the rollup count is
                 inflated.
               </p>
             </>
@@ -737,14 +738,30 @@ function ShopMetrics({ shop }) {
 // Inline preview for an uploaded file: images render as a thumbnail, anything
 // else (PDF proofs) as a link card.
 function FilePreview({ url, label }) {
+  const [src, setSrc] = useState(null);
+  const [broken, setBroken] = useState(false);
+  useEffect(() => {
+    let live = true;
+    setSrc(null);
+    setBroken(false);
+    if (url)
+      resolveStorageUrl(url)
+        .catch(() => url)
+        .then((u) => live && setSrc(u));
+    return () => {
+      live = false;
+    };
+  }, [url]);
   if (!url) return null;
   const isImage = /\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(url);
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="ap-file">
-      {isImage ? (
-        <img src={url} alt={label} loading="lazy" />
+    <a href={src || url} target="_blank" rel="noreferrer" className="ap-file">
+      {!src ? (
+        <span className="ap-file-doc">Loading…</span>
+      ) : isImage && !broken ? (
+        <img src={src} alt={label} loading="lazy" onError={() => setBroken(true)} />
       ) : (
-        <span className="ap-file-doc">Document</span>
+        <span className="ap-file-doc">{broken ? "Preview unavailable" : "Document"}</span>
       )}
       <span className="ap-file-label">{label} ↗</span>
     </a>
@@ -755,7 +772,7 @@ function Detail({ label, value, span }) {
   return (
     <div className={`ap-detail ${span ? "ap-detail-span" : ""}`}>
       <span className="ap-detail-label">{label}</span>
-      <span className="ap-detail-value">{value ?? "—"}</span>
+      <span className="ap-detail-value">{value ?? "-"}</span>
     </div>
   );
 }
@@ -781,7 +798,7 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
             disabled={busy}
             onClick={() => {
               if (reason.trim().length < 4) {
-                setErr("A remark is required — the vendor sees this.");
+                setErr("A remark is required. The vendor sees this.");
                 return;
               }
               onSubmit(reason.trim());
@@ -809,7 +826,7 @@ function RejectModal({ shop, onClose, onSubmit, busy }) {
             setReason(e.target.value);
             setErr("");
           }}
-          placeholder="e.g. Business proof is unreadable — please re-upload a clearer photo."
+          placeholder="e.g. Business proof is unreadable, please re-upload a clearer photo."
         />
       </Field>
     </Modal>

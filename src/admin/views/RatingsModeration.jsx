@@ -25,7 +25,7 @@ export default function RatingsModeration() {
     (s, b) => s + b.stars * (Number(b.count) || 0),
     0,
   );
-  const mean = totalRatings ? (weighted / totalRatings).toFixed(2) : "—";
+  const mean = totalRatings ? (weighted / totalRatings).toFixed(2) : "-";
 
   return (
     <div className="ap-view">
@@ -206,7 +206,7 @@ export default function RatingsModeration() {
                             {r.review ? (
                               r.review
                             ) : (
-                              <span className="ap-td-empty">— no text —</span>
+                              <span className="ap-td-empty">No text</span>
                             )}
                           </td>
                         </tr>

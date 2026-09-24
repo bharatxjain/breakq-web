@@ -20,18 +20,18 @@ export async function getSession() {
 
 // A network-level failure (QUIC/HTTP3 hiccup, VPN, flaky wifi) never reaches
 // Supabase at all, so it surfaces as a bare "Failed to fetch" TypeError
-// instead of a Supabase AuthError — reword it into something actionable.
+// instead of a Supabase AuthError - reword it into something actionable.
 function rethrowNetworkFriendly(e) {
   if (e instanceof TypeError) {
     throw new Error(
-      "Network error while reaching Supabase — check your connection (or try disabling any VPN/antivirus HTTPS scanning) and try again.",
+      "Network error while reaching Supabase. Check your connection (or try disabling any VPN/antivirus HTTPS scanning) and try again.",
     );
   }
   throw e;
 }
 
 export async function sendOtp(email) {
-  // shouldCreateUser:false — admins must already exist; never provision here.
+  // shouldCreateUser:false - admins must already exist; never provision here.
   try {
     const { error } = await client().auth.signInWithOtp({
       email: email.trim(),
@@ -349,7 +349,7 @@ async function dashboardFallback() {
 
 /* -------------------------------------------------------------- analytics --- */
 // The four functions below are added by supabase/admin_analytics.sql. Until that
-// runs the RPC is absent — we return { _missing: true } so each view can show a
+// runs the RPC is absent - we return { _missing: true } so each view can show a
 // one-line "needs setup" hint instead of an error wall.
 
 function looksMissing(error) {
@@ -552,7 +552,7 @@ export async function fetchShopsPaged({
       });
       lastActive = new Map((la ?? []).map((x) => [x.shop_id, x.last_active]));
     } catch {
-      /* RPC not installed — column just shows "—" */
+      /* RPC not installed - column just shows "-" */
     }
 
     for (const s of rows) {
@@ -565,7 +565,7 @@ export async function fetchShopsPaged({
 }
 
 // Fire-and-forget: ask the edge function to email the vendor + log an in-app
-// notification for a status change. Never blocks or fails the admin action —
+// notification for a status change. Never blocks or fails the admin action -
 // a mailer outage must not stop a vendor being verified/rejected/deleted.
 function notifyVendorStatus(shop, event, reason) {
   try {
@@ -1411,4 +1411,21 @@ export async function probeSchema() {
     client().rpc("admin_platform_analytics", { p_days: 1 }),
   );
   return out;
+}
+
+/* --------------------------------------------------------------- storage --- */
+
+// Business proofs are stored as `/object/authenticated/shop-proofs/<path>`
+// (private bucket), and older files as `/object/public/<bucket>/<path>`, which
+// 400 if that bucket is ever made private. Swap either for a short-lived
+// signed URL; anything else is returned untouched.
+export async function resolveStorageUrl(url, expiresIn = 3600) {
+  const m = /\/storage\/v1\/object\/(?:public|authenticated)\/([^/]+)\/(.+?)(\?|$)/.exec(url || "");
+  if (!m) return url;
+  const [, bucket, path] = m;
+  const { data, error } = await client()
+    .storage.from(bucket)
+    .createSignedUrl(decodeURIComponent(path), expiresIn);
+  if (error || !data?.signedUrl) return url;
+  return data.signedUrl;
 }
